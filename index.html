@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#18251d"><link rel="manifest" href="/manifest.json"><title>Meu Reino Medieval</title><style>
 *{box-sizing:border-box}body{margin:0;background:#18251d;color:#f7f1df;font:15px system-ui;overflow:hidden;overscroll-behavior:none}#game{position:fixed;inset:0}#game canvas{display:block;touch-action:none}#hud{position:fixed;inset:0;pointer-events:none}.top{display:flex;justify-content:space-between;padding:12px;gap:8px}.panel{background:#142019d9;border:1px solid #b99b59;border-radius:12px;padding:9px 12px;box-shadow:0 3px 14px #0005}.brand{font-weight:800;color:#f0cc78} .bottom{position:absolute;bottom:14px;left:150px;right:8px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;align-content:flex-end;max-height:42vh;overflow-y:auto;padding:8px;pointer-events:auto}.bottom button{padding:10px 11px;font-size:13px}button{border:1px solid #c5a96b;background:#293b2d;color:#fff2d0;border-radius:10px;padding:11px 14px;font-weight:700;touch-action:manipulation}button:active{transform:scale(.96)}#joystick{position:fixed;left:20px;bottom:24px;width:124px;height:124px;border:2px solid #e2c68188;border-radius:50%;background:#17251dcc;box-shadow:0 4px 18px #0008;pointer-events:auto;touch-action:none;z-index:4}#joystick:before{content:'360°';position:absolute;inset:0;display:grid;place-items:center;color:#f5e5bd66;font-size:13px;font-weight:800;pointer-events:none}#stick{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px;border-radius:50%;background:linear-gradient(145deg,#d8bd79,#78603a);border:2px solid #f4dda5;box-shadow:0 3px 10px #0009;pointer-events:none}#lookTip{position:fixed;right:12px;bottom:158px;color:#fff;background:#14201999;border-radius:8px;padding:6px 9px;font-size:11px;pointer-events:none}
-#cameraControls{position:fixed;right:12px;top:92px;display:flex;flex-direction:column;gap:7px;pointer-events:auto;z-index:4}#cameraControls button{width:42px;height:42px;padding:0;font-size:20px;background:#142019dc;border-color:#d5bb7b;box-shadow:0 2px 9px #0007}#cameraControls .small{font-size:11px}
+#mapPanel.hidden{display:none!important}#mapPanel:not(.hidden){display:flex!important}#cameraControls{position:fixed;right:12px;top:92px;display:flex;flex-direction:column;gap:7px;pointer-events:auto;z-index:4}#cameraControls button{width:42px;height:42px;padding:0;font-size:20px;background:#142019dc;border-color:#d5bb7b;box-shadow:0 2px 9px #0007}#cameraControls .small{font-size:11px}
 #avatarSelect{position:fixed;left:50%;top:68px;transform:translateX(-50%);display:flex;gap:5px;padding:6px;background:#142019dc;border:1px solid #b99b59;border-radius:12px;pointer-events:auto;z-index:4;white-space:nowrap}#avatarSelect button{padding:7px 9px;font-size:11px}#avatarSelect button.active{background:#94743d;border-color:#ffe2a0;box-shadow:0 0 0 1px #ffe2a0}#mount{background:#62482a}@media(max-width:520px){#avatarSelect{top:64px;gap:3px;padding:4px}#avatarSelect button{padding:7px 6px;font-size:10px}}#login{position:fixed;inset:0;background:#101a15eF;display:grid;place-items:center;z-index:5}#login.hidden{display:none}#login form{width:min(90vw,360px);background:#26382b;border:1px solid #b99b59;border-radius:16px;padding:22px}input{width:100%;padding:12px;margin:7px 0 12px;border-radius:8px;border:1px solid #b99b59;background:#101a15;color:white}#chatbox input{margin:4px 0}#hint{position:fixed;bottom:calc(44vh + 18px);left:50%;transform:translateX(-50%);z-index:12;pointer-events:none;white-space:normal;text-align:center;background:#142019ed;border:1px solid #b99b59;padding:9px 13px;border-radius:9px;max-width:min(92vw,520px);max-height:18vh;overflow:auto;box-shadow:0 4px 16px #0009}.hidden{display:none}@media(max-width:520px){.top{padding:7px;gap:5px}.panel{padding:7px 9px;font-size:12px}.bottom{left:145px;right:4px;bottom:8px;gap:5px;max-height:44vh}.bottom button{padding:9px 8px;font-size:12px}#joystick{left:12px;bottom:18px;width:116px;height:116px}#stick{width:50px;height:50px;margin:-25px}#hint{bottom:calc(44vh + 12px);font-size:12px;max-width:calc(100vw - 20px)}#lookTip{bottom:135px}}@media(min-width:700px){.bottom{left:auto;right:16px;bottom:20px;width:300px;justify-content:flex-end}#joystick{left:28px;bottom:28px}}
-</style></head><body><div id="game"></div><div id="hud"><div class="top"><div class="panel"><div class="brand">⚔ MEU REINO MEDIEVAL</div><div id="stats">Madeira: 0 · Pedra: 0</div><div style="font-size:9px;opacity:.68;margin-top:3px">Modelos 3D: Vinish.dev · CC BY 4.0</div></div><div class="panel" id="players">Entrando no reino…</div></div><div id="hint">WASD ou controles para caminhar · Explore o reino!</div><div id="questToast" style="position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:15;display:none;pointer-events:none;background:#24382aee;border:1px solid #e2c681;border-radius:12px;padding:12px 16px;text-align:center;max-width:90vw;box-shadow:0 5px 20px #0009"></div><div id="avatarSelect" aria-label="Escolha seu personagem"><button data-avatar="knight" class="active">⚔ Cavaleiro</button><button data-avatar="princess">👸 Princesa</button><button data-avatar="ogre">👹 Ogro</button></div><div class="bottom"><button id="collect">🌲 Coletar</button><button id="build">🧱 Bloco</button><button id="castleBuild">🏰 Meu castelo</button><button id="castleUpgrade">🛡 Aprimorar</button><button id="gate">🚪 Abrir portão</button><button id="attack">⚔ Atacar</button><button id="plant">🌱 Plantar</button><button id="animal">🐾 Criar animal</button><button id="fence">🪵 Cercado</button><button id="products">🥚🥛 Recolher</button><button id="well">🪣 Poço</button><button id="shop">🛡 Loja</button><button id="mount">🐎 Montar</button><button id="questsToggle">📜 Missões</button><button id="chatToggle">💬 Chat</button></div><div id="joystick" aria-label="Controle de movimento"><div id="stick"></div></div><div id="assetCredits" style="position:fixed;right:8px;bottom:4px;color:#fff9;font-size:9px;pointer-events:none;text-shadow:0 1px 3px #000">“Medieval guard captain” by VibeAssets, CC0 (https://vibeassets.io/a/9h7odik5fl)</div><div id="cameraControls" aria-label="Controles da câmera"><button id="zoomIn" aria-label="Aproximar" title="Aproximar">＋</button><button id="zoomOut" aria-label="Afastar" title="Afastar">−</button><button id="viewUp" class="small" aria-label="Ver mais de cima" title="Ver mais de cima">⬆</button><button id="viewDown" class="small" aria-label="Ver mais no horizonte" title="Ver mais no horizonte">⬇</button></div></div><div id="questsPanel" class="panel hidden" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,440px);max-height:78vh;overflow:auto;pointer-events:auto;z-index:8;border-color:#e2c681"><div style="display:flex;justify-content:space-between;align-items:center"><b>📜 Diário de missões</b><button id="questsClose" style="padding:5px 10px">✕</button></div><div id="questLevel" style="margin:10px 0;color:#f0cc78;font-weight:800">Nível 1 · 0 XP</div><div id="questList" style="display:grid;gap:8px"></div></div><div id="chatbox" class="panel hidden" style="position:fixed;right:12px;bottom:82px;width:min(92vw,320px);pointer-events:auto;z-index:3"><b>Chat do reino</b><div id="chatlog" style="height:150px;overflow:auto;margin:8px 0;font-size:13px"></div><form id="chatform"><input id="chatinput" maxlength="500" placeholder="Mensagem..." required><button>Enviar</button></form></div>
-<div id="login"><form id="auth"><h2>Entre no seu reino</h2><p>Use seu e-mail para salvar seu progresso.</p><input id="email" type="email" placeholder="E-mail" required><input id="password" type="password" placeholder="Senha (mín. 6 caracteres)" minlength="6" required><button style="width:100%">Entrar / Criar conta</button><p id="authmsg"></p></form></div>
+</style></head><body><div id="game"></div><div id="hud"><div class="top"><div class="panel"><div class="brand">⚔ MEU REINO MEDIEVAL</div><div id="stats">Madeira: 0 · Pedra: 0</div><div style="font-size:9px;opacity:.68;margin-top:3px">Modelos 3D: Vinish.dev · CC BY 4.0</div></div><div class="panel" id="players">Entrando no reino…</div></div><div id="hint">WASD ou controles para caminhar · Explore o reino!</div><div id="questToast" style="position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:15;display:none;pointer-events:none;background:#24382aee;border:1px solid #e2c681;border-radius:12px;padding:12px 16px;text-align:center;max-width:90vw;box-shadow:0 5px 20px #0009"></div><div id="avatarSelect" aria-label="Escolha seu personagem"><button data-avatar="knight" class="active">⚔ Cavaleiro</button><button data-avatar="princess">👸 Princesa</button><button data-avatar="ogre">👹 Ogro</button></div><div class="bottom"><button id="collect">🌲 Coletar</button><button id="build">🧱 Bloco</button><button id="castleBuild">🏰 Meu castelo</button><button id="castleUpgrade">🛡 Aprimorar</button><button id="gate">🚪 Abrir portão</button><button id="attack">⚔ Atacar</button><button id="plant">🌱 Plantar</button><button id="animal">🐾 Criar animal</button><button id="fence">🪵 Cercado</button><button id="products">🥚🥛 Recolher</button><button id="well">🪣 Poço</button><button id="shop">🛡 Loja</button><button id="mount">🐎 Montar</button><button id="mapToggle">🗺️ Mapa</button><button id="questsToggle">📜 Missões</button><button id="chatToggle">💬 Chat</button></div><div id="joystick" aria-label="Controle de movimento"><div id="stick"></div></div><div id="assetCredits" style="position:fixed;right:8px;bottom:4px;color:#fff9;font-size:9px;pointer-events:none;text-shadow:0 1px 3px #000">“Medieval guard captain” by VibeAssets, CC0 (https://vibeassets.io/a/9h7odik5fl)</div><div id="cameraControls" aria-label="Controles da câmera"><button id="zoomIn" aria-label="Aproximar" title="Aproximar">＋</button><button id="zoomOut" aria-label="Afastar" title="Afastar">−</button><button id="viewUp" class="small" aria-label="Ver mais de cima" title="Ver mais de cima">⬆</button><button id="viewDown" class="small" aria-label="Ver mais no horizonte" title="Ver mais no horizonte">⬇</button></div></div><div id="questsPanel" class="panel hidden" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,440px);max-height:78vh;overflow:auto;pointer-events:auto;z-index:8;border-color:#e2c681"><div style="display:flex;justify-content:space-between;align-items:center"><b>📜 Diário de missões</b><button id="questsClose" style="padding:5px 10px">✕</button></div><div id="questLevel" style="margin:10px 0;color:#f0cc78;font-weight:800">Nível 1 · 0 XP</div><div id="questList" style="display:grid;gap:8px"></div></div><div id="chatbox" class="panel hidden" style="position:fixed;right:12px;bottom:82px;width:min(92vw,320px);pointer-events:auto;z-index:3"><b>Chat do reino</b><div id="chatlog" style="height:150px;overflow:auto;margin:8px 0;font-size:13px"></div><form id="chatform"><input id="chatinput" maxlength="500" placeholder="Mensagem..." required><button>Enviar</button></form></div>
+<div id="mapPanel" class="panel hidden" style="position:fixed;inset:4vh 3vw;width:94vw;height:92vh;max-width:900px;margin:auto;z-index:10;pointer-events:auto;background:#d9c89c;color:#302819;border:3px solid #80633c;border-radius:16px;padding:12px;display:none;flex-direction:column;box-shadow:0 12px 50px #000b"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><div><b style="font-size:19px">🗺️ Mapa do Reino</b><div style="font-size:12px">Toque no mapa para colocar uma marcação</div></div><button id="mapClose">✕ Fechar</button></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin:9px 0"><button id="mapAdd" style="background:#526b3d">📍 Marcar local</button><button id="mapDelete" style="background:#754b37">🗑 Apagar última</button><span id="mapCount" style="align-self:center;font-size:12px">0 marcações</span></div><canvas id="kingdomMap" width="800" height="800" style="width:100%;flex:1;min-height:0;object-fit:contain;border:2px solid #94764b;border-radius:10px;background:#b9c58b;touch-action:manipulation"></canvas><div style="font-size:11px;margin-top:6px">N ↑ · Clique em “Marcar local” e depois escolha um ponto no mapa. As marcações ficam salvas na sua conta.</div></div><div id="login"><form id="auth"><h2>Entre no seu reino</h2><p>Use seu e-mail para salvar seu progresso.</p><input id="email" type="email" placeholder="E-mail" required><input id="password" type="password" placeholder="Senha (mín. 6 caracteres)" minlength="6" required><button style="width:100%">Entrar / Criar conta</button><p id="authmsg"></p></form></div>
 <script>
 window.addEventListener('error',e=>{
  const m=document.querySelector('#authmsg');
@@ -33,8 +33,8 @@ function collidesAt(x,z,r=.52){for(const o of worldObstacles){if(o.type==='circl
 function moveWithCollisions(dx,dz){const r=.52,nx=player.position.x+dx,nz=player.position.z+dz;if(!collidesAt(nx,nz,r)){player.position.x=nx;player.position.z=nz;return}if(!collidesAt(nx,player.position.z,r))player.position.x=nx;if(!collidesAt(player.position.x,nz,r))player.position.z=nz}
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x9fc8df);
-scene.fog=new THREE.Fog(0x9fc8df,75,175);
-const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,260);
+scene.fog=new THREE.Fog(0x9fc8df,145,340);
+const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,520);
 const renderer=new THREE.WebGLRenderer({antialias:innerWidth>700,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth>700?1.35:1.05));
 renderer.setSize(innerWidth,innerHeight);
@@ -56,20 +56,20 @@ function makeGroundTexture(){
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=512;
  const ctx=canvas.getContext('2d');ctx.fillStyle='#638b45';ctx.fillRect(0,0,512,512);
  for(let i=0;i<15000;i++){const x=Math.random()*512,y=Math.random()*512,r=Math.random()*2.2+.4;ctx.fillStyle=Math.random()>.5?'rgba(35,75,34,.20)':'rgba(190,177,105,.15)';ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}
- const tex=new THREE.CanvasTexture(canvas);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(9,9);tex.colorSpace=THREE.SRGBColorSpace;return tex;
+ const tex=new THREE.CanvasTexture(canvas);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(17,17);tex.colorSpace=THREE.SRGBColorSpace;return tex;
 }
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(220,220),new THREE.MeshStandardMaterial({map:makeGroundTexture(),color:0xffffff,roughness:1}));
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(420,420),new THREE.MeshStandardMaterial({map:makeGroundTexture(),color:0xffffff,roughness:1}));
 
 ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
 // Céu em degradê e horizonte com colinas distantes
-const sky=new THREE.Mesh(new THREE.SphereGeometry(210,32,20),new THREE.ShaderMaterial({
+const sky=new THREE.Mesh(new THREE.SphereGeometry(480,32,20),new THREE.ShaderMaterial({
  side:THREE.BackSide,depthWrite:false,
  vertexShader:`varying float h;void main(){h=normalize(position).y;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
  fragmentShader:`varying float h;void main(){vec3 horizon=vec3(0.88,0.72,0.52);vec3 zenith=vec3(0.12,0.29,0.43);float k=smoothstep(-0.08,0.78,h);gl_FragColor=vec4(mix(horizon,zenith,k),1.0);}`
 }));scene.add(sky);
 const hillMat=new THREE.MeshStandardMaterial({color:0x526f4b,roughness:1});
 for(let i=0;i<13;i++){
- const a=i/13*Math.PI*2,r=88+(i%3)*9;
+ const a=i/13*Math.PI*2,r=185+(i%3)*18;
  const hill=new THREE.Mesh(new THREE.SphereGeometry(1,18,12),hillMat);
  hill.position.set(Math.cos(a)*r,-4,Math.sin(a)*r);
  hill.scale.set(20+(i%4)*5,9+(i%3)*3,16+(i%5)*3);
@@ -195,9 +195,9 @@ function tree(x,z,id=null){
  worldTreePromise.then(gltf=>{if(!group.parent)return;const model=gltf.scene.clone(),bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),fit=8.1/Math.max(size.y,.01);model.scale.setScalar(fit);model.position.set(0,-bounds.min.y*fit,0);model.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m.map){m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=4;}m.needsUpdate=true;});}});group.clear();group.add(model);}).catch(e=>console.warn('Modelo de árvore não carregou; mantendo árvore reserva:',e));}
  return group;
 }
-for(let i=0;i<68;i++){const x=(Math.random()-.5)*125,z=(Math.random()-.5)*125;if(Math.abs(x)>13||Math.abs(z)>15)tree(x,z)}
+for(let i=0;i<210;i++){const x=(Math.random()-.5)*360,z=(Math.random()-.5)*360;if(Math.abs(x)>16||Math.abs(z)>18)tree(x,z)}
 // Pedras, arbustos e caminho até ao castelo
-for(let i=0;i<32;i++){const x=(Math.random()-.5)*110,z=(Math.random()-.5)*110;if(Math.abs(x)>12||Math.abs(z)>14){const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.35+Math.random()*.5,0),new THREE.MeshStandardMaterial({color:0x777b70,roughness:1}));rock.position.set(x,.2,z);rock.scale.y=.65;rock.castShadow=true;scene.add(rock);harvestRocks.push(rock)}}
+for(let i=0;i<105;i++){const x=(Math.random()-.5)*350,z=(Math.random()-.5)*350;if(Math.abs(x)>12||Math.abs(z)>14){const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.35+Math.random()*.5,0),new THREE.MeshStandardMaterial({color:0x777b70,roughness:1}));rock.position.set(x,.2,z);rock.scale.y=.65;rock.castShadow=true;scene.add(rock);harvestRocks.push(rock)}}
 const pathMat=new THREE.MeshStandardMaterial({color:0x9b805b,roughness:1});
 const path=new THREE.Mesh(new THREE.PlaneGeometry(5,48),pathMat);path.rotation.x=-Math.PI/2;path.position.set(0,.025,18);scene.add(path);
 for(let i=0;i<18;i++){const peb=new THREE.Mesh(new THREE.DodecahedronGeometry(.18+Math.random()*.18,0),new THREE.MeshStandardMaterial({color:0xb5a17b,roughness:1}));peb.position.set((Math.random()-.5)*3,.06,40-i*2.2);peb.scale.set(1,.25,1.4);scene.add(peb)}
@@ -1064,13 +1064,48 @@ document.querySelector('#attack').onclick=async()=>{
  document.querySelector('#hint').textContent=error?'Falha ao atacar: '+error.message:'Golpe enviado contra '+(target.r.name||'outro jogador')+'!';
 };
 
-let live,lastPresenceUpdate=0;
+
+let kingdomMarkers=[],mapArmed=false;
+const mapCanvas=document.querySelector('#kingdomMap'),mapCtx=mapCanvas.getContext('2d'),MAP_EXTENT=210;
+function drawKingdomMap(){
+ const c=mapCtx,w=mapCanvas.width,h=mapCanvas.height;c.clearRect(0,0,w,h);
+ c.fillStyle='#b9c58b';c.fillRect(0,0,w,h);
+ for(let i=0;i<34;i++){const x=(i*173+71)%w,y=(i*293+39)%h;c.fillStyle=i%3?'#a8ba7d':'#9eb477';c.beginPath();c.arc(x,y,18+(i%5)*7,0,Math.PI*2);c.fill()}
+ c.strokeStyle='#8d9e6a';c.lineWidth=2;c.globalAlpha=.45;
+ for(let x=0;x<=w;x+=100){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke();}for(let y=0;y<=h;y+=100){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();}c.globalAlpha=1;
+ const px=x=>((x+MAP_EXTENT)/(MAP_EXTENT*2))*w,py=z=>((z+MAP_EXTENT)/(MAP_EXTENT*2))*h;
+ c.strokeStyle='#b99a63';c.lineWidth=12;c.lineCap='round';c.beginPath();c.moveTo(px(0),py(210));c.quadraticCurveTo(px(4),py(70),px(0),py(13));c.stroke();
+ c.fillStyle='#4a6d82';c.beginPath();c.ellipse(px(-25),py(8),w*8/(MAP_EXTENT*2),h*5/(MAP_EXTENT*2),0,0,Math.PI*2);c.fill();
+ c.fillStyle='#765532';c.fillRect(px(-5),py(-5),w*10/(MAP_EXTENT*2),h*10/(MAP_EXTENT*2));c.fillStyle='#f8e8bd';c.font='bold 20px system-ui';c.textAlign='center';c.fillText('🏰',px(0),py(0)+7);
+ for(const m of kingdomMarkers){const x=px(m.x),y=py(m.z);c.fillStyle='#8a2020';c.beginPath();c.arc(x,y,12,0,Math.PI*2);c.fill();c.strokeStyle='#fff1cc';c.lineWidth=3;c.stroke();c.fillStyle='#302819';c.font='bold 17px system-ui';c.textAlign='left';c.fillText(m.label.slice(0,22),x+15,y+5);}
+ if(player){const x=px(player.position.x),y=py(player.position.z);c.fillStyle='#175cbd';c.beginPath();c.arc(x,y,12,0,Math.PI*2);c.fill();c.strokeStyle='white';c.lineWidth=3;c.stroke();c.fillStyle='#17324a';c.font='bold 16px system-ui';c.textAlign='left';c.fillText('Você',x+15,y+5);}
+ c.fillStyle='#493b28';c.font='bold 24px system-ui';c.textAlign='right';c.fillText('N ↑',w-22,34);
+ document.querySelector('#mapCount').textContent=kingdomMarkers.length+' marcação(ões)';
+}
+async function saveKingdomMarkers(){
+ const {data,error}=await db.auth.updateUser({data:{...(user?.user_metadata||{}),kingdom_map_markers:kingdomMarkers}});
+ if(error){document.querySelector('#hint').textContent='Não foi possível salvar o mapa: '+error.message;return false}
+ if(data?.user)user=data.user;return true;
+}
+function openKingdomMap(){if(!user){document.querySelector('#hint').textContent='Entre na sua conta para usar o mapa.';return}document.querySelector('#mapPanel').classList.remove('hidden');document.querySelector('#mapPanel').style.display='flex';drawKingdomMap();}
+document.querySelector('#mapToggle').onclick=openKingdomMap;
+document.querySelector('#mapClose').onclick=()=>{document.querySelector('#mapPanel').classList.add('hidden');document.querySelector('#mapPanel').style.display='none';mapArmed=false;};
+document.querySelector('#mapAdd').onclick=()=>{mapArmed=true;document.querySelector('#hint').textContent='Agora toque no ponto do mapa que deseja marcar.';};
+mapCanvas.addEventListener('click',async ev=>{
+ if(!mapArmed)return;const rect=mapCanvas.getBoundingClientRect(),x=(ev.clientX-rect.left)/rect.width*mapCanvas.width,z=(ev.clientY-rect.top)/rect.height*mapCanvas.height;
+ const wx=(x/mapCanvas.width*2-1)*MAP_EXTENT,wz=(z/mapCanvas.height*2-1)*MAP_EXTENT,label=prompt('Nome deste local:','Meu ponto');
+ if(!label?.trim()){mapArmed=false;return}
+ kingdomMarkers.push({id:Date.now().toString(36),x:Math.round(wx),z:Math.round(wz),label:label.trim().slice(0,32)});
+ mapArmed=false;if(await saveKingdomMarkers()){drawKingdomMap();document.querySelector('#hint').textContent='📍 Marcação salva no mapa!';}
+});
+document.querySelector('#mapDelete').onclick=async()=>{if(!kingdomMarkers.length){document.querySelector('#hint').textContent='Não há marcações para apagar.';return}kingdomMarkers.pop();if(await saveKingdomMarkers()){drawKingdomMap();document.querySelector('#hint').textContent='Última marcação apagada.';}};
+\nlet live,lastPresenceUpdate=0;
 async function enterGame(session,emailFallback='') {
   spawnEnemies();
   if(!session?.user) throw new Error('Sessão não encontrada. Entre novamente com seu e-mail e senha.');
   // signInWithPassword já devolveu uma sessão autenticada pelo Supabase.
   // Evita uma segunda chamada de rede que podia deixar a tela presa em "Conectando".
-  user=session.user;playerName=getPlayerName();updateNameTag(localNameTag,playerName);
+  user=session.user;kingdomMarkers=Array.isArray(user.user_metadata?.kingdom_map_markers)?user.user_metadata.kingdom_map_markers:[];playerName=getPlayerName();updateNameTag(localNameTag,playerName);
   const login=document.querySelector('#login');
   const players=document.querySelector('#players');
   const hint=document.querySelector('#hint');
@@ -1250,7 +1285,7 @@ shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;sun.target.position.set(
  cameraDistanceCurrent+=(cameraDistance-cameraDistanceCurrent)*Math.min(1,dt*10);
  const horiz=Math.cos(cameraPitch)*cameraDistanceCurrent;
  const target=new THREE.Vector3(player.position.x+Math.sin(yaw)*horiz,player.position.y+Math.sin(cameraPitch)*cameraDistanceCurrent+1.2,player.position.z+Math.cos(yaw)*horiz);
- camera.position.lerp(target,.14);camera.lookAt(player.position.x,1.1,player.position.z);
+ camera.position.lerp(target,.14);camera.lookAt(player.position.x,1.1,player.position.z);if(!document.querySelector('#mapPanel').classList.contains('hidden'))drawKingdomMap();
  clouds.forEach((c,i)=>{c.position.x+=dt*(.45+(i%3)*.12);if(c.position.x>165)c.position.x=-165;});renderer.render(scene,camera);if(user&&t-lastSave>4000){lastSave=t;saveResources()}}
 requestAnimationFrame(animate);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
