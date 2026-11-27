@@ -3,7 +3,7 @@
 *{box-sizing:border-box}body{margin:0;background:#18251d;color:#f7f1df;font:15px system-ui;overflow:hidden;overscroll-behavior:none}#game{position:fixed;inset:0}#game canvas{display:block;touch-action:none}#hud{position:fixed;inset:0;pointer-events:none}.top{display:flex;justify-content:space-between;padding:12px;gap:8px}.panel{background:#142019d9;border:1px solid #b99b59;border-radius:12px;padding:9px 12px;box-shadow:0 3px 14px #0005}.brand{font-weight:800;color:#f0cc78} .bottom{position:absolute;bottom:14px;left:150px;right:8px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;align-content:flex-end;max-height:42vh;overflow-y:auto;padding:8px;pointer-events:auto}.bottom button{padding:10px 11px;font-size:13px}button{border:1px solid #c5a96b;background:#293b2d;color:#fff2d0;border-radius:10px;padding:11px 14px;font-weight:700;touch-action:manipulation}button:active{transform:scale(.96)}#joystick{position:fixed;left:20px;bottom:24px;width:124px;height:124px;border:2px solid #e2c68188;border-radius:50%;background:#17251dcc;box-shadow:0 4px 18px #0008;pointer-events:auto;touch-action:none;z-index:4}#joystick:before{content:'360°';position:absolute;inset:0;display:grid;place-items:center;color:#f5e5bd66;font-size:13px;font-weight:800;pointer-events:none}#stick{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px;border-radius:50%;background:linear-gradient(145deg,#d8bd79,#78603a);border:2px solid #f4dda5;box-shadow:0 3px 10px #0009;pointer-events:none}#lookTip{position:fixed;right:12px;bottom:158px;color:#fff;background:#14201999;border-radius:8px;padding:6px 9px;font-size:11px;pointer-events:none}
 #cameraControls{position:fixed;right:12px;top:92px;display:flex;flex-direction:column;gap:7px;pointer-events:auto;z-index:4}#cameraControls button{width:42px;height:42px;padding:0;font-size:20px;background:#142019dc;border-color:#d5bb7b;box-shadow:0 2px 9px #0007}#cameraControls .small{font-size:11px}
 #avatarSelect{position:fixed;left:50%;top:68px;transform:translateX(-50%);display:flex;gap:5px;padding:6px;background:#142019dc;border:1px solid #b99b59;border-radius:12px;pointer-events:auto;z-index:4;white-space:nowrap}#avatarSelect button{padding:7px 9px;font-size:11px}#avatarSelect button.active{background:#94743d;border-color:#ffe2a0;box-shadow:0 0 0 1px #ffe2a0}#mount{background:#62482a}@media(max-width:520px){#avatarSelect{top:64px;gap:3px;padding:4px}#avatarSelect button{padding:7px 6px;font-size:10px}}#login{position:fixed;inset:0;background:#101a15eF;display:grid;place-items:center;z-index:5}#login.hidden{display:none}#login form{width:min(90vw,360px);background:#26382b;border:1px solid #b99b59;border-radius:16px;padding:22px}input{width:100%;padding:12px;margin:7px 0 12px;border-radius:8px;border:1px solid #b99b59;background:#101a15;color:white}#chatbox input{margin:4px 0}#hint{position:absolute;bottom:160px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#142019cc;padding:8px 12px;border-radius:9px;max-width:90vw;overflow:hidden;text-overflow:ellipsis}.hidden{display:none}@media(max-width:520px){.top{padding:7px;gap:5px}.panel{padding:7px 9px;font-size:12px}.bottom{left:145px;right:4px;bottom:8px;gap:5px;max-height:44vh}.bottom button{padding:9px 8px;font-size:12px}#joystick{left:12px;bottom:18px;width:116px;height:116px}#stick{width:50px;height:50px;margin:-25px}#hint{bottom:145px;font-size:11px}#lookTip{bottom:135px}}@media(min-width:700px){.bottom{left:auto;right:16px;bottom:20px;width:300px;justify-content:flex-end}#joystick{left:28px;bottom:28px}}
-</style></head><body><div id="game"></div><div id="hud"><div class="top"><div class="panel"><div class="brand">⚔ MEU REINO MEDIEVAL</div><div id="stats">Madeira: 0 · Pedra: 0</div></div><div class="panel" id="players">Entrando no reino…</div></div><div id="hint">WASD ou controles para caminhar · Explore o reino!</div><div id="avatarSelect" aria-label="Escolha seu personagem"><button data-avatar="knight" class="active">⚔ Cavaleiro</button><button data-avatar="princess">👸 Princesa</button><button data-avatar="ogre">👹 Ogro</button></div><div class="bottom"><button id="collect">🌲 Coletar</button><button id="build">🧱 Bloco</button><button id="castleBuild">🏰 Meu castelo</button><button id="gate">🚪 Abrir portão</button><button id="attack">⚔ Atacar</button><button id="plant">🌱 Plantar</button><button id="animal">🐾 Criar animal</button><button id="fence">🪵 Cercado</button><button id="products">🥚🥛 Recolher</button><button id="well">🪣 Poço</button><button id="shop">🛡 Loja</button><button id="mount">🐎 Montar</button><button id="chatToggle">💬 Chat</button></div><div id="joystick" aria-label="Controle de movimento"><div id="stick"></div></div><div id="lookTip">Arraste a tela para girar a câmera</div><div id="assetCredits" style="position:fixed;right:8px;bottom:4px;color:#fff9;font-size:9px;pointer-events:none;text-shadow:0 1px 3px #000">“Medieval guard captain” by VibeAssets, CC0 (https://vibeassets.io/a/9h7odik5fl)</div><div id="cameraControls" aria-label="Controles da câmera"><button id="zoomIn" aria-label="Aproximar" title="Aproximar">＋</button><button id="zoomOut" aria-label="Afastar" title="Afastar">−</button><button id="viewUp" class="small" aria-label="Ver mais de cima" title="Ver mais de cima">⬆</button><button id="viewDown" class="small" aria-label="Ver mais no horizonte" title="Ver mais no horizonte">⬇</button></div></div><div id="chatbox" class="panel hidden" style="position:fixed;right:12px;bottom:82px;width:min(92vw,320px);pointer-events:auto;z-index:3"><b>Chat do reino</b><div id="chatlog" style="height:150px;overflow:auto;margin:8px 0;font-size:13px"></div><form id="chatform"><input id="chatinput" maxlength="500" placeholder="Mensagem..." required><button>Enviar</button></form></div>
+</style></head><body><div id="game"></div><div id="hud"><div class="top"><div class="panel"><div class="brand">⚔ MEU REINO MEDIEVAL</div><div id="stats">Madeira: 0 · Pedra: 0</div></div><div class="panel" id="players">Entrando no reino…</div></div><div id="hint">WASD ou controles para caminhar · Explore o reino!</div><div id="avatarSelect" aria-label="Escolha seu personagem"><button data-avatar="knight" class="active">⚔ Cavaleiro</button><button data-avatar="princess">👸 Princesa</button><button data-avatar="ogre">👹 Ogro</button></div><div class="bottom"><button id="collect">🌲 Coletar</button><button id="build">🧱 Bloco</button><button id="castleBuild">🏰 Meu castelo</button><button id="gate">🚪 Abrir portão</button><button id="attack">⚔ Atacar</button><button id="plant">🌱 Plantar</button><button id="animal">🐾 Criar animal</button><button id="fence">🪵 Cercado</button><button id="products">🥚🥛 Recolher</button><button id="well">🪣 Poço</button><button id="shop">🛡 Loja</button><button id="mount">🐎 Montar</button><button id="chatToggle">💬 Chat</button></div><div id="joystick" aria-label="Controle de movimento"><div id="stick"></div></div><div id="assetCredits" style="position:fixed;right:8px;bottom:4px;color:#fff9;font-size:9px;pointer-events:none;text-shadow:0 1px 3px #000">“Medieval guard captain” by VibeAssets, CC0 (https://vibeassets.io/a/9h7odik5fl)</div><div id="cameraControls" aria-label="Controles da câmera"><button id="zoomIn" aria-label="Aproximar" title="Aproximar">＋</button><button id="zoomOut" aria-label="Afastar" title="Afastar">−</button><button id="viewUp" class="small" aria-label="Ver mais de cima" title="Ver mais de cima">⬆</button><button id="viewDown" class="small" aria-label="Ver mais no horizonte" title="Ver mais no horizonte">⬇</button></div></div><div id="chatbox" class="panel hidden" style="position:fixed;right:12px;bottom:82px;width:min(92vw,320px);pointer-events:auto;z-index:3"><b>Chat do reino</b><div id="chatlog" style="height:150px;overflow:auto;margin:8px 0;font-size:13px"></div><form id="chatform"><input id="chatinput" maxlength="500" placeholder="Mensagem..." required><button>Enviar</button></form></div>
 <div id="login"><form id="auth"><h2>Entre no seu reino</h2><p>Use seu e-mail para salvar seu progresso.</p><input id="email" type="email" placeholder="E-mail" required><input id="password" type="password" placeholder="Senha (mín. 6 caracteres)" minlength="6" required><button style="width:100%">Entrar / Criar conta</button><p id="authmsg"></p></form></div>
 <script>
 window.addEventListener('error',e=>{
@@ -36,9 +36,9 @@ scene.background=new THREE.Color(0x9fc8df);
 scene.fog=new THREE.Fog(0x9fc8df,75,175);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,260);
 const renderer=new THREE.WebGLRenderer({antialias:innerWidth>700,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));
+renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth>700?1.35:1.05));
 renderer.setSize(innerWidth,innerHeight);
-renderer.shadowMap.enabled=true;
+renderer.shadowMap.enabled=true;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -48,7 +48,7 @@ document.querySelector('#game').appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xdceeff,0x66734a,1.65));
 const sun=new THREE.DirectionalLight(0xffe2ad,2.4);
 sun.position.set(-35,55,28);sun.castShadow=true;
-sun.shadow.mapSize.set(innerWidth>700?2048:1536,innerWidth>700?2048:1536);
+sun.shadow.mapSize.set(innerWidth>700?1536:768,innerWidth>700?1536:768);
 sun.shadow.camera.left=-40;sun.shadow.camera.right=40;sun.shadow.camera.top=40;sun.shadow.camera.bottom=-40;
 sun.shadow.bias=-.00025;scene.add(sun);scene.add(sun.target);
 const fill=new THREE.DirectionalLight(0x9dbbdf,.55);fill.position.set(30,18,-35);scene.add(fill);
@@ -99,10 +99,10 @@ shore.rotation.x=-Math.PI/2;shore.position.set(-25,.035,8);shore.scale.set(1,0.6
 const grassGeo=new THREE.ConeGeometry(.055,.42,3);
 grassGeo.translate(0,.2,0);
 const grassMat=new THREE.MeshStandardMaterial({color:0x6d984c,roughness:1});
-const grass=new THREE.InstancedMesh(grassGeo,grassMat,1250);
+const grass=new THREE.InstancedMesh(grassGeo,grassMat,650);
 const dummy=new THREE.Object3D(),grassColors=[new THREE.Color(0x527d3d),new THREE.Color(0x789c50),new THREE.Color(0x9aa75b)];
 let grassCount=0;
-for(let i=0;i<1250;i++){
+for(let i=0;i<650;i++){
  const x=(Math.random()-.5)*145,z=(Math.random()-.5)*145;
  if((Math.abs(x)<11&&Math.abs(z)<15)||(Math.abs(x)<3.5&&z> -8&&z<43)||((x+25)**2/100+(z-8)**2/45<1))continue;
  dummy.position.set(x,.05,z);dummy.rotation.set(0,Math.random()*Math.PI,Math.random()*.18);const s=.65+Math.random()*.8;dummy.scale.set(s,s,s);dummy.updateMatrix();
@@ -171,19 +171,19 @@ document.querySelector('#gate').onclick=toggleCastleGate;
 addRectObstacle(0,-8,8.5,.68);addRectObstacle(-4.85,8,3.15,.68);addRectObstacle(4.85,8,3.15,.68);addRectObstacle(-8,0,.68,8);addRectObstacle(8,0,.68,8);
 addCircleObstacle(-8,-8,1.85);addCircleObstacle(8,-8,1.85);addCircleObstacle(-8,8,1.85);addCircleObstacle(8,8,1.85);
 addRectObstacle(0,-2,3.05,2.55);
-const worldTreeLoader=new GLTFLoader(),worldTreeUrl='https://files.innerscene.com/library/oak-street-tree-detailed-leaves-a273fef9/4a26d0fea7474835bf61/oak-detailed.glb';let worldTreePromise=null;
+const worldTreeLoader=new GLTFLoader(),worldTreeUrl='/api/farm-model?type=oak';let worldTreePromise=null;
 function tree(x,z,id=null){
  const group=new THREE.Group();group.position.set(x,0,z);group.rotation.y=Math.random()*Math.PI;const scale=.82+Math.random()*.34;group.scale.setScalar(scale);scene.add(group);
  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.2,.34,1.8,7),new THREE.MeshStandardMaterial({color:0x68452b,roughness:1}));trunk.position.y=.9;group.add(trunk);
  const greens=[0x285c36,0x356f3d,0x477c43];for(let j=0;j<3;j++){const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(1.15-j*.08,1),new THREE.MeshStandardMaterial({color:greens[j],roughness:1}));crown.position.set((j-1)*.32,2.05+j*.62,(j%2)*.22);crown.scale.set(1.15,.95,1.05);group.add(crown)}
  addCircleObstacle(x,z,1.05*scale);if(id)meshes.trees.set(id,group);
- if(!worldTreePromise)worldTreePromise=worldTreeLoader.loadAsync(worldTreeUrl);
- worldTreePromise.then(gltf=>{if(!group.parent)return;const model=gltf.scene.clone(),bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),fit=8.1/Math.max(size.y,.01);model.scale.setScalar(fit);model.position.set(0,-bounds.min.y*fit,0);model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m.map){m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=8;}m.needsUpdate=true;});}});group.clear();group.add(model);}).catch(e=>console.warn('Modelo de árvore não carregou; mantendo árvore reserva:',e));
+ if(Math.hypot(x,z-13)<36){if(!worldTreePromise)worldTreePromise=worldTreeLoader.loadAsync(worldTreeUrl);
+ worldTreePromise.then(gltf=>{if(!group.parent)return;const model=gltf.scene.clone(),bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),fit=8.1/Math.max(size.y,.01);model.scale.setScalar(fit);model.position.set(0,-bounds.min.y*fit,0);model.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m.map){m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=4;}m.needsUpdate=true;});}});group.clear();group.add(model);}).catch(e=>console.warn('Modelo de árvore não carregou; mantendo árvore reserva:',e));}
  return group;
 }
-for(let i=0;i<95;i++){const x=(Math.random()-.5)*125,z=(Math.random()-.5)*125;if(Math.abs(x)>13||Math.abs(z)>15)tree(x,z)}
+for(let i=0;i<68;i++){const x=(Math.random()-.5)*125,z=(Math.random()-.5)*125;if(Math.abs(x)>13||Math.abs(z)>15)tree(x,z)}
 // Pedras, arbustos e caminho até ao castelo
-for(let i=0;i<55;i++){const x=(Math.random()-.5)*110,z=(Math.random()-.5)*110;if(Math.abs(x)>12||Math.abs(z)>14){const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.35+Math.random()*.5,0),new THREE.MeshStandardMaterial({color:0x777b70,roughness:1}));rock.position.set(x,.2,z);rock.scale.y=.65;rock.castShadow=true;scene.add(rock)}}
+for(let i=0;i<32;i++){const x=(Math.random()-.5)*110,z=(Math.random()-.5)*110;if(Math.abs(x)>12||Math.abs(z)>14){const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.35+Math.random()*.5,0),new THREE.MeshStandardMaterial({color:0x777b70,roughness:1}));rock.position.set(x,.2,z);rock.scale.y=.65;rock.castShadow=true;scene.add(rock)}}
 const pathMat=new THREE.MeshStandardMaterial({color:0x9b805b,roughness:1});
 const path=new THREE.Mesh(new THREE.PlaneGeometry(5,48),pathMat);path.rotation.x=-Math.PI/2;path.position.set(0,.025,18);scene.add(path);
 for(let i=0;i<18;i++){const peb=new THREE.Mesh(new THREE.DodecahedronGeometry(.18+Math.random()*.18,0),new THREE.MeshStandardMaterial({color:0xb5a17b,roughness:1}));peb.position.set((Math.random()-.5)*3,.06,40-i*2.2);peb.scale.set(1,.25,1.4);scene.add(peb)}
@@ -704,7 +704,7 @@ function renderAnimalFallback(a){
  for(let i=0;i<n;i++){const x=t==='chicken'?(i?-.13:.13):(i%2?-.3:.3),z=t==='chicken'?0:(i<2?.38:-.38),leg=new THREE.Group();leg.position.set(x,.48,z);g.add(leg);const sh=new THREE.Mesh(new THREE.CylinderGeometry(.055,.07,.42,9),t==='chicken'?gold:coat);sh.position.y=-.2;leg.add(sh);ball(leg,0,-.4,.04,.09,.04,.12,dark);u.legs.push(leg)}
  g.position.set(a.x,0,a.z);g.userData=u;scene.add(g);meshes.animals.set(a.id,g);
 }
-const farmAnimalUrls={cow:'https://cdn.mint.gg/owned-artifacts/158d1a346a5b198c784514fe747f51f8ff7113e7789f402f532a9e32c138ea1c',chicken:'https://cdn.mint.gg/owned-artifacts/4b70685d7395397a9a9a4c813f28b95c7a01769929e6bf21a43057bb02ed8004',pig:'https://cdn.mint.gg/owned-artifacts/0151b3208e9413674e962a1360eca2446083e398bd8ceb4db22abc156a390d07',sheep:'https://cdn.mint.gg/owned-artifacts/6e6b7ec3d01e80df27c21538f0cffaa754f6f608d9dfb44135b8b6c2f0812dc3'};
+const farmAnimalUrls={cow:'/api/farm-model?type=cow',chicken:'/api/farm-model?type=chicken',pig:'/api/farm-model?type=pig',sheep:'/api/farm-model?type=sheep'};
 const farmAnimalHeights={cow:1.25,pig:.82,chicken:.62,sheep:.92},farmAnimalLoader=new GLTFLoader(),farmAnimalPromises=new Map(),farmAnimalPending=new Set();
 function renderAnimal(a){
  if(meshes.animals.has(a.id)||farmAnimalPending.has(a.id))return;
@@ -713,7 +713,7 @@ function renderAnimal(a){
  farmAnimalPromises.get(type).then(gltf=>{
   if(meshes.animals.has(a.id))return;const model=gltf.scene.clone(),bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),scale=(farmAnimalHeights[type]||.9)/Math.max(size.y,.01);
   model.scale.setScalar(scale);model.position.set(-((bounds.min.x+bounds.max.x)/2)*scale,-bounds.min.y*scale,-((bounds.min.z+bounds.max.z)/2)*scale);
-  model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m.map){m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=8;}m.needsUpdate=true;});}});
+  model.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m.map){m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=4;}m.needsUpdate=true;});}});
   const group=new THREE.Group();group.position.set(a.x,0,a.z);group.rotation.y=Math.random()*Math.PI*2;group.add(model);group.userData={staticAsset:true};scene.add(group);meshes.animals.set(a.id,group);
  }).catch(e=>{console.warn('Modelo GLB não carregou; usando reserva:',type,e);if(!meshes.animals.has(a.id)){const fallback=renderAnimalFallback(a);meshes.animals.set(a.id,fallback);}}).finally(()=>farmAnimalPending.delete(a.id));
 }
@@ -969,7 +969,7 @@ db.auth.getSession().then(async ({data,error})=>{
   }
 });
 
-let last=0,walkPhase=0;function animate(t){requestAnimationFrame(animate);const dt=Math.min((t-last)/1000,.05);last=t;
+let last=0,walkPhase=0,shadowRefresh=0;function animate(t){requestAnimationFrame(animate);const dt=Math.min((t-last)/1000,.05);last=t;
  let sx=moveInput.x,sy=-moveInput.y;
  if(keys.w||keys.arrowup)sy=1;if(keys.s||keys.arrowdown)sy=-1;if(keys.a||keys.arrowleft)sx=-1;if(keys.d||keys.arrowright)sx=1;
  const len=Math.hypot(sx,sy);const moving=len>.08;if(moving){walkPhase+=dt*(mountedHorse?10:8);const side=sx/Math.max(1,len),forward=sy/Math.max(1,len);
@@ -977,7 +977,7 @@ let last=0,walkPhase=0;function animate(t){requestAnimationFrame(animate);const 
  moveWithCollisions(dx*(mountedHorse?10:6)*dt,dz*(mountedHorse?10:6)*dt);const ta=Math.atan2(dx,dz),d=Math.atan2(Math.sin(ta-player.rotation.y),Math.cos(ta-player.rotation.y));player.rotation.y+=d*Math.min(1,dt*12);if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;}
  if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);player.position.y=1.22;}else player.position.y=0;
  if(castleGate){gateAngle+=(gateTarget-gateAngle)*Math.min(1,dt*2.8);castleGate.rotation.y=gateAngle;}
-sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.position.z/2)*2);sun.position.set(sun.target.position.x-35,55,sun.target.position.z+28);
+shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.position.z/2)*2);sun.position.set(sun.target.position.x-35,55,sun.target.position.z+28);renderer.shadowMap.needsUpdate=true;}
  const gait=moving?Math.sin(walkPhase):0;
  if(avatarInstance){
   avatarInstance.mixer.update(dt);setProfessionalGait(avatarInstance,moving&&!mountedHorse,false);
