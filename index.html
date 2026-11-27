@@ -176,7 +176,7 @@ function tree(x,z,id=null){
  const group=new THREE.Group();group.position.set(x,0,z);group.rotation.y=Math.random()*Math.PI;const scale=.82+Math.random()*.34;group.scale.setScalar(scale);scene.add(group);
  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.2,.34,1.8,7),new THREE.MeshStandardMaterial({color:0x68452b,roughness:1}));trunk.position.y=.9;group.add(trunk);
  const greens=[0x285c36,0x356f3d,0x477c43];for(let j=0;j<3;j++){const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(1.15-j*.08,1),new THREE.MeshStandardMaterial({color:greens[j],roughness:1}));crown.position.set((j-1)*.32,2.05+j*.62,(j%2)*.22);crown.scale.set(1.15,.95,1.05);group.add(crown)}
- addCircleObstacle(x,z,1.05*scale);if(id)meshes.trees.set(id,group);
+ addCircleObstacle(x,z,1.05*scale);const harvestId=id||('wild:'+x.toFixed(2)+':'+z.toFixed(2));meshes.trees.set(harvestId,group);group.userData.harvestX=x;group.userData.harvestZ=z;
  if(Math.hypot(x,z-13)<36){if(!worldTreePromise)worldTreePromise=worldTreeLoader.loadAsync(worldTreeUrl);
  worldTreePromise.then(gltf=>{if(!group.parent)return;const model=gltf.scene.clone(),bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),fit=8.1/Math.max(size.y,.01);model.scale.setScalar(fit);model.position.set(0,-bounds.min.y*fit,0);model.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m.map){m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=4;}m.needsUpdate=true;});}});group.clear();group.add(model);}).catch(e=>console.warn('Modelo de árvore não carregou; mantendo árvore reserva:',e));}
  return group;
@@ -542,17 +542,17 @@ function makeHorse(color=0x8a5633){
   part(leg,new THREE.CylinderGeometry(.075,.09,.78,8),coat,0,-.39,0);
   part(leg,new THREE.BoxGeometry(.17,.16,.22),hoof,0,-.78,.035);g.add(leg);legs.push(leg);
  }
- part(g,new THREE.CylinderGeometry(.055,.11,.72,8),coat,0,1.52,-.78).rotation.x=-.55;
+ const tail=part(g,new THREE.CylinderGeometry(.055,.11,.72,8),coat,0,1.52,-.78);tail.rotation.x=-.55;tail.userData.horseTail=true;
  part(g,new THREE.BoxGeometry(.12,.72,.14),mane,0,1.9,-.02);
  // Crina em mechas, focinho, olhos e arreios para dar leitura mais natural.
  for(let i=0;i<5;i++)part(g,new THREE.ConeGeometry(.07,.38,7),mane,(i-2)*.11,2.16,.3);
- part(g,new THREE.SphereGeometry(.16,10,8),coat,0,1.88,1.02);
+ const head=part(g,new THREE.SphereGeometry(.16,10,8),coat,0,1.88,1.02);head.userData.horseHead=true;
  for(const x of [-.13,.13]){part(g,new THREE.SphereGeometry(.035,8,8),hoof,x,1.91,1.12);part(g,new THREE.SphereGeometry(.045,8,8),white,x,2.02,.78)}
  const bridle=mat(0x4a3022),metal=mat(0xc2a15e,.55,.35);
  part(g,new THREE.BoxGeometry(.48,.055,.06),bridle,0,1.83,.91);
  part(g,new THREE.BoxGeometry(.06,.32,.07),bridle,0,1.96,.9);
  part(g,new THREE.SphereGeometry(.07,8,8),metal,0,1.82,.96);
- return {group:g,legs};
+ return {group:g,legs,tail:g.children.find(o=>o.userData?.horseTail)||null,head:g.children.find(o=>o.userData?.horseHead)||null};
 }
 const horses=[];
 for(let i=0;i<5;i++){
@@ -644,7 +644,7 @@ async function saveResources(){
     return {error};
   }
 }
-document.querySelector('#collect').onclick=async()=>{if(!user)return;const nearbyTree=[...meshes.trees.entries()].map(([id,g])=>({id,g,d:Math.hypot(g.position.x-player.position.x,g.position.z-player.position.z)})).filter(v=>v.d<4.8).sort((a,b)=>a.d-b.d)[0];const nearbyRock=harvestRocks.map((g,i)=>({g,i,d:Math.hypot(g.position.x-player.position.x,g.position.z-player.position.z)})).filter(v=>v.d<4.2).sort((a,b)=>a.d-b.d)[0];if(nearbyTree&&(!nearbyRock||nearbyTree.d<=nearbyRock.d)){const {error}=await db.from('world_trees').delete().eq('id',nearbyTree.id);if(error){document.querySelector('#hint').textContent='Não foi possível cortar esta árvore: '+error.message;return}scene.remove(nearbyTree.g);meshes.trees.delete(nearbyTree.id);wood+=3;document.querySelector('#hint').textContent='🪓 Árvore cortada: +3 madeiras.';}else if(nearbyRock){scene.remove(nearbyRock.g);harvestRocks.splice(nearbyRock.i,1);stone+=2;document.querySelector('#hint').textContent='⛏️ Pedra extraída: +2 pedras.';}else{document.querySelector('#hint').textContent='Aproxime-se de uma árvore ou de uma pedra para coletar.';return}updateStats();await saveResources()}
+document.querySelector('#collect').onclick=async()=>{if(!user){document.querySelector('#hint').textContent='Entre na sua conta para coletar recursos.';return}const nearbyTree=[...meshes.trees.entries()].map(([id,g])=>({id,g,d:Math.hypot(g.position.x-player.position.x,g.position.z-player.position.z)})).filter(v=>v.d<6.2).sort((a,b)=>a.d-b.d)[0];const nearbyRock=harvestRocks.map((g,i)=>({g,i,d:Math.hypot(g.position.x-player.position.x,g.position.z-player.position.z)})).filter(v=>v.d<5.5).sort((a,b)=>a.d-b.d)[0];if(nearbyTree&&(!nearbyRock||nearbyTree.d<=nearbyRock.d)){if(!String(nearbyTree.id).startsWith('wild:')){const {error}=await db.from('world_trees').delete().eq('id',nearbyTree.id).eq('owner_id',user.id);if(error){document.querySelector('#hint').textContent='Não foi possível cortar a árvore plantada: '+error.message;return}}scene.remove(nearbyTree.g);meshes.trees.delete(nearbyTree.id);worldObstacles=worldObstacles.filter(o=>!(o.type==='circle'&&Math.hypot(o.x-nearbyTree.g.position.x,o.z-nearbyTree.g.position.z)<1.8));wood+=3;document.querySelector('#hint').textContent='🪓 Árvore cortada! +3 madeiras.';}else if(nearbyRock){scene.remove(nearbyRock.g);harvestRocks.splice(nearbyRock.i,1);stone+=2;document.querySelector('#hint').textContent='⛏️ Pedra extraída! +2 pedras.';}else{document.querySelector('#hint').textContent='Chegue perto de uma árvore ou pedra e toque em Coletar.';return}updateStats();const saved=await saveResources();if(saved?.error)document.querySelector('#hint').textContent+=' Atenção: não foi possível salvar os recursos: '+saved.error.message;}
 
 document.querySelector('#castleBuild').onclick=async()=>{
  if(!user)return;
@@ -681,7 +681,7 @@ function renderAnimalFallback(a){
  if(meshes.animals.has(a.id))return;
  const t=a.animal_type,c={cow:0xe8e2d4,pig:0xe6a0a0,chicken:0xf3e7c9,sheep:0xe9e7df}[t]||0xffffff;
  const coat=mat(c,0,.92),dark=mat(0x49372b),pink=mat(0xe9b4a4),white=mat(0xf3ead6),black=mat(0x211d19),gold=mat(0xd89a36);
- const g=new THREE.Group(),u={legs:[],phase:Math.random()*6,head:null,tail:null};
+ const g=new THREE.Group(),u={legs:[],phase:Math.random()*6,head:null,tail:null,type:t};
  const ball=(p,x,y,z,sx,sy,sz,m)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(1,16,12),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;o.receiveShadow=true;p.add(o);return o};
  if(t==='chicken'){
   ball(g,0,.58,0,.34,.43,.48,coat);u.head=new THREE.Group();u.head.position.set(0,.91,.34);g.add(u.head);ball(u.head,0,0,0,.22,.24,.23,coat);ball(u.head,0,.23,0,.11,.12,.1,dark);
@@ -714,7 +714,7 @@ function renderAnimal(a){
   if(meshes.animals.has(a.id))return;const model=gltf.scene.clone(),bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),scale=(farmAnimalHeights[type]||.9)/Math.max(size.y,.01);
   model.scale.setScalar(scale);model.position.set(-((bounds.min.x+bounds.max.x)/2)*scale,-bounds.min.y*scale,-((bounds.min.z+bounds.max.z)/2)*scale);
   model.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m.map){m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=4;}m.needsUpdate=true;});}});
-  const group=new THREE.Group();group.position.set(a.x,0,a.z);group.rotation.y=Math.random()*Math.PI*2;group.add(model);group.userData={staticAsset:true};scene.add(group);meshes.animals.set(a.id,group);
+  const group=new THREE.Group();group.position.set(a.x,0,a.z);group.rotation.y=Math.random()*Math.PI*2;group.add(model);group.userData={staticAsset:true,phase:Math.random()*6,type,baseX:a.x,baseZ:a.z,roam:Math.random()*6,ownerId:a.owner_id};scene.add(group);meshes.animals.set(a.id,group);
  }).catch(e=>{console.warn('Modelo GLB não carregou; usando reserva:',type,e);if(!meshes.animals.has(a.id)){const fallback=renderAnimalFallback(a);meshes.animals.set(a.id,fallback);}}).finally(()=>farmAnimalPending.delete(a.id));
 }
 document.querySelector('#plant').onclick=async()=>{if(!user)return;const x=player.position.x+Math.sin(player.rotation.y)*-3,z=player.position.z+Math.cos(player.rotation.y)*-3;const {data,error}=await db.from('world_trees').insert({owner_id:user.id,tree_type:'oak',x,y:0,z,growth_seconds:60,health:100}).select().single();if(error){document.querySelector('#hint').textContent=error.message;return}renderTree(data);document.querySelector('#hint').textContent='Muda plantada! Crescimento previsto: 60 segundos.'};
@@ -765,6 +765,7 @@ document.querySelector('#well').onclick=async()=>{
  if(error){document.querySelector('#hint').textContent='Erro ao construir poço: '+error.message;return}
  wood-=5;stone-=5;if(life)coins-=30;renderWell(data);updateStats();await saveResources();document.querySelector('#hint').textContent='Poço construído! Aproxime-se e use Recolher.';
 };
+document.querySelector('#products').textContent='🥚 Recolher ovos / 🥛 Ordenhar';
 document.querySelector('#products').onclick=async()=>{
  if(!user)return;
  const nearby=[...meshes.animals.entries()].map(([id,g])=>({id,g,d:Math.hypot(g.position.x-player.position.x,g.position.z-player.position.z)})).filter(v=>v.d<5).sort((a,b)=>a.d-b.d)[0];
@@ -777,7 +778,7 @@ document.querySelector('#products').onclick=async()=>{
   if(qty<1){document.querySelector('#hint').textContent=type==='chicken'?'A galinha ainda não pôs ovo.':'A vaca ainda não produziu leite.';return}
   const {error:saveError}=await db.from('world_animals').update({state:{...state,lastProductAt:new Date(last+qty*interval).toISOString()}}).eq('id',nearby.id).eq('owner_id',user.id);
   if(saveError){document.querySelector('#hint').textContent='Falha ao recolher: '+saveError.message;return}
-  const earned=qty*(type==='chicken'?5:10);coins+=earned;updateStats();await saveResources();document.querySelector('#hint').textContent=(type==='chicken'?'🥚 Ovos recolhidos: ':'🥛 Leite recolhido: ')+qty+'. Venda: +'+earned+' moedas.';return;
+  const earned=qty*(type==='chicken'?5:10);coins+=earned;updateStats();const saved=await saveResources();document.querySelector('#hint').textContent=(type==='chicken'?'🥚 Ovos recolhidos do ninho: ':'🥛 Ordenha concluída: ')+qty+(type==='chicken'?' ovo(s). ':' unidade(s) de leite. ')+'Venda: +'+earned+' moedas.'+(saved?.error?' Não foi possível salvar os recursos.':'');return;
  }
  const well=[...meshes.wells.values()].find(w=>Math.hypot(w.x-player.position.x,w.z-player.position.z)<4);
  if(well){health=Math.min(100,health+(well.well_type==='life'?50:15));updateStats();await saveResources();document.querySelector('#hint').textContent=well.well_type==='life'?'Água da Vida: +50 de vida!':'Água do poço: +15 de vida!';return}
@@ -1008,9 +1009,9 @@ shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;sun.target.position.set(
    l.pivot.rotation.x=moving?Math.sin(phase)*.58:0;l.pivot.position.y=.68+(moving?Math.max(0,Math.cos(phase))*.035:0);
   }
  }
- for(const animal of meshes.animals.values()){const u=animal.userData;if(u.staticAsset)continue;u.phase+=dt*2.1;animal.position.y=Math.abs(Math.sin(u.phase*2))*.018;if(u.head)u.head.rotation.x=Math.sin(u.phase*.7)*.045;if(u.tail)u.tail.rotation.x=Math.sin(u.phase*1.8)*.22;u.legs?.forEach((leg,i)=>{leg.rotation.x=Math.sin(u.phase*2.4+i*Math.PI)*.035;});}
- for(const h of horses){if(h===mountedHorse)continue;h.timer-=dt;if(h.timer<=0){h.target.set(h.group.position.x+(Math.random()-.5)*12,0,h.group.position.z+(Math.random()-.5)*10);h.timer=2+Math.random()*4;}const vx=h.target.x-h.group.position.x,vz=h.target.z-h.group.position.z,dl=Math.hypot(vx,vz);if(dl>.5){h.group.position.x+=vx/dl*.8*dt;h.group.position.z+=vz/dl*.8*dt;h.group.rotation.y=Math.atan2(vx,vz);}h.legs.forEach((leg,i)=>{leg.rotation.x=dl>.5?Math.sin(t*.008+i*Math.PI)*.34:Math.sin(t*.0015+i)*.025;});}
- if(mountedHorse){mountedHorse.group.position.y=Math.abs(Math.sin(t*.012))*.045;mountedHorse.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.012+i*Math.PI)*.48;});}
+ for(const animal of meshes.animals.values()){const u=animal.userData;u.phase=(u.phase||0)+dt*2.1;if(u.staticAsset){if(u.type==='chicken'){u.roam=(u.roam||0)+dt*.22;animal.position.x=u.baseX+Math.sin(u.roam)*.8;animal.position.z=u.baseZ+Math.cos(u.roam*.73)*.65;animal.rotation.y=Math.sin(u.roam*.73+1)*.45;animal.position.y=Math.abs(Math.sin(u.phase*2))*.025;}continue}animal.position.y=Math.abs(Math.sin(u.phase*2))*.018;if(u.head)u.head.rotation.x=Math.sin(u.phase*.7)*.045;if(u.tail)u.tail.rotation.x=Math.sin(u.phase*1.8)*.22;u.legs?.forEach((leg,i)=>{leg.rotation.x=Math.sin(u.phase*2.4+i*Math.PI)*.08;});}
+ for(const h of horses){if(h===mountedHorse)continue;h.timer-=dt;if(h.timer<=0){h.target.set(h.group.position.x+(Math.random()-.5)*12,0,h.group.position.z+(Math.random()-.5)*10);h.timer=3+Math.random()*5;}const vx=h.target.x-h.group.position.x,vz=h.target.z-h.group.position.z,dl=Math.hypot(vx,vz),walking=dl>.5;if(walking){h.group.position.x+=vx/dl*1.15*dt;h.group.position.z+=vz/dl*1.15*dt;h.group.rotation.y=Math.atan2(vx,vz);}h.legs.forEach((leg,i)=>{leg.rotation.x=walking?Math.sin(t*.006+i*Math.PI)*.48:Math.sin(t*.0012+i)*.035;});if(h.tail)h.tail.rotation.x=Math.sin(t*.002+h.phase)*.22;if(h.head)h.head.rotation.x=Math.sin(t*.0018+h.phase)*.035;}
+ if(mountedHorse){mountedHorse.group.position.y=Math.abs(Math.sin(t*.012))*.065;mountedHorse.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.012+i*Math.PI)*.62;});if(mountedHorse.tail)mountedHorse.tail.rotation.x=Math.sin(t*.003)*.24;}
  for(const remote of remotePlayers.values()){
   const delta=remote.target.clone().sub(remote.group.position),remoteMoving=delta.length()>.025;
   remote.group.position.lerp(remote.target,Math.min(1,dt*8));remote.group.rotation.y=remote.rotation;
