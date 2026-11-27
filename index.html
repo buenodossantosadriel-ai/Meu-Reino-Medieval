@@ -574,7 +574,7 @@ async function loadRealHorse(h,type){
  const scale=2.28/Math.max(size.y,.01);
  model.scale.setScalar(scale);
  model.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
- model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=false;const ms=Array.isArray(o.material)?o.material:(o.material?[o.material]);ms.forEach(m=>{if(m.map){m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=4;}m.envMap=charEnv;m.envMapIntensity=.48;m.needsUpdate=true;});}});
+ model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=false;const ms=Array.isArray(o.material)?o.material:(o.material?[o.material]:[]);ms.forEach(m=>{if(m.map){m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=4;}m.envMap=charEnv;m.envMapIntensity=.48;m.needsUpdate=true;});}});
  for(const child of [...h.group.children]){h.group.remove(child);child.traverse(o=>{if(o.isMesh){o.geometry?.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose();}});}
  h.group.add(model);h.model=model;h.mixer=new THREE.AnimationMixer(model);h.horseActions={};
  for(const clip of gltf.animations){const key=clip.name.toLowerCase().replace(/[ _-]/g,'');const action=h.mixer.clipAction(clip);action.setLoop(THREE.LoopRepeat,Infinity);if(key.includes('idle'))h.horseActions.idle=action;else if(key.includes('walk'))h.horseActions.walk=action;else if(key.includes('trot'))h.horseActions.trot=action;else if(key.includes('gallop'))h.horseActions.gallop=action;else if(key.includes('graze'))h.horseActions.graze=action;else if(key.includes('rear'))h.horseActions.rear=action;}
