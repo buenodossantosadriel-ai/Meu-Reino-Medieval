@@ -1015,12 +1015,46 @@ function renderBlock(b){
   for(let i=0;i<18;i++){const a=i/18*Math.PI*2,r=9.75;const ripple=new THREE.Mesh(new THREE.CircleGeometry(.13,8),rippleMat);ripple.rotation.x=-Math.PI/2;ripple.position.set(b.x+Math.cos(a)*r,.09,b.z+Math.sin(a)*r);group.add(ripple)}
   scene.add(group);m=group;
  }else if(b.block_type==='castle_keep_upgrade'){
-  const group=new THREE.Group();
-  const shaft=new THREE.Mesh(new THREE.CylinderGeometry(1.55,1.9,8.5,12),stoneMat);shaft.position.set(b.x,4.25,b.z);shaft.castShadow=true;shaft.receiveShadow=true;group.add(shaft);
-  const crown=new THREE.Mesh(new THREE.CylinderGeometry(2.05,1.7,1.15,12),new THREE.MeshStandardMaterial({color:0x9e927b,roughness:.88}));crown.position.set(b.x,8.8,b.z);crown.castShadow=true;group.add(crown);
-  const roof=new THREE.Mesh(new THREE.ConeGeometry(2.35,3.1,12),new THREE.MeshStandardMaterial({color:0x70453a,roughness:.82}));roof.position.set(b.x,10.9,b.z);roof.castShadow=true;group.add(roof);
-  const flagPole=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,2.2,6),new THREE.MeshStandardMaterial({color:0x4a3828}));flagPole.position.set(b.x,13.35,b.z);group.add(flagPole);
-  const flag=new THREE.Mesh(new THREE.PlaneGeometry(1.1,.65),new THREE.MeshStandardMaterial({color:0xb33b32,side:THREE.DoubleSide,roughness:.8}));flag.position.set(b.x+.52,13.2,b.z);group.add(flag);
+  // Fortaleza real: corpo central, quatro torres, ameias, janelas e bandeiras.
+  const group=new THREE.Group();group.position.set(b.x,0,b.z);
+  const stoneLight=new THREE.MeshStandardMaterial({color:0xb8b09d,roughness:.92});
+  const stoneDark=new THREE.MeshStandardMaterial({color:0x817967,roughness:.96});
+  const roofMat=new THREE.MeshStandardMaterial({color:0x704238,roughness:.86});
+  const roofGold=new THREE.MeshStandardMaterial({color:0x9a783e,metalness:.28,roughness:.58});
+  const windowMat=new THREE.MeshStandardMaterial({color:0x252a2d,roughness:.8});
+  const flagMat=new THREE.MeshStandardMaterial({color:0xa9342c,side:THREE.DoubleSide,roughness:.8});
+  const addBox=(x,y,z,sx,sy,sz,material)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;group.add(o);return o};
+  const addCylinder=(x,y,z,rt,rb,h,material,n=12)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,n),material);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;group.add(o);return o};
+  const addTower=(x,z,height=9)=>{
+   addCylinder(x,height/2,z,1.18,1.42,height,stoneLight,14);
+   addCylinder(x,height+.18,z,1.48,1.28,.42,stoneDark,14);
+   const roof=new THREE.Mesh(new THREE.ConeGeometry(1.62,2.9,14),roofMat);roof.position.set(x,height+1.75,z);roof.castShadow=true;group.add(roof);
+   addCylinder(x,height+3.25,z,.055,.055,.9,roofGold,6);
+   const flag=new THREE.Mesh(new THREE.PlaneGeometry(1.05,.62),flagMat);flag.position.set(x+.5,height+3.28,z);flag.castShadow=true;group.add(flag);
+   for(let w=-1;w<=1;w+=2){const slit=addBox(x+w*.43,height*.58,z-1.205,.22,.9,.07,windowMat);slit.rotation.y=0;}
+  };
+  // Plataforma e salão principal
+  addBox(0,.55,0,12.8,1.1,12.8,stoneDark);
+  addBox(0,4.65,0,9.2,7.2,9.2,stoneLight);
+  addBox(0,8.35,0,9.8,.55,9.8,stoneDark);
+  // Fachada com portal em arco estilizado e janelas altas
+  addBox(0,2.05,4.64,2.0,3.4,.16,stoneDark);
+  addBox(0,1.55,4.76,1.05,2.45,.12,roofMat);
+  for(const x of [-2.65,2.65]){
+   for(const y of [3.2,5.7]){addBox(x,y,4.67,.58,1.35,.12,windowMat);addBox(x,y-.72,4.72,.82,.13,.16,roofGold);}
+  }
+  // Torres de canto e torre de menagem central, em patamares distintos
+  for(const p of [[-5.05,-5.05],[5.05,-5.05],[-5.05,5.05],[5.05,5.05]])addTower(p[0],p[1],8.2);
+  addTower(0,-.25,13.2);
+  // Ameias no topo do salão e passarelas de ligação
+  for(let i=0;i<9;i++){
+   const p=-4.2+i*1.05;
+   addBox(p,8.95,-4.72,.58,.72,.42,stoneLight);addBox(p,8.95,4.72,.58,.72,.42,stoneLight);
+   addBox(-4.72,8.95,p,.42,.72,.58,stoneLight);addBox(4.72,8.95,p,.42,.72,.58,stoneLight);
+  }
+  // Detalhes dourados e bandeira real no alto
+  addCylinder(0,14.25,-.25,.075,.075,2.0,roofGold,8);
+  const royalFlag=new THREE.Mesh(new THREE.PlaneGeometry(1.65,1.0),new THREE.MeshStandardMaterial({color:0xc49a36,side:THREE.DoubleSide,roughness:.7}));royalFlag.position.set(.8,14.35,-.25);royalFlag.castShadow=true;group.add(royalFlag);
   scene.add(group);m=group;
  }else if(b.block_type==='castle_guard'){
   const group=new THREE.Group();const guard=makeKnight();guard.scale.setScalar(.78);group.add(guard);group.position.set(b.x,0,b.z);group.rotation.y=Number(b.rotation)||0;scene.add(group);m=group;
