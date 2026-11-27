@@ -238,23 +238,66 @@ function tower(x,z){
 let castleGate,castleBridge,gateAngle=0,gateTarget=0,castleBridgeTarget=0,fortressGuards=[],celestialGuardians=[];
 
 function createCelestialAngel(index){
- const g=new THREE.Group(),armor=new THREE.MeshStandardMaterial({color:0xe7e4d8,metalness:.72,roughness:.24}),gold=new THREE.MeshStandardMaterial({color:0xd5ad55,metalness:.78,roughness:.22}),skin=new THREE.MeshStandardMaterial({color:0xd9ad91,roughness:.72}),cloth=new THREE.MeshStandardMaterial({color:index%2?0xf1eee5:0xd9e1e8,roughness:.86}),feather=new THREE.MeshStandardMaterial({color:0xf5f3ed,roughness:.9}),dark=new THREE.MeshStandardMaterial({color:0x39424b,metalness:.68,roughness:.3});
+ const g=new THREE.Group();
+ const robe=new THREE.MeshStandardMaterial({color:index%2?0xf8f4e9:0xe9edf0,roughness:.88});
+ const robeShade=new THREE.MeshStandardMaterial({color:0xd9dce0,roughness:.94});
+ const gold=new THREE.MeshStandardMaterial({color:0xd9b765,metalness:.68,roughness:.27});
+ const skin=new THREE.MeshStandardMaterial({color:0xe5c3a8,roughness:.76});
+ const hair=new THREE.MeshStandardMaterial({color:index%3===0?0x6b4934:0x9a7952,roughness:.82});
+ const feather=new THREE.MeshStandardMaterial({color:0xfffdf6,roughness:.92});
+ const featherShade=new THREE.MeshStandardMaterial({color:0xe8edf1,roughness:.94});
+ const eye=new THREE.MeshStandardMaterial({color:0x6b8b9c,roughness:.45,emissive:0x52758a,emissiveIntensity:.16});
  const add=(geo,matr,x,y,z,sx=1,sy=1,sz=1,parent=g)=>{const m=new THREE.Mesh(geo,matr);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m};
- add(new THREE.SphereGeometry(.31,20,16),skin,0,1.92,.02,1,.98,.86);
- add(new THREE.SphereGeometry(.32,18,12),gold,0,2.23,-.03,1,.23,.9);
- add(new THREE.CapsuleGeometry(.27,.64,7,12),cloth,0,1.22,0,1,.95,.72);
- add(new THREE.SphereGeometry(.34,18,14),armor,0,1.48,.1,1,.86,.72);
- add(new THREE.BoxGeometry(.56,.12,.12),gold,0,1.68,.12);
- add(new THREE.CylinderGeometry(.055,.09,.7,10),armor,-.39,1.25,0,1,1,1);
- add(new THREE.CylinderGeometry(.055,.09,.7,10),armor,.39,1.25,0,1,1,1);
- for(const side of [-1,1]){const arm=add(new THREE.CapsuleGeometry(.105,.48,5,10),cloth,side*.48,1.28,.02);arm.rotation.z=side*-.2;add(new THREE.SphereGeometry(.12,12,10),skin,side*.55,.98,.1);const leg=add(new THREE.CapsuleGeometry(.12,.48,5,10),armor,side*.16,.48,0);leg.rotation.z=side*.05;add(new THREE.BoxGeometry(.24,.15,.4),dark,side*.16,.17,.1)}
- const halo=new THREE.Mesh(new THREE.TorusGeometry(.38,.045,10,36),gold);halo.position.set(0,2.55,-.02);halo.rotation.x=Math.PI/2;g.add(halo);
+ // Túnica longa em camadas, com pregas e bordas douradas.
+ add(new THREE.ConeGeometry(.58,1.55,16,3),robe,0,.91,0,1,1, .78);
+ add(new THREE.CapsuleGeometry(.29,.48,7,14),robe,0,1.65,0,1,.92,.78);
+ add(new THREE.SphereGeometry(.34,24,18),skin,0,2.18,.015, .86,1,.78);
+ // Pescoço, cabelo e moldura delicada do rosto.
+ add(new THREE.CylinderGeometry(.105,.12,.2,12),skin,0,1.94,0);
+ add(new THREE.SphereGeometry(.355,20,16),hair,0,2.34,-.055,.94,.72,.88);
+ add(new THREE.SphereGeometry(.105,14,10),hair,-.29,2.13,-.005,.9,1.8,.9);
+ add(new THREE.SphereGeometry(.105,14,10),hair,.29,2.13,-.005,.9,1.8,.9);
+ for(const side of [-1,1]){
+  add(new THREE.SphereGeometry(.027,10,8),eye,side*.105,2.19,.292);
+  add(new THREE.SphereGeometry(.045,10,8),skin,side*.19,2.12,.22,.8,.72,.65);
+  const sleeve=add(new THREE.CapsuleGeometry(.105,.48,5,10),robe,side*.39,1.55,0,1,1,.95);sleeve.rotation.z=side*-.32;
+  add(new THREE.SphereGeometry(.105,12,10),skin,side*.49,1.27,.08);
+  // Pregas verticais da túnica e acabamento dourado na manga.
+  const fold=add(new THREE.CapsuleGeometry(.018,.78,3,6),robeShade,side*.23,.82,.39,1,1,.45);fold.rotation.z=side*.08;
+  const cuff=add(new THREE.TorusGeometry(.105,.025,6,14),gold,side*.39,1.31,0);cuff.rotation.z=Math.PI/2;
+ }
+ add(new THREE.TorusGeometry(.39,.035,8,36),gold,0,1.73,.02,1,1,1).rotation.x=Math.PI/2;
+ add(new THREE.TorusGeometry(.47,.025,8,40),gold,0,.48,0,1,1,1).rotation.x=Math.PI/2;
+ add(new THREE.SphereGeometry(.105,14,10),gold,0,1.67,.43,1,1,.45);
+ // Auréola dupla e raios suaves.
+ const halo=new THREE.Group();halo.position.set(0,2.72,-.08);g.add(halo);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(.39,.035,10,48),gold);ring.rotation.x=Math.PI/2;halo.add(ring);
+ const innerRing=new THREE.Mesh(new THREE.TorusGeometry(.29,.012,6,40),robe);innerRing.rotation.x=Math.PI/2;halo.add(innerRing);
+ for(let i=0;i<12;i++){const a=i*Math.PI/6,ray=add(new THREE.CylinderGeometry(.009,.018,.16,6),gold,Math.cos(a)*.48,2.72+Math.sin(a)*.48,-.08);ray.rotation.z=-a;}
  const wings=[];
- for(const side of [-1,1]){const pivot=new THREE.Group();pivot.position.set(side*.24,1.72,-.2);g.add(pivot);const root=add(new THREE.SphereGeometry(.22,12,10),feather,side*.32,.12,-.05,1.2,1.8,.55,pivot);for(let j=0;j<9;j++){const f=add(new THREE.SphereGeometry(.16,12,10),feather,side*(.42+j*.16),.1+j*.115,-.035,1.05,2.25,.52,pivot);f.rotation.z=side*(-.15-j*.055)}for(let j=0;j<5;j++){const f=add(new THREE.SphereGeometry(.13,10,8),feather,side*(.34+j*.14),-.18-j*.04,.035,1,1.8,.6,pivot);f.rotation.z=side*-.25}wings.push({pivot,side})}
- const weapon=new THREE.Group();weapon.position.set(index%2?-.58:.58,1.03,.12);g.add(weapon);
- if(index===2||index===3){const shaft=add(new THREE.CylinderGeometry(.035,.045,2.35,10),gold,0,.78,0,1,1,1,weapon);const tip=add(new THREE.ConeGeometry(.12,.48,8),armor,0,2.15,0,1,1,1,weapon);tip.rotation.z=0;add(new THREE.TorusGeometry(.075,.025,8,12),gold,0,1.91,0,1,1,1,weapon)}
- else if(index===4||index===5){const bow=add(new THREE.TorusGeometry(.58,.045,10,24,Math.PI),gold,0,.8,0);bow.rotation.z=Math.PI/2;bow.parent.remove(bow);weapon.add(bow);const string=add(new THREE.CylinderGeometry(.012,.012,1.1,6),armor,0,.8,.01,1,1,1,weapon);string.rotation.z=Math.PI/2;const arrow=add(new THREE.CylinderGeometry(.018,.018,.92,6),dark,.12,.8,.05,1,1,1,weapon);arrow.rotation.z=Math.PI/2;const point=add(new THREE.ConeGeometry(.065,.2,6),gold,.62,.8,.05);point.rotation.z=-Math.PI/2;weapon.add(point)}
- else{const grip=add(new THREE.CylinderGeometry(.045,.045,.42,8),dark,0,.48,0,1,1,1,weapon);const blade=add(new THREE.BoxGeometry(.13,1.35,.045),armor,0,1.35,0,1,1,1,weapon);const edge=add(new THREE.BoxGeometry(.035,1.2,.055),gold,.07,1.35,.005,1,1,1,weapon);add(new THREE.BoxGeometry(.48,.09,.13),gold,0,.77,0,1,1,1,weapon)}
+ for(const side of [-1,1]){
+  const pivot=new THREE.Group();pivot.position.set(side*.24,1.77,-.19);g.add(pivot);
+  const base=add(new THREE.SphereGeometry(.2,14,12),featherShade,side*.3,.12,-.04,1.25,1.7,.62,pivot);
+  // Camadas sobrepostas de penas longas, com pontas suaves.
+  for(let row=0;row<3;row++){
+   const count=row===0?7:6;
+   for(let j=0;j<count;j++){
+    const x=side*(.28+j*.145),y=.25-row*.19+j*.105;
+    const f=add(new THREE.SphereGeometry(.115,12,10),row===1?featherShade:feather,x,y,-.055+row*.035,.78,2.9,.52,pivot);
+    f.rotation.z=side*(-.16-j*.045);
+   }
+  }
+  for(let j=0;j<5;j++){
+   const f=add(new THREE.SphereGeometry(.105,12,10),feather,side*(.32+j*.13),-.34-j*.075,.02,.82,2.5,.5,pivot);
+   f.rotation.z=side*(-.24-j*.055);
+  }
+  wings.push({pivot,side});
+ }
+ // Bastão cerimonial discreto, em dourado claro.
+ const weapon=new THREE.Group();weapon.position.set(index%2?-.57:.57,1.03,.13);g.add(weapon);
+ const staff=add(new THREE.CylinderGeometry(.035,.045,1.9,10),gold,0,.92,0,1,1,1,weapon);
+ const star=add(new THREE.OctahedronGeometry(.19,1),robe,0,1.94,0,1,1,1,weapon);
+ const glow=new THREE.PointLight(0xffe6a8,.65,5);glow.position.set(0,2.2,-.35);g.add(glow);
  return {group:g,wings,halo,weapon,index,phase:index*.9};
 }
 
