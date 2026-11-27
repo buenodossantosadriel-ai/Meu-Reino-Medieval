@@ -39,12 +39,9 @@ function updateStats(){document.querySelector('#stats').textContent='❤️ '+he
 async function saveResources(){
   if(!user)return {error:null};
   try {
-    // Confirma o usuário diretamente no Auth antes de gravar qualquer dado.
-    const {data:authData,error:authError}=await db.auth.getUser();
-    if(authError) throw authError;
-    const verifiedUser=authData?.user;
-    if(!verifiedUser) throw new Error('Sessão expirada. Entre novamente.');
-    user=verifiedUser;
+    // A identidade vem da sessão validada pelo signInWithPassword.
+    const verifiedUser=user;
+    if(!verifiedUser?.id) throw new Error('Sessão expirada. Entre novamente.');
     const payload={
       user_id:verifiedUser.id,
       player_name:(verifiedUser.email||'Jogador').split('@')[0].slice(0,24),
@@ -118,11 +115,9 @@ document.querySelector('#attack').onclick=()=>{document.querySelector('#hint').t
 let live;
 async function enterGame(session,emailFallback='') {
   if(!session?.user) throw new Error('Sessão não encontrada. Entre novamente com seu e-mail e senha.');
-  // Usa a identidade validada pelo servidor, não apenas o objeto recebido no formulário.
-  const {data:authData,error:authError}=await db.auth.getUser();
-  if(authError) throw authError;
-  if(!authData?.user) throw new Error('Não foi possível validar sua sessão. Entre novamente.');
-  user=authData.user;
+  // signInWithPassword já devolveu uma sessão autenticada pelo Supabase.
+  // Evita uma segunda chamada de rede que podia deixar a tela presa em "Conectando".
+  user=session.user;
   const login=document.querySelector('#login');
   const players=document.querySelector('#players');
   const hint=document.querySelector('#hint');
@@ -199,6 +194,7 @@ document.querySelector('#auth').onsubmit=async e=>{
       msg.textContent='Sua conta ainda não possui uma sessão ativa. Confirme o e-mail pelo link mais recente e depois entre novamente.';
       return;
     }
+    msg.textContent='Conta autenticada. Abrindo o cenário…';
     await enterGame(result.data.session,email);
   } catch(err) {
     msg.textContent='Não foi possível entrar: '+(err.message||String(err));
