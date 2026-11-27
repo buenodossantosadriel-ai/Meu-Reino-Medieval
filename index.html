@@ -993,7 +993,7 @@ document.querySelector('#castleUpgrade').onclick=async()=>{
  const {data,error}=await db.from('world_blocks').insert(rows).select();
  if(error){document.querySelector('#hint').textContent='Falha ao construir melhoria: '+error.message;return}
  wood-=cost.wood;stone-=cost.stone;coins-=cost.coins;data.forEach(renderBlock);updateStats();await saveResources();
- document.querySelector('#hint').textContent=type==='castle_wall_upgrade'?'🧱 Muralhas reforçadas! Seu castelo agora tem uma segunda linha defensiva e ameias.':type==='castle_moat'?'🌊 Fosso construído! A água cerca a fortaleza.':'🛡 Quatro guardas foram posicionados nas torres para proteger seu reino.';
+ document.querySelector('#hint').textContent=type==='castle_wall_upgrade'?'🧱 Muralhas reforçadas! Seu castelo agora tem uma segunda linha defensiva e ameias.':type==='castle_moat'?'🌊 Fosso construído! A água cerca a fortaleza.':type==='castle_guard'?'🛡 Quatro guardas foram posicionados nas torres para proteger seu reino.':'🏰 A Torre Real foi erguida! Seu castelo ganhou uma torre central mais alta.';
 };
 document.querySelector('#build').onclick=async()=>{if(!user)return;if(wood<3||stone<2){document.querySelector('#hint').textContent='Precisa de 3 madeiras e 2 pedras.';return}const x=Math.round(player.position.x/2)*2,z=Math.round((player.position.z-2)/2)*2;const {data,error}=await db.from('world_blocks').insert({owner_id:user.id,block_type:'stone',x,y:1,z,rotation:0}).select().single();if(error){document.querySelector('#hint').textContent='Falha ao salvar construção: '+error.message;return}wood-=3;stone-=2;updateStats();renderBlock(data);advanceQuest('build',1);await saveResources()}; 
 function renderBlock(b){
