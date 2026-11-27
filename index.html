@@ -196,40 +196,80 @@ function part(group,geo,material,x,y,z,sx=1,sy=1,sz=1){
  const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;group.add(m);return m;
 }
 function makeKnight(){
- // Reserva visual do Black Knight: armadura negra, elmo pontudo e escudo torre escuro.
- const g=new THREE.Group(),armor=mat(0x171c22,.78,.27),silver=mat(0x424a52,.82,.24),gold=mat(0x98743b,.72,.32),red=mat(0x17191d),dark=mat(0x090d12);
- part(g,new THREE.CapsuleGeometry(.39,.62,6,12),armor,0,1.12,0);
- part(g,new THREE.BoxGeometry(.58,.48,.12),silver,0,1.25,.34);
- part(g,new THREE.BoxGeometry(.48,.09,.14),gold,0,.91,.36);
- part(g,new THREE.SphereGeometry(.27,16,12),dark,0,1.82,0);
- part(g,new THREE.SphereGeometry(.34,16,12,0,Math.PI*2,0,Math.PI/2),armor,0,1.92,0);
- part(g,new THREE.BoxGeometry(.43,.12,.1),dark,0,1.82,.29);
- part(g,new THREE.ConeGeometry(.12,.38,6),armor,0,2.22,-.02);
- part(g,new THREE.BoxGeometry(.65,.95,.13),red,0,1.04,-.4).rotation.x=-.12;
- for(const x of [-.47,.47]){
-  part(g,new THREE.SphereGeometry(.25,12,10),silver,x,1.43,0);
-  part(g,new THREE.CylinderGeometry(.105,.13,.62,10),armor,x,.82,.02);
-  part(g,new THREE.BoxGeometry(.24,.62,.28),armor,x*.42,.35,0);
-  part(g,new THREE.BoxGeometry(.27,.16,.32),silver,x*.42,.08,.03);
-  part(g,new THREE.CylinderGeometry(.075,.09,.48,10),silver,x*.95,1.02,.04);
+ // Cavaleiro Black Knight: armadura medieval em camadas, malha, placas e membros articulados.
+ const g=new THREE.Group();
+ const steel=mat(0x202832,.82,.3),edge=mat(0x59636d,.78,.27),darkSteel=mat(0x0d131a,.72,.38),black=mat(0x080c12,.12,.62),gold=mat(0x9b7940,.72,.3),leather=mat(0x302018,.05,.78),cloth=mat(0x171b24,0,.92),chain=mat(0x70777d,.78,.48);
+ const front=(geo,material,x,y,z,sx=1,sy=1,sz=1)=>part(g,geo,material,x,y,z,sx,sy,sz);
+ // Capa com volume e gola, atrás do corpo.
+ front(new THREE.ConeGeometry(.62,1.28,10,1,true),cloth,0,1.04,-.48,1,1,.42).rotation.x=-.12;
+ front(new THREE.TorusGeometry(.34,.075,8,18),darkSteel,0,1.62,-.02).rotation.x=Math.PI/2;
+ // Tronco anatômico: malha sob o peitoral e placas sobrepostas.
+ front(new THREE.CapsuleGeometry(.31,.62,7,12),chain,0,1.22,0,1,1,.78);
+ front(new THREE.SphereGeometry(.37,18,14),steel,0,1.38,.12,1,.92,.72);
+ front(new THREE.BoxGeometry(.47,.13,.08),darkSteel,0,1.67,.12);
+ front(new THREE.SphereGeometry(.29,16,12),edge,0,1.4,.34,1,.88,.22);
+ front(new THREE.BoxGeometry(.34,.06,.045),gold,0,1.43,.414);
+ front(new THREE.BoxGeometry(.12,.32,.055),darkSteel,0,1.27,.405);
+ front(new THREE.SphereGeometry(.055,10,8),gold,0,1.48,.45);
+ // Placas abdominais e cinturão de couro.
+ for(let i=0;i<3;i++){const y=1.08-i*.13;front(new THREE.CapsuleGeometry(.285-i*.018,.105,4,10),i%2?darkSteel:steel,0,y,.12,1,.48,.82);front(new THREE.BoxGeometry(.035,.025,.035),edge,-.2,y+.045,.31);front(new THREE.BoxGeometry(.035,.025,.035),edge,.2,y+.045,.31);}
+ front(new THREE.CylinderGeometry(.32,.3,.11,16),leather,0,.91,0,1,1,.82);
+ front(new THREE.BoxGeometry(.16,.16,.055),gold,0,.91,.29);
+ front(new THREE.SphereGeometry(.045,10,8),edge,0,.91,.33);
+ // Saia de placas (tassets) e malha inferior.
+ for(const x of [-1,1]){const p=front(new THREE.BoxGeometry(.22,.34,.12),steel,x*.19,.73,.12);p.rotation.z=x*.12;front(new THREE.BoxGeometry(.19,.055,.14),edge,x*.19,.87,.14);front(new THREE.CapsuleGeometry(.045,.24,4,8),chain,x*.27,.66,.03);}
+ // Pescoço e elmo fechado, com crista e viseira recortada.
+ front(new THREE.CylinderGeometry(.13,.16,.2,12),darkSteel,0,1.72,0);
+ front(new THREE.SphereGeometry(.255,18,14),steel,0,1.94,0,1,1.08,.92);
+ front(new THREE.SphereGeometry(.27,16,12,0,Math.PI*2,0,Math.PI/2),edge,0,2.02,-.015,1,1,.95);
+ front(new THREE.BoxGeometry(.37,.19,.075),darkSteel,0,1.91,.205);
+ front(new THREE.BoxGeometry(.31,.035,.035),black,0,1.98,.25);
+ for(let i=0;i<7;i++)front(new THREE.BoxGeometry(.018,.07,.025),edge,-.13+i*.043,1.86,.245);
+ front(new THREE.ConeGeometry(.09,.3,7),steel,0,2.22,-.015).rotation.x=-.15;
+ front(new THREE.BoxGeometry(.12,.08,.12),gold,0,1.72,.04);
+ // Ombreiras arredondadas com rebordo e rebites.
+ const armPivots=[];
+ for(const side of [-1,1]){
+  const shoulder=new THREE.Group();shoulder.position.set(side*.39,1.48,0);shoulder.userData.motionPart='arm';shoulder.userData.side=side;g.add(shoulder);armPivots.push(shoulder);
+  part(shoulder,new THREE.SphereGeometry(.205,14,12),steel,0,0,0,1.12,1,.9);
+  part(shoulder,new THREE.SphereGeometry(.17,12,10),edge,side*.015,.045,.105,1.08,.7,.55);
+  for(let k=0;k<3;k++)part(shoulder,new THREE.SphereGeometry(.025,8,6),gold,side*(k-1)*.075,.08,.2);
+  part(shoulder,new THREE.CapsuleGeometry(.105,.32,5,9),darkSteel,0,-.27,0);
+  part(shoulder,new THREE.CapsuleGeometry(.115,.3,5,9),steel,0,-.48,.015);
+  part(shoulder,new THREE.BoxGeometry(.23,.16,.22),edge,0,-.68,.04);
+  part(shoulder,new THREE.SphereGeometry(.095,12,10),leather,0,-.77,.06);
+  part(shoulder,new THREE.CylinderGeometry(.12,.14,.17,10),steel,0,-.87,.05);
+  // Cotoveleira e placas do antebraço.
+  part(shoulder,new THREE.SphereGeometry(.12,12,10),edge,0,-.36,.04);
+  part(shoulder,new THREE.CapsuleGeometry(.12,.28,5,9),steel,0,-.57,.04,1,.9,.85);
  }
- const shield=part(g,new THREE.CylinderGeometry(.39,.27,.10,5),dark,-.65,1.05,.16);shield.rotation.z=Math.PI/2;shield.rotation.x=.2;
- part(g,new THREE.BoxGeometry(.09,.88,.12),silver,.61,1.08,.1).rotation.z=-.16;
- part(g,new THREE.BoxGeometry(.34,.09,.16),gold,.61,.64,.1);
- for(const x of [-.19,.19]){part(g,new THREE.SphereGeometry(.035,8,8),gold,x,1.28,.415);part(g,new THREE.SphereGeometry(.045,8,8),dark,x,1.82,.345)}
- part(g,new THREE.BoxGeometry(.25,.035,.035),gold,0,1.72,.365);
- part(g,new THREE.BoxGeometry(.12,.28,.035),silver,0,1.18,.425);
- for(const x of [-.21,.21]){part(g,new THREE.SphereGeometry(.16,12,10),silver,x*.95,.48,.12);part(g,new THREE.BoxGeometry(.12,.08,.08),gold,x*.95,.15,.18)}
- part(g,new THREE.BoxGeometry(.12,.12,.12),gold,-.65,1.05,.23);
- for(const x of [-.21,.21]){
-  part(g,new THREE.CylinderGeometry(.15,.18,.34,12),dark,x,.19,.02);
-  part(g,new THREE.SphereGeometry(.17,12,10),silver,x,.06,.12);
-  part(g,new THREE.SphereGeometry(.14,12,10),silver,x*.95,.67,.12);
-  part(g,new THREE.SphereGeometry(.12,12,10),silver,x*1.08,.55,.15);
+ // Pernas articuladas, coxas, joelhos, grevas e botas.
+ const legPivots=[];
+ for(const side of [-1,1]){
+  const hip=new THREE.Group();hip.position.set(side*.19,.68,0);hip.userData.motionPart='leg';hip.userData.side=side;g.add(hip);legPivots.push(hip);
+  part(hip,new THREE.CapsuleGeometry(.145,.32,5,10),darkSteel,0,-.22,0);
+  part(hip,new THREE.SphereGeometry(.14,12,10),edge,0,-.43,.025);
+  part(hip,new THREE.CapsuleGeometry(.15,.39,5,10),steel,0,-.67,.02,1,.95,.9);
+  part(hip,new THREE.BoxGeometry(.2,.13,.18),edge,0,-.54,.12);
+  part(hip,new THREE.BoxGeometry(.13,.06,.16),gold,0,-.7,.15);
+  part(hip,new THREE.CapsuleGeometry(.17,.22,5,10),darkSteel,0,-.91,.1,1,.75,1.2);
+  part(hip,new THREE.BoxGeometry(.3,.12,.43),black,0,-1.04,.16);
+  part(hip,new THREE.BoxGeometry(.31,.055,.43),edge,0,-.98,.17);
  }
- part(g,new THREE.BoxGeometry(.07,.52,.045),silver,.61,1.48,.13);
- part(g,new THREE.BoxGeometry(.34,.07,.08),gold,.61,1.12,.13);
- part(g,new THREE.CylinderGeometry(.045,.055,.22,10),woodMat,.61,.91,.13);
+ // Escudo torre no braço esquerdo, com brasão em relevo.
+ const shield=front(new THREE.CylinderGeometry(.32,.24,.105,5),darkSteel,-.72,1.02,.16,1,1,1);shield.rotation.z=Math.PI/2;shield.rotation.x=.12;
+ front(new THREE.BoxGeometry(.045,.55,.035),edge,-.72,1.03,.22);
+ front(new THREE.BoxGeometry(.25,.045,.04),gold,-.72,1.04,.235);
+ front(new THREE.SphereGeometry(.065,10,8),gold,-.72,1.03,.25);
+ // Espada longa na mão direita.
+ const blade=front(new THREE.BoxGeometry(.075,.76,.035),edge,.67,1.0,.2);blade.rotation.z=-.12;
+ front(new THREE.ConeGeometry(.055,.2,4),edge,.716,1.47,.2).rotation.z=-.12;
+ front(new THREE.BoxGeometry(.28,.055,.075),gold,.67,.59,.2).rotation.z=-.12;
+ front(new THREE.CylinderGeometry(.045,.05,.24,10),leather,.67,.43,.2);
+ front(new THREE.SphereGeometry(.065,10,8),gold,.67,.29,.2);
+ // Pinos, fivelas e detalhes de forja.
+ for(const side of [-1,1])for(let i=0;i<4;i++)front(new THREE.SphereGeometry(.022,8,6),gold,side*(.25+i*.015),1.12-i*.12,.34);
+ g.userData.motionParts={arms:armPivots,legs:legPivots};
  return g;
 }
 function makePrincess(){
@@ -309,6 +349,11 @@ const avatarBuilders={knight:makeKnight,princess:makePrincess,ogre:makeOgre};
 // Transforma braços e pernas em articulações reais para a animação de caminhada.
 function prepareAvatarMotion(model,type){
  const motion={arms:[],legs:[],type};
+ if(model.userData.motionParts){
+  motion.arms=model.userData.motionParts.arms.map(p=>({pivot:p,side:p.userData.side||1}));
+  motion.legs=model.userData.motionParts.legs.map(p=>({pivot:p,side:p.userData.side||1}));
+  return motion;
+ }
  const candidates=[];
  model.traverse(o=>{if(o.isMesh&&o.parent===model)candidates.push(o)});
  for(const mesh of candidates){
