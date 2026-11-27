@@ -739,7 +739,7 @@ let last=0,walkPhase=0;function animate(t){requestAnimationFrame(animate);const 
  let sx=moveInput.x,sy=-moveInput.y;
  if(keys.w||keys.arrowup)sy=1;if(keys.s||keys.arrowdown)sy=-1;if(keys.a||keys.arrowleft)sx=-1;if(keys.d||keys.arrowright)sx=1;
  const len=Math.hypot(sx,sy);const moving=len>.08;if(moving){walkPhase+=dt*(mountedHorse?10:8);const side=sx/Math.max(1,len),forward=sy/Math.max(1,len);
- const dx=(Math.sin(yaw)*forward+Math.cos(yaw)*side),dz=(-Math.cos(yaw)*forward+Math.sin(yaw)*side);
+ const dx=(-Math.sin(yaw)*forward+Math.cos(yaw)*side),dz=(-Math.cos(yaw)*forward-Math.sin(yaw)*side);
  moveWithCollisions(dx*(mountedHorse?10:6)*dt,dz*(mountedHorse?10:6)*dt);const ta=Math.atan2(dx,dz),d=Math.atan2(Math.sin(ta-player.rotation.y),Math.cos(ta-player.rotation.y));player.rotation.y+=d*Math.min(1,dt*12);if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;}
  if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);player.position.y=1.22;}else player.position.y=0;
  if(castleGate){gateAngle+=(gateTarget-gateAngle)*Math.min(1,dt*2.8);castleGate.rotation.y=gateAngle;}
