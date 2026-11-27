@@ -548,7 +548,7 @@ function syncRemotePlayers(){
 }
 async function syncDatabasePlayers(){
  if(!user)return;
- const cutoff=new Date(Date.now()-15000).toISOString();
+ const cutoff=new Date(Date.now()-30000).toISOString();
  const {data,error}=await db.from('players').select('user_id,player_name,x,z,updated_at').neq('user_id',user.id).gte('updated_at',cutoff);
  if(error){console.warn('Sincronização de jogadores pelo banco:',error);return}
  const active=new Set();
@@ -556,10 +556,25 @@ async function syncDatabasePlayers(){
   const key='db:'+p.user_id;active.add(key);
   upsertRemoteAvatar({user_id:p.user_id,player_name:p.player_name,x:p.x,z:p.z,avatar:'knight'},key,'database');
  }
- for(const [key,remote] of remotePlayers){if(remote.source==='database'&&key.startsWith('db:')&&!active.has(key))removeRemoteAvatar(key);}
- const online=(data||[]).length+1;
+ for(const [key,remote] of remotePlayers){if(remote.source==='database'&&remote.id!==user.id&&!active.has('db:'+remote.id)&&Date.now()-(remote.lastSeenAt||0)>30000)removeRemoteAvatar(key);}
+ const onlineUsers=new Set([user.id,...(data||[]).map(p=>p.user_id)]);
  const players=document.querySelector('#players');
- if(players&&!players.textContent.includes('Offline'))players.textContent='Online: '+online;
+ if(players&&!players.textContent.includes('Offline'))players.textContent='Online: '+onlineUsers.size;
+}
+let heartbeatInFlight=false;
+async function heartbeatPlayerPosition(){
+ if(!user||heartbeatInFlight)return;
+ heartbeatInFlight=true;
+ try{
+  const payload={player_name:playerName.slice(0,24),x:player.position.x,y:0,z:player.position.z,updated_at:new Date().toISOString()};
+  const updated=await db.from('players').update(payload).eq('user_id',user.id).select('user_id').maybeSingle();
+  if(updated.error)throw updated.error;
+  if(!updated.data){
+   const inserted=await db.from('players').insert({user_id:user.id,...payload});
+   if(inserted.error)throw inserted.error;
+  }
+ }catch(error){console.warn('Pulso de presença do jogador falhou:',error);}
+ finally{heartbeatInFlight=false;}
 }
 function chooseAvatar(type){
  if(!avatarBuilders[type]||type===selectedAvatar)return;
@@ -1131,7 +1146,7 @@ mapCanvas.addEventListener('click',async ev=>{
 });
 document.querySelector('#mapDelete').onclick=async()=>{if(!kingdomMarkers.length){document.querySelector('#hint').textContent='Não há marcações para apagar.';return}kingdomMarkers.pop();if(await saveKingdomMarkers()){drawKingdomMap();document.querySelector('#hint').textContent='Última marcação apagada.';}};
 const clientId=globalThis.crypto?.randomUUID?.()||('client-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));
-let live,lastPresenceUpdate=0,lastDbPlayersSync=0;
+let live,lastPresenceUpdate=0,lastDbPlayersSync=0,lastHeartbeat=0;
 async function enterGame(session,emailFallback='') {
   spawnEnemies();
   if(!session?.user) throw new Error('Sessão não encontrada. Entre novamente com seu e-mail e senha.');
@@ -1195,6 +1210,7 @@ async function enterGame(session,emailFallback='') {
       hint.textContent='Reino aberto. Não foi possível carregar/salvar seu progresso agora: '+(e.message||e);
     }
     updateStats();
+    await heartbeatPlayerPosition();
     await syncDatabasePlayers();
     players.textContent=players.textContent.startsWith('Online:')?players.textContent:'Reino aberto';
     return true;
@@ -1323,7 +1339,8 @@ shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;sun.target.position.set(
   }
 }
  if(user&&live&&t-lastPresenceUpdate>350){lastPresenceUpdate=t;live.track({client_id:clientId,user_id:user.id,name:playerName,avatar:selectedAvatar,x:player.position.x,z:player.position.z,rotation:player.rotation.y}).catch(e=>console.warn('Presença:',e));}
- if(user&&t-lastDbPlayersSync>3000){lastDbPlayersSync=t;syncDatabasePlayers();}
+ if(user&&t-lastHeartbeat>2500){lastHeartbeat=t;heartbeatPlayerPosition();}
+ if(user&&t-lastDbPlayersSync>4000){lastDbPlayersSync=t;syncDatabasePlayers();}
  cameraDistanceCurrent+=(cameraDistance-cameraDistanceCurrent)*Math.min(1,dt*10);
  const horiz=Math.cos(cameraPitch)*cameraDistanceCurrent;
  const target=new THREE.Vector3(player.position.x+Math.sin(yaw)*horiz,player.position.y+Math.sin(cameraPitch)*cameraDistanceCurrent+1.2,player.position.z+Math.cos(yaw)*horiz);
