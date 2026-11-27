@@ -38,13 +38,31 @@ const held={};for(const [id,key] of [['forward','w'],['back','s'],['left','a'],[
 function updateStats(){document.querySelector('#stats').textContent='❤️ '+health+' · Madeira: '+wood+' · Pedra: '+stone}
 async function saveResources(){
   if(!user)return {error:null};
-  const {error}=await db.from('players').upsert({
-    user_id:user.id,player_name:(user.email||'Jogador').split('@')[0],
-    x:player.position.x,y:0,z:player.position.z,health,stamina:100,wood,stone,
-    updated_at:new Date().toISOString()
-  });
-  if(error) console.error('Falha ao salvar jogador:',error);
-  return {error};
+  try {
+    // Confirma o usuário diretamente no Auth antes de gravar qualquer dado.
+    const {data:authData,error:authError}=await db.auth.getUser();
+    if(authError) throw authError;
+    const verifiedUser=authData?.user;
+    if(!verifiedUser) throw new Error('Sessão expirada. Entre novamente.');
+    user=verifiedUser;
+    const payload={
+      user_id:verifiedUser.id,
+      player_name:(verifiedUser.email||'Jogador').split('@')[0].slice(0,24),
+      x:player.position.x,y:0,z:player.position.z,health,stamina:100,wood,stone,
+      updated_at:new Date().toISOString()
+    };
+    // Atualiza primeiro: evita o caminho INSERT desnecessário do upsert.
+    const updated=await db.from('players').update(payload).eq('user_id',verifiedUser.id).select('user_id').maybeSingle();
+    if(updated.error) throw updated.error;
+    if(!updated.data){
+      const inserted=await db.from('players').insert(payload);
+      if(inserted.error) throw inserted.error;
+    }
+    return {error:null};
+  } catch(error) {
+    console.error('Falha ao salvar jogador:',error);
+    return {error};
+  }
 }
 document.querySelector('#collect').onclick=async()=>{wood+=1;stone+=1;updateStats();await saveResources();document.querySelector('#hint').textContent='Recursos coletados (ação demonstrativa).'}
 
@@ -99,8 +117,12 @@ function subscribeWorld(){
 document.querySelector('#attack').onclick=()=>{document.querySelector('#hint').textContent='Você brandiu sua espada! Os inimigos ainda serão adicionados.'}
 let live;
 async function enterGame(session,emailFallback='') {
-  user=session?.user;
-  if(!user) throw new Error('Sessão não encontrada. Entre novamente com seu e-mail e senha.');
+  if(!session?.user) throw new Error('Sessão não encontrada. Entre novamente com seu e-mail e senha.');
+  // Usa a identidade validada pelo servidor, não apenas o objeto recebido no formulário.
+  const {data:authData,error:authError}=await db.auth.getUser();
+  if(authError) throw authError;
+  if(!authData?.user) throw new Error('Não foi possível validar sua sessão. Entre novamente.');
+  user=authData.user;
   const login=document.querySelector('#login');
   const players=document.querySelector('#players');
   const hint=document.querySelector('#hint');
