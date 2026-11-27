@@ -662,12 +662,12 @@ document.querySelector('#viewUp').onclick=()=>cameraPitch=Math.min(1.42,cameraPi
 document.querySelector('#viewDown').onclick=()=>cameraPitch=Math.max(.08,cameraPitch-.12);
 
 const QUESTS=[
- {id:'wood',title:'Lenhador iniciante',desc:'Colete 10 madeiras',target:10,xp:40,unit:'madeira'},
- {id:'stone',title:'Pedras para o reino',desc:'Extraia 10 pedras',target:10,xp:50,unit:'pedra'},
- {id:'build',title:'Primeira construção',desc:'Construa 3 blocos',target:3,xp:60,unit:'bloco'},
- {id:'plant',title:'Guardião da floresta',desc:'Plante 2 árvores',target:2,xp:45,unit:'árvore'},
- {id:'animals',title:'Criador do reino',desc:'Crie 2 animais no cercado',target:2,xp:55,unit:'animal'},
- {id:'products',title:'Colheita real',desc:'Recolha 3 produtos de animais',target:3,xp:50,unit:'produtos'}
+ {id:'wood',title:'Lenhador iniciante',desc:'Colete 10 madeiras',target:10,xp:40,coins:15,unit:'madeira'},
+ {id:'stone',title:'Pedras para o reino',desc:'Extraia 10 pedras',target:10,xp:50,coins:20,unit:'pedra'},
+ {id:'build',title:'Primeira construção',desc:'Construa 3 blocos',target:3,xp:60,coins:25,unit:'bloco'},
+ {id:'plant',title:'Guardião da floresta',desc:'Plante 2 árvores',target:2,xp:45,coins:15,unit:'árvore'},
+ {id:'animals',title:'Criador do reino',desc:'Crie 2 animais no cercado',target:2,xp:55,coins:20,unit:'animal'},
+ {id:'products',title:'Colheita real',desc:'Recolha 3 produtos de animais',target:3,xp:50,coins:25,unit:'produtos'}
 ];
 let questData={level:1,xp:0,progress:{wood:0,stone:0,build:0,plant:0,animals:0,products:0},completed_quests:[]},questLoaded=false,questSaving=Promise.resolve();
 function questLevelFor(xp){let level=1,remaining=xp;while(remaining>=level*100){remaining-=level*100;level++}return {level,remaining,next:level*100}}
@@ -681,7 +681,7 @@ function renderQuests(){
  const desc=document.createElement('div');desc.style.cssText='font-size:12px;opacity:.9;margin:4px 0';desc.textContent=q.desc+' · '+n+'/'+q.target;
  const bar=document.createElement('div');bar.style.cssText='height:7px;background:#101a15;border-radius:9px;overflow:hidden';
  const fill=document.createElement('div');fill.style.cssText='height:100%;width:'+(n/q.target*100)+'%;background:#d6b56d';bar.append(fill);
- const reward=document.createElement('div');reward.style.cssText='font-size:11px;color:#f0cc78;margin-top:4px';reward.textContent=done?'Concluída · recompensa recebida':'Recompensa: '+q.xp+' XP';
+ const reward=document.createElement('div');reward.style.cssText='font-size:11px;color:#f0cc78;margin-top:4px';reward.textContent=done?'Concluída · recompensa recebida':'Recompensa: '+q.xp+' XP + '+q.coins+' moedas';
  card.append(title,desc,bar,reward);list.append(card)});
 }
 async function loadQuestProgress(){
@@ -703,9 +703,9 @@ async function advanceQuest(id,amount=1){
  questData.progress[id]=Math.min(q.target,Number(questData.progress[id]||0)+amount);
  if(questData.progress[id]>=q.target){
   const previousLevel=questLevelFor(questData.xp||0).level;
-  questData.completed_quests.push(id);questData.xp=(questData.xp||0)+q.xp;
+  questData.completed_quests.push(id);questData.xp=(questData.xp||0)+q.xp;coins+=q.coins;updateStats();await saveResources();
   const lv=questLevelFor(questData.xp);questData.level=lv.level;
-  showQuestToast('🏆 Missão concluída: '+q.title+'! +'+q.xp+' XP · Nível '+lv.level+(lv.level>previousLevel?' · SUBIU DE NÍVEL!':''));
+  showQuestToast('🏆 Missão concluída: '+q.title+'! +'+q.xp+' XP · +'+q.coins+' moedas · Nível '+lv.level+(lv.level>previousLevel?' · SUBIU DE NÍVEL!':''));
  }else document.querySelector('#hint').textContent='📜 Missão: '+q.title+' ('+questData.progress[id]+'/'+q.target+')';
  renderQuests();await saveQuestProgress();
 }
