@@ -826,7 +826,7 @@ const QUESTS=[
 ];
 let questData={level:1,xp:0,progress:{wood:0,stone:0,build:0,plant:0,animals:0,products:0,enemies:0},completed_quests:[]},questLoaded=false,questSaving=Promise.resolve();
 function questLevelFor(xp){let level=1,remaining=xp;while(remaining>=level*100){remaining-=level*100;level++}return {level,remaining,next:level*100}}
-let questToastTimer=null;function showQuestToast(message){const el=document.querySelector('#questToast');el.textContent=message;el.style.display='block';clearTimeout(questToastTimer);questToastTimer=setTimeout(()=>{el.style.display='none'},2800)}
+let questToastTimer=null;function showQuestToast(message){const el=document.querySelector('#questToast');el.textContent=message;el.style.display='block';clearTimeout(questToastTimer);questToastTimer=setTimeout(()=>{el.style.display='none'},1000)}
 function renderQuests(){
  const lv=questLevelFor(questData.xp||0),el=document.querySelector('#questLevel');
  el.textContent='Nível '+lv.level+' · '+lv.remaining+'/'+lv.next+' XP';
@@ -861,7 +861,7 @@ async function advanceQuest(id,amount=1){
   questData.completed_quests.push(id);questData.xp=(questData.xp||0)+q.xp;coins+=q.coins;updateStats();await saveResources();
   const lv=questLevelFor(questData.xp);questData.level=lv.level;
   showQuestToast('🏆 Missão concluída: '+q.title+'! +'+q.xp+' XP · +'+q.coins+' moedas · Nível '+lv.level+(lv.level>previousLevel?' · SUBIU DE NÍVEL!':''));
- }else document.querySelector('#hint').textContent='📜 Missão: '+q.title+' ('+questData.progress[id]+'/'+q.target+')';
+ }else showQuestToast('📜 Missão: '+q.title+' ('+questData.progress[id]+'/'+q.target+')');
  renderQuests();await saveQuestProgress();
 }
 document.querySelector('#questsToggle').onclick=()=>{document.querySelector('#questsPanel').classList.toggle('hidden');renderQuests()};
