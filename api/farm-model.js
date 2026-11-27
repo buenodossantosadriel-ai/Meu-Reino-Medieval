@@ -4,6 +4,7 @@ const SOURCES = {
   pig: 'https://cdn.mint.gg/owned-artifacts/0151b3208e9413674e962a1360eca2446083e398bd8ceb4db22abc156a390d07',
   sheep: 'https://cdn.mint.gg/owned-artifacts/6e6b7ec3d01e80df27c21538f0cffaa754f6f608d9dfb44135b8b6c2f0812dc3',
   oak: 'https://files.innerscene.com/library/oak-street-tree-detailed-leaves-a273fef9/4a26d0fea7474835bf61/oak-detailed.glb',
+  dragon: 'https://vinish-models.pages.dev/dragons/fire-dragon.glb',
   'horse-bay': 'https://vinish-models.pages.dev/horses/bay-horse.glb',
   'horse-arabian': 'https://vinish-models.pages.dev/horses/arabian-horse.glb',
   'horse-friesian': 'https://vinish-models.pages.dev/horses/friesian-horse.glb',
