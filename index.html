@@ -20,19 +20,99 @@ const SUPABASE_URL='https://vuvjxrxljlhvoldugmpz.supabase.co';
 const SUPABASE_KEY='sb_publishable_Rr0gZu8e2g7uLLSBugM2aA_93T5xOVY';
 const db=createClient(SUPABASE_URL,SUPABASE_KEY);
 let user=null,wood=0,stone=0,health=100,night=false,lastSave=0;const meshes={blocks:new Map(),trees:new Map(),animals:new Map()};
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x9bc9dc);scene.fog=new THREE.Fog(0x9bc9dc,35,100);
-const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,200);
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;document.querySelector('#game').appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xe5f4ff,0x65733d,2));const sun=new THREE.DirectionalLight(0xffedc4,2.2);sun.position.set(-15,30,15);sun.castShadow=true;scene.add(sun);
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),new THREE.MeshStandardMaterial({color:0x548344,roughness:1}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
-const grid=new THREE.GridHelper(180,60,0x496b3d,0x496b3d);grid.position.y=.015;scene.add(grid);
-function box(x,y,z,sx,sy,sz,color){const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),new THREE.MeshStandardMaterial({color}));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;scene.add(m);return m}
-function tree(x,z,id=null){const group=new THREE.Group();const trunk= new THREE.Mesh(new THREE.CylinderGeometry(.22,.3,1.5,6),new THREE.MeshStandardMaterial({color:0x76502c}));trunk.position.set(0,.75,0);group.add(trunk);const crown=new THREE.Mesh(new THREE.ConeGeometry(1.25,2.8,7),new THREE.MeshStandardMaterial({color:0x27633a}));crown.position.set(0,2.65,0);group.add(crown);group.position.set(x,0,z);scene.add(group);if(id)meshes.trees.set(id,group);return group}
-for(let i=0;i<55;i++){const x=(Math.random()-.5)*90,z=(Math.random()-.5)*90;if(Math.abs(x)>7||Math.abs(z)>7)tree(x,z)}
-// Castelo inicial
-for(let x=-4;x<=4;x+=2)for(let z=-4;z<=4;z+=2)if(Math.abs(x)===4||Math.abs(z)===4)box(x,1,z,1.9,2,1.9,0x9b9585);
-box(0,1.8,-4,2.2,3.6,2,0xaaa18c);
-const player=new THREE.Group();const body=new THREE.Mesh(new THREE.CapsuleGeometry(.42,.8,4,8),new THREE.MeshStandardMaterial({color:0x315c9a}));body.position.y=.85;player.add(body);const head=new THREE.Mesh(new THREE.SphereGeometry(.28,12,10),new THREE.MeshStandardMaterial({color:0xe0b68d}));head.position.y=1.55;player.add(head);scene.add(player);
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x9fc8df);
+scene.fog=new THREE.Fog(0x9fc8df,75,175);
+const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,260);
+const renderer=new THREE.WebGLRenderer({antialias:innerWidth>700,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.12;
+document.querySelector('#game').appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xdceeff,0x66734a,1.65));
+const sun=new THREE.DirectionalLight(0xffe2ad,2.4);
+sun.position.set(-35,55,28);sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024);
+sun.shadow.camera.left=-65;sun.shadow.camera.right=65;sun.shadow.camera.top=65;sun.shadow.camera.bottom=-65;
+sun.shadow.bias=-.00025;scene.add(sun);
+const fill=new THREE.DirectionalLight(0x9dbbdf,.55);fill.position.set(30,18,-35);scene.add(fill);
+function makeGroundTexture(){
+ const canvas=document.createElement('canvas');canvas.width=512;canvas.height=512;
+ const ctx=canvas.getContext('2d');ctx.fillStyle='#638b45';ctx.fillRect(0,0,512,512);
+ for(let i=0;i<15000;i++){const x=Math.random()*512,y=Math.random()*512,r=Math.random()*2.2+.4;ctx.fillStyle=Math.random()>.5?'rgba(35,75,34,.20)':'rgba(190,177,105,.15)';ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}
+ const tex=new THREE.CanvasTexture(canvas);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(9,9);tex.colorSpace=THREE.SRGBColorSpace;return tex;
+}
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(220,220),new THREE.MeshStandardMaterial({map:makeGroundTexture(),color:0xffffff,roughness:1}));
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+function box(x,y,z,sx,sy,sz,color,material=null){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material||new THREE.MeshStandardMaterial({color,roughness:.88}));
+ m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;scene.add(m);return m;
+}
+const stoneMat=new THREE.MeshStandardMaterial({color:0xaaa99b,roughness:.95});
+const darkStone=new THREE.MeshStandardMaterial({color:0x666b62,roughness:1});
+const roofMat=new THREE.MeshStandardMaterial({color:0x70483a,roughness:.9});
+const woodMat=new THREE.MeshStandardMaterial({color:0x69452c,roughness:.9});
+function tower(x,z){
+ const base=new THREE.Mesh(new THREE.CylinderGeometry(1.75,1.95,5.8,12),stoneMat);base.position.set(x,2.9,z);base.castShadow=true;base.receiveShadow=true;scene.add(base);
+ const roof=new THREE.Mesh(new THREE.ConeGeometry(2.05,3.2,12),roofMat);roof.position.set(x,7.35,z);roof.castShadow=true;scene.add(roof);
+ for(let a=0;a<8;a++){const ang=a*Math.PI/4;const mer=box(x+Math.cos(ang)*1.35,5.9,z+Math.sin(ang)*1.35,.42,1,.42,0x8b8d82);mer.material=stoneMat}
+ const slit=box(x,3.7,z+1.76,.28,1.1,.08,0x303b38);slit.material=darkStone;
+}
+function castle(){
+ // Muralhas com ameias e quatro torres
+ box(0,2,-8,17,4,1.25,0xaaa99b,stoneMat);box(0,2,8,17,4,1.25,0xaaa99b,stoneMat);
+ box(-8,2,0,1.25,4,16,0xaaa99b,stoneMat);box(8,2,0,1.25,4,16,0xaaa99b,stoneMat);
+ for(let x=-7.5;x<=7.5;x+=2){box(x,4.35,-8,.8,.65,1.35,0xaaa99b,stoneMat);box(x,4.35,8,.8,.65,1.35,0xaaa99b,stoneMat)}
+ for(let z=-6;z<=6;z+=2){box(-8,4.35,z,1.35,.65,.8,0xaaa99b,stoneMat);box(8,4.35,z,1.35,.65,.8,0xaaa99b,stoneMat)}
+ tower(-8,-8);tower(8,-8);tower(-8,8);tower(8,8);
+ // Portão, arco e ponte
+ box(0,2,-8,3.1,4.2,.5,0x493b2e,woodMat);
+ const arch=new THREE.Mesh(new THREE.TorusGeometry(1.55,.24,8,16,Math.PI),stoneMat);arch.rotation.z=Math.PI;arch.position.set(0,3.9,-7.68);scene.add(arch);
+ for(let x=-1.2;x<=1.2;x+=.4)box(x,2,-7.68,.08,3.7,.12,0x8a633c,woodMat);
+ box(0,.18,-12,4,.25,7,0x795b3a,woodMat);
+ // Torre de menagem no pátio
+ box(0,2.5,-2,6,5,5,0xb8b5a7,stoneMat);
+ box(0,5.3,-2,6.3,.35,5.3,0x777c72,darkStone);
+ for(let x=-2.4;x<=2.4;x+=1.6){box(x,5.8,-4.25,.75,.9,.75,0xb8b5a7,stoneMat)}
+ for(let z=-3.5;z<=-.5;z+=1.5){box(-3.1,5.8,z,.75,.9,.75,0xb8b5a7,stoneMat);box(3.1,5.8,z,.75,.9,.75,0xb8b5a7,stoneMat)}
+ const keepRoof=new THREE.Mesh(new THREE.ConeGeometry(3.9,3.2,4),roofMat);keepRoof.position.set(0,7.1,-2);keepRoof.rotation.y=Math.PI/4;keepRoof.castShadow=true;scene.add(keepRoof);
+ for(const x of [-1.5,1.5]){const win=box(x,3.4,.56,.45,1.1,.08,0x293b45);win.material=new THREE.MeshStandardMaterial({color:0x293b45,emissive:0x182c35})}
+}
+castle();
+function tree(x,z,id=null){
+ const group=new THREE.Group();
+ const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.2,.34,1.8,7),new THREE.MeshStandardMaterial({color:0x68452b,roughness:1}));
+ trunk.position.y=.9;trunk.castShadow=true;group.add(trunk);
+ const greens=[0x285c36,0x356f3d,0x477c43];
+ for(let j=0;j<3;j++){const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(1.15-j*.08,1),new THREE.MeshStandardMaterial({color:greens[j],roughness:1}));crown.position.set((j-1)*.32,2.05+j*.62,(j%2)*.22);crown.scale.set(1.15,.95,1.05);crown.castShadow=true;group.add(crown)}
+ group.position.set(x,0,z);group.rotation.y=Math.random()*Math.PI;const s=.8+Math.random()*.65;group.scale.setScalar(s);scene.add(group);if(id)meshes.trees.set(id,group);return group;
+}
+for(let i=0;i<95;i++){const x=(Math.random()-.5)*125,z=(Math.random()-.5)*125;if(Math.abs(x)>13||Math.abs(z)>15)tree(x,z)}
+// Pedras, arbustos e caminho até ao castelo
+for(let i=0;i<55;i++){const x=(Math.random()-.5)*110,z=(Math.random()-.5)*110;if(Math.abs(x)>12||Math.abs(z)>14){const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.35+Math.random()*.5,0),new THREE.MeshStandardMaterial({color:0x777b70,roughness:1}));rock.position.set(x,.2,z);rock.scale.y=.65;rock.castShadow=true;scene.add(rock)}}
+const pathMat=new THREE.MeshStandardMaterial({color:0x9b805b,roughness:1});
+const path=new THREE.Mesh(new THREE.PlaneGeometry(5,48),pathMat);path.rotation.x=-Math.PI/2;path.position.set(0,.025,18);scene.add(path);
+for(let i=0;i<18;i++){const peb=new THREE.Mesh(new THREE.DodecahedronGeometry(.18+Math.random()*.18,0),new THREE.MeshStandardMaterial({color:0xb5a17b,roughness:1}));peb.position.set((Math.random()-.5)*3,.06,40-i*2.2);peb.scale.set(1,.25,1.4);scene.add(peb)}
+// Personagem: cavaleiro com armadura, elmo, capa e espada
+const player=new THREE.Group();
+const armor=new THREE.MeshStandardMaterial({color:0x526c83,metalness:.55,roughness:.42});
+const trim=new THREE.MeshStandardMaterial({color:0xc5a45e,metalness:.65,roughness:.35});
+const cloth=new THREE.MeshStandardMaterial({color:0x7d2930,roughness:.9});
+const skin=new THREE.MeshStandardMaterial({color:0xd6a77e,roughness:.9});
+const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.43,.72,5,10),armor);torso.position.y=1.12;torso.castShadow=true;player.add(torso);
+const chest=new THREE.Mesh(new THREE.BoxGeometry(.58,.5,.12),trim);chest.position.set(0,1.25,.36);player.add(chest);
+const head=new THREE.Mesh(new THREE.SphereGeometry(.28,16,12),skin);head.position.y=1.82;player.add(head);
+const helmet=new THREE.Mesh(new THREE.SphereGeometry(.34,16,10,0,Math.PI*2,0,Math.PI/2),armor);helmet.position.y=1.92;player.add(helmet);
+const visor=box(0,1.82,.29,.42,.1,.08,0x252e36);visor.position.set(0,1.82,.29);player.add(visor);scene.remove(visor);
+const cape=new THREE.Mesh(new THREE.BoxGeometry(.62,.9,.12),cloth);cape.position.set(0,1.05,-.38);cape.rotation.x=-.12;player.add(cape);
+for(const x of [-.48,.48]){const shoulder=new THREE.Mesh(new THREE.SphereGeometry(.25,10,8),armor);shoulder.position.set(x,1.42,0);player.add(shoulder)}
+for(const x of [-.19,.19]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.23,.58,.27),armor);leg.position.set(x,.34,0);player.add(leg)}
+const sword=new THREE.Group();const blade=new THREE.Mesh(new THREE.BoxGeometry(.09,.85,.12),new THREE.MeshStandardMaterial({color:0xd9e1e4,metalness:.8,roughness:.22}));blade.position.y=.48;sword.add(blade);const grip=new THREE.Mesh(new THREE.BoxGeometry(.34,.09,.16),trim);grip.position.y=.08;sword.add(grip);sword.position.set(.55,.9,.12);sword.rotation.z=-.18;player.add(sword);
+scene.add(player);
 let yaw=0;const keys={};addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 const held={};for(const [id,key] of [['forward','w'],['back','s'],['left','a'],['right','d']]){const b=document.getElementById(id);b.onpointerdown=()=>held[key]=true;b.onpointerup=b.onpointerleave=()=>held[key]=false}
 function updateStats(){document.querySelector('#stats').textContent='❤️ '+health+' · Madeira: '+wood+' · Pedra: '+stone}
