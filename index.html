@@ -956,13 +956,14 @@ function showHorseHint(message){
 }
 function mountNearestHorse(){
  if(mountedHorse){
+  window.__medieval4D?.play('mount',player.position);
   mountedHorse.wild=true;mountedHorse.group.position.set(player.position.x+2.2,0,player.position.z+1.8);mountedHorse.target.set(mountedHorse.group.position.x,0,mountedHorse.group.position.z);mountedHorse.timer=3;playHorseAnimation(mountedHorse,'Idle');mountedHorse=null;player.position.y=0;
   document.querySelector('#mount').textContent='🐎 Montar';showHorseHint('Você desmontou. O cavalo ficou livre.');return;
  }
  let best=null,dist=8.5;
  for(const h of horses){if(!h.wild)continue;const d=Math.hypot(h.group.position.x-player.position.x,h.group.position.z-player.position.z);if(d<dist){dist=d;best=h}}
  if(!best){document.querySelector('#hint').textContent='Chegue mais perto de um cavalo para montar.';return}
- mountedHorse=best;best.wild=false;best.timer=9999;best.target.set(best.group.position.x,0,best.group.position.z);player.position.set(best.group.position.x,1.58,best.group.position.z);player.rotation.y=best.group.rotation.y;playHorseAnimation(best,'Idle');document.querySelector('#mount').textContent='↘ Desmontar';showHorseHint('Você montou a cavalo! Use o joystick para cavalgar.');
+ window.__medieval4D?.play('mount',best.group.position);mountedHorse=best;best.wild=false;best.timer=9999;best.target.set(best.group.position.x,0,best.group.position.z);player.position.set(best.group.position.x,1.58,best.group.position.z);player.rotation.y=best.group.rotation.y;playHorseAnimation(best,'Idle');document.querySelector('#mount').textContent='↘ Desmontar';showHorseHint('Você montou a cavalo! Use o joystick para cavalgar.');
 }
 document.querySelector('#mount').onclick=mountNearestHorse;
 let yaw=0,cameraPitch=.48,cameraDistance=17,cameraDistanceCurrent=17;
@@ -1100,9 +1101,9 @@ async function collectResource(target='any'){
   if(!String(nearbyTree.id).startsWith('wild:')){const {error}=await db.from('world_trees').delete().eq('id',nearbyTree.id).eq('owner_id',user.id);if(error){document.querySelector('#hint').textContent='Não foi possível cortar a árvore plantada: '+error.message;return}}
   scene.remove(nearbyTree.g);meshes.trees.delete(nearbyTree.id);
   for(let oi=worldObstacles.length-1;oi>=0;oi--){const o=worldObstacles[oi];if(o.type==='circle'&&Math.hypot(o.x-nearbyTree.g.position.x,o.z-nearbyTree.g.position.z)<1.8)worldObstacles.splice(oi,1)}
-  wood+=3;advanceQuest('wood',3);document.querySelector('#hint').textContent='🪓 Árvore recolhida! +3 madeiras.';
+  wood+=3;window.__medieval4D?.play('wood',player.position);advanceQuest('wood',3);document.querySelector('#hint').textContent='🪓 Árvore recolhida! +3 madeiras.';
  }else if(rockSelected&&nearbyRock){
-  scene.remove(nearbyRock.g);harvestRocks.splice(nearbyRock.i,1);stone+=2;advanceQuest('stone',2);document.querySelector('#hint').textContent='⛏️ Pedra recolhida! +2 pedras.';
+  scene.remove(nearbyRock.g);harvestRocks.splice(nearbyRock.i,1);stone+=2;window.__medieval4D?.play('stone',player.position);advanceQuest('stone',2);document.querySelector('#hint').textContent='⛏️ Pedra recolhida! +2 pedras.';
  }else{
   document.querySelector('#hint').textContent=target==='tree'?'Chegue perto de uma árvore para recolhê-la.':target==='rock'?'Chegue perto de uma pedra para recolhê-la.':'Chegue perto de uma árvore ou pedra para coletar.';
   return;
@@ -1554,21 +1555,21 @@ function updateEnemies(dt,t){
 }
 document.querySelector('#jump').onclick=()=>{
  if(!user||mountedHorse||cannonActive||jumpOffset>.02)return;
- jumpVelocity=7.4;document.querySelector('#hint').textContent='Você saltou!';
+ jumpVelocity=7.4;window.__medieval4D?.play('jump',player.position);document.querySelector('#hint').textContent='Você saltou!';
 };
 document.querySelector('#dodge').onclick=()=>{
  const now=Date.now();if(!user||mountedHorse||cannonActive||now<dodgeCooldown)return;
  let fx=Math.sin(player.rotation.y),fz=Math.cos(player.rotation.y);
  const ix=moveInput.x,iy=-moveInput.y;
  if(Math.hypot(ix,iy)>.15){const side=ix,forward=iy;fx=-Math.sin(yaw)*forward+Math.cos(yaw)*side;fz=-Math.cos(yaw)*forward-Math.sin(yaw)*side;const n=Math.hypot(fx,fz)||1;fx/=n;fz/=n;}
- dodgeX=fx;dodgeZ=fz;dodgeUntil=now+430;dodgeCooldown=now+1250;enemyInvulnerableUntil=now+480;
+ dodgeX=fx;dodgeZ=fz;window.__medieval4D?.play('dodge',player.position);dodgeUntil=now+430;dodgeCooldown=now+1250;enemyInvulnerableUntil=now+480;
  document.querySelector('#hint').textContent='Esquiva! Você está temporariamente protegido.';
 };
 document.querySelector('#attack').onclick=async()=>{
  if(!user)return;const now=Date.now();if(now-lastAttackAt<900){document.querySelector('#hint').textContent='Aguarde para atacar novamente.';return}lastAttackAt=now;
  const enemy=enemyUnits.filter(e=>e.alive).map(e=>({e,d:Math.hypot(e.group.position.x-player.position.x,e.group.position.z-player.position.z)})).filter(v=>v.d<3.6).sort((a,b)=>a.d-b.d)[0];
- attackUntil=Date.now()+720;if(avatarInstance?.attackAction){avatarInstance.attackAction.reset().fadeIn(.08).play();avatarInstance.attackAction.clampWhenFinished=true;avatarInstance.attackAction.setLoop(THREE.LoopOnce,1)}
- if(enemy){const e=enemy.e,damage=Math.min(65,14+power*6);const awayX=e.group.position.x-player.position.x,awayZ=e.group.position.z-player.position.z,awayLen=Math.hypot(awayX,awayZ)||1;e.knockbackX=awayX/awayLen*(e.type==='ogre'?3.2:5.2);e.knockbackZ=awayZ/awayLen*(e.type==='ogre'?3.2:5.2);e.knockbackUntil=Date.now()+260;e.health=Math.max(0,e.health-damage);updateEnemyHealth(e);if(e.health<=0){e.alive=false;e.respawnAt=Date.now()+18000;scene.remove(e.group);coins+=e.reward;updateStats();await saveResources();advanceQuest('enemies',1);document.querySelector('#hint').textContent='🏅 '+(e.type==='ogre'?'Ciclope':'Bandido')+' derrotado! +'+e.reward+' moedas. Ele retornará em breve.'}else document.querySelector('#hint').textContent='⚔ Você acertou '+(e.type==='ogre'?'o ciclope':'o bandido')+'! '+e.health+'/'+e.maxHealth+' de vida restante.';return}
+ attackUntil=Date.now()+720;window.__medieval4D?.play('sword',player.position);if(avatarInstance?.attackAction){avatarInstance.attackAction.reset().fadeIn(.08).play();avatarInstance.attackAction.clampWhenFinished=true;avatarInstance.attackAction.setLoop(THREE.LoopOnce,1)}
+ if(enemy){const e=enemy.e;window.__medieval4D?.play('hit',e.group.position);const damage=Math.min(65,14+power*6);const awayX=e.group.position.x-player.position.x,awayZ=e.group.position.z-player.position.z,awayLen=Math.hypot(awayX,awayZ)||1;e.knockbackX=awayX/awayLen*(e.type==='ogre'?3.2:5.2);e.knockbackZ=awayZ/awayLen*(e.type==='ogre'?3.2:5.2);e.knockbackUntil=Date.now()+260;e.health=Math.max(0,e.health-damage);updateEnemyHealth(e);if(e.health<=0){e.alive=false;e.respawnAt=Date.now()+18000;scene.remove(e.group);coins+=e.reward;updateStats();await saveResources();advanceQuest('enemies',1);document.querySelector('#hint').textContent='🏅 '+(e.type==='ogre'?'Ciclope':'Bandido')+' derrotado! +'+e.reward+' moedas. Ele retornará em breve.'}else document.querySelector('#hint').textContent='⚔ Você acertou '+(e.type==='ogre'?'o ciclope':'o bandido')+'! '+e.health+'/'+e.maxHealth+' de vida restante.';return}
  const target=[...remotePlayers.values()].map(r=>({r,d:Math.hypot(r.group.position.x-player.position.x,r.group.position.z-player.position.z)})).filter(v=>v.d<3.4).sort((a,b)=>a.d-b.d)[0];
  if(!target){document.querySelector('#hint').textContent='Nenhum inimigo ou jogador ao alcance. Aproxime-se de um alvo.';return}
  const {error}=await db.from('world_combat').insert({attacker_id:user.id,target_id:target.r.id,damage:Math.min(25,4+power*2)});
@@ -2015,7 +2016,7 @@ shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;const lightDirection=sun
  const dragonNear=dragonFlight.ready&&dragonFlight.group&&Math.hypot(dragonFlight.group.position.x-player.position.x,dragonFlight.group.position.z-player.position.z)<7.5;if(dragonNear&&Date.now()>lastDragonDamage&&Date.now()<dragonBurnUntil){lastDragonDamage=Date.now()+620;health=Math.max(0,health-5);updateStats();saveResources();document.querySelector('#hint').textContent='🐉 Você está exposto às chamas do dragão! -5 de vida. Afaste-se!';if(health<=0){health=35;player.position.set(0,0,13);dragonBurnUntil=0;enemyInvulnerableUntil=Date.now()+2500;updateStats();saveResources();}}
  for(const smoke of volcanoSmoke){smoke.phase+=dt*.22;smoke.mesh.position.y+=dt*.55;if(smoke.mesh.position.y>125)smoke.mesh.position.y=74;smoke.mesh.position.x=Math.sin(smoke.phase)*5;smoke.mesh.material.opacity=.12+Math.sin(smoke.phase*2)*.06;}
  lavaGlow.intensity=(worldLight.night>0.5?6.5:3.4)+Math.sin(t*.003)*.65;lavaGlow.distance=worldLight.night>0.5?95:58;
- clouds.forEach((c,i)=>{c.position.x+=dt*(.45+(i%3)*.12);if(c.position.x>165)c.position.x=-165;});window.__medieval4D?.update(dt,t,player.position,worldLight);renderer.render(scene,camera);if(user&&t-lastSave>4000){lastSave=t;saveResources()}}
+ clouds.forEach((c,i)=>{c.position.x+=dt*(.45+(i%3)*.12);if(c.position.x>165)c.position.x=-165;});window.__medieval4D?.update(dt,t,player.position,worldLight,camera,{moving:activeMoving&&!cannonActive,mounted:!!mountedHorse,running});renderer.render(scene,camera);if(user&&t-lastSave>4000){lastSave=t;saveResources()}}
 requestAnimationFrame(animate);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 if('serviceWorker'in navigator) navigator.serviceWorker.register('/sw.js').catch(e=>console.warn('Service worker:',e));
