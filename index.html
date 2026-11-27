@@ -269,7 +269,29 @@ function makeOgre(){
  return g;
 }
 const avatarBuilders={knight:makeKnight,princess:makePrincess,ogre:makeOgre};
-let avatarModel=makeKnight();player.add(avatarModel);
+// Transforma braços e pernas em articulações reais para a animação de caminhada.
+function prepareAvatarMotion(model,type){
+ const motion={arms:[],legs:[],type};
+ const candidates=[];
+ model.traverse(o=>{if(o.isMesh&&o.parent===model)candidates.push(o)});
+ for(const mesh of candidates){
+  const p=mesh.position,geo=mesh.geometry?.type,ax=Math.abs(p.x);
+  let kind=null,anchor=0;
+  if(type==='knight'&&geo==='CylinderGeometry'&&ax>.43&&ax<.51&&p.y>.75&&p.y<.9){kind='arm';anchor=1.43;}
+  if(type==='knight'&&geo==='BoxGeometry'&&ax>.17&&ax<.23&&p.y>.28&&p.y<.42){kind='leg';anchor=.68;}
+  if(type==='princess'&&geo==='CapsuleGeometry'&&ax>.38&&ax<.48&&p.y>1.35&&p.y<1.55){kind='arm';anchor=1.72;}
+  if(type==='ogre'&&geo==='CapsuleGeometry'&&ax>.48&&ax<.58&&p.y>1.05&&p.y<1.3){kind='arm';anchor=1.48;}
+  if(type==='ogre'&&geo==='BoxGeometry'&&ax>.25&&ax<.34&&p.y>.28&&p.y<.48){kind='leg';anchor=.68;}
+  if(!kind)continue;
+  const pivot=new THREE.Group(),original=mesh.position.clone();
+  pivot.position.set(original.x,anchor,original.z);
+  mesh.position.set(0,original.y-anchor,0);
+  model.add(pivot);pivot.add(mesh);
+  (kind==='arm'?motion.arms:motion.legs).push({pivot,side:Math.sign(original.x)||1});
+ }
+ return motion;
+}
+let avatarModel=makeKnight();let avatarMotion=prepareAvatarMotion(avatarModel,'knight');player.add(avatarModel);
 function makeNameTag(name){
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;
  const ctx=canvas.getContext('2d');
@@ -305,16 +327,17 @@ function syncRemotePlayers(){
   const id=meta.user_id;seen.add(id);
   let remote=remotePlayers.get(id);
   if(!remote){
-   const group=new THREE.Group(),model=(avatarBuilders[meta.avatar]||makeKnight)();
+   const group=new THREE.Group(),avatarType=avatarBuilders[meta.avatar]?meta.avatar:'knight',model=avatarBuilders[avatarType]();
+   const motion=prepareAvatarMotion(model,avatarType);
    group.add(model);const tag=makeNameTag(meta.name||'Aventureiro');group.add(tag);scene.add(group);
-   remote={group,target:new THREE.Vector3(),rotation:0,tag,model};remotePlayers.set(id,remote);
+   remote={group,target:new THREE.Vector3(),rotation:0,tag,model,motion,phase:Math.random()*Math.PI*2};remotePlayers.set(id,remote);
   }
   remote.target.set(Number(meta.x)||0,0,Number(meta.z)||0);
   remote.rotation=Number(meta.rotation)||0;
   if(meta.name)updateNameTag(remote.tag,meta.name);
   if(meta.avatar&&remote.avatar!==meta.avatar){
    remote.group.remove(remote.model);remote.model.traverse(o=>{if(o.isMesh){o.geometry.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});
-   remote.model=avatarBuilders[meta.avatar]?.()||makeKnight();remote.group.add(remote.model);remote.avatar=meta.avatar;
+   remote.model=avatarBuilders[meta.avatar]?.()||makeKnight();remote.motion=prepareAvatarMotion(remote.model,meta.avatar);remote.group.add(remote.model);remote.avatar=meta.avatar;
   }
  }
  for(const [id,remote] of remotePlayers){if(!seen.has(id)){scene.remove(remote.group);remote.group.traverse(o=>{if(o.isMesh){o.geometry.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else if(o.material)o.material.dispose();}});remotePlayers.delete(id);}}
@@ -322,7 +345,7 @@ function syncRemotePlayers(){
 function chooseAvatar(type){
  if(!avatarBuilders[type]||type===selectedAvatar)return;
  player.remove(avatarModel);avatarModel.traverse(o=>{if(o.isMesh){o.geometry.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});
- selectedAvatar=type;avatarModel=avatarBuilders[type]();player.add(avatarModel);
+ selectedAvatar=type;avatarModel=avatarBuilders[type]();avatarMotion=prepareAvatarMotion(avatarModel,type);player.add(avatarModel);
  document.querySelectorAll('#avatarSelect button').forEach(b=>b.classList.toggle('active',b.dataset.avatar===type));
  document.querySelector('#hint').textContent='Personagem escolhido: '+({knight:'Cavaleiro',princess:'Princesa',ogre:'Ogro'}[type])+'.';
 }
@@ -594,16 +617,28 @@ db.auth.getSession().then(async ({data,error})=>{
   }
 });
 
-let last=0;function animate(t){requestAnimationFrame(animate);const dt=Math.min((t-last)/1000,.05);last=t;
+let last=0,walkPhase=0;function animate(t){requestAnimationFrame(animate);const dt=Math.min((t-last)/1000,.05);last=t;
  let sx=moveInput.x,sy=-moveInput.y;
  if(keys.w||keys.arrowup)sy=1;if(keys.s||keys.arrowdown)sy=-1;if(keys.a||keys.arrowleft)sx=-1;if(keys.d||keys.arrowright)sx=1;
- const len=Math.hypot(sx,sy);if(len>.08){const side=sx/Math.max(1,len),forward=sy/Math.max(1,len);
+ const len=Math.hypot(sx,sy);const moving=len>.08;if(moving){walkPhase+=dt*(mountedHorse?10:8);const side=sx/Math.max(1,len),forward=sy/Math.max(1,len);
  const dx=(Math.sin(yaw)*forward+Math.cos(yaw)*side),dz=(-Math.cos(yaw)*forward+Math.sin(yaw)*side);
  player.position.x+=dx*(mountedHorse?10:6)*dt;player.position.z+=dz*(mountedHorse?10:6)*dt;player.rotation.y=Math.atan2(dx,dz);if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;}
  if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);player.position.y=1.22;}else player.position.y=0;
- for(const h of horses){if(h===mountedHorse)continue;h.timer-=dt;if(h.timer<=0){h.target.set(h.group.position.x+(Math.random()-.5)*12,0,h.group.position.z+(Math.random()-.5)*10);h.timer=2+Math.random()*4;}const vx=h.target.x-h.group.position.x,vz=h.target.z-h.group.position.z,dl=Math.hypot(vx,vz);if(dl>.5){h.group.position.x+=vx/dl*.8*dt;h.group.position.z+=vz/dl*.8*dt;h.group.rotation.y=Math.atan2(vx,vz);}h.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.006+i*Math.PI)*.12;});}
- if(mountedHorse)mountedHorse.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.012+i*Math.PI)*.28;});
- for(const remote of remotePlayers.values()){remote.group.position.lerp(remote.target,Math.min(1,dt*8));remote.group.rotation.y=remote.rotation;}
+ const gait=moving?Math.sin(walkPhase):0;
+ avatarModel.position.y=(moving?Math.abs(Math.sin(walkPhase*2))*.045:Math.sin(t*.0018)*.018);
+ avatarModel.rotation.x=moving?Math.sin(walkPhase)*.035:Math.sin(t*.0015)*.012;
+ avatarModel.rotation.z=selectedAvatar==='princess'?(moving?Math.sin(walkPhase)*.045:Math.sin(t*.0012)*.018):0;
+ for(const a of avatarMotion.arms)a.pivot.rotation.z=(moving?Math.sin(walkPhase+ (a.side<0?Math.PI:0))*.42:Math.sin(t*.0015+a.side)*.025);
+ for(const l of avatarMotion.legs)l.pivot.rotation.x=moving?Math.sin(walkPhase+(l.side<0?Math.PI:0))*.62:0;
+ for(const h of horses){if(h===mountedHorse)continue;h.timer-=dt;if(h.timer<=0){h.target.set(h.group.position.x+(Math.random()-.5)*12,0,h.group.position.z+(Math.random()-.5)*10);h.timer=2+Math.random()*4;}const vx=h.target.x-h.group.position.x,vz=h.target.z-h.group.position.z,dl=Math.hypot(vx,vz);if(dl>.5){h.group.position.x+=vx/dl*.8*dt;h.group.position.z+=vz/dl*.8*dt;h.group.rotation.y=Math.atan2(vx,vz);}h.legs.forEach((leg,i)=>{leg.rotation.x=dl>.5?Math.sin(t*.008+i*Math.PI)*.34:Math.sin(t*.0015+i)*.025;});}
+ if(mountedHorse){mountedHorse.group.position.y=Math.abs(Math.sin(t*.012))*.045;mountedHorse.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.012+i*Math.PI)*.48;});}
+ for(const remote of remotePlayers.values()){
+  const delta=remote.target.clone().sub(remote.group.position),remoteMoving=delta.length()>.025;
+  remote.group.position.lerp(remote.target,Math.min(1,dt*8));remote.group.rotation.y=remote.rotation;
+  remote.phase+=dt*(remoteMoving?8:1.5);remote.model.position.y=remoteMoving?Math.abs(Math.sin(remote.phase*2))*.04:Math.sin(t*.0015)*.015;
+  for(const a of remote.motion.arms)a.pivot.rotation.z=remoteMoving?Math.sin(remote.phase+(a.side<0?Math.PI:0))*.4:0;
+  for(const l of remote.motion.legs)l.pivot.rotation.x=remoteMoving?Math.sin(remote.phase+(l.side<0?Math.PI:0))*.58:0;
+}
  if(user&&live&&t-lastPresenceUpdate>350){lastPresenceUpdate=t;live.track({user_id:user.id,name:playerName,avatar:selectedAvatar,x:player.position.x,z:player.position.z,rotation:player.rotation.y}).catch(e=>console.warn('Presença:',e));}
  cameraDistanceCurrent+=(cameraDistance-cameraDistanceCurrent)*Math.min(1,dt*10);
  const horiz=Math.cos(cameraPitch)*cameraDistanceCurrent;
