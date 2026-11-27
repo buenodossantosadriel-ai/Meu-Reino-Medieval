@@ -25,6 +25,8 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL='https://vuvjxrxljlhvoldugmpz.supabase.co';
 const SUPABASE_KEY='sb_publishable_Rr0gZu8e2g7uLLSBugM2aA_93T5xOVY';
 const db=createClient(SUPABASE_URL,SUPABASE_KEY);
+// Identificador único por aba: necessário para a chave de Presence do multiplayer.
+const clientId=(window.crypto&&typeof window.crypto.randomUUID==='function')?window.crypto.randomUUID():'client-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
 let user=null,wood=0,stone=0,health=100,coins=0,power=1,weapon="Espada de madeira",night=false,lastSave=0;const meshes={blocks:new Map(),trees:new Map(),animals:new Map(),fences:new Map(),wells:new Map()};const harvestRocks=[];
 const worldObstacles=[];
 function addCircleObstacle(x,z,r){worldObstacles.push({type:'circle',x,z,r})}
