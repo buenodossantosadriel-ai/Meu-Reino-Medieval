@@ -1065,7 +1065,7 @@ document.querySelector('#attack').onclick=async()=>{
 };
 
 
-let kingdomMarkers=[],mapArmed=false;
+let kingdomMarkers=[],mapArmed=false,lastMapDraw=0;
 const mapCanvas=document.querySelector('#kingdomMap'),mapCtx=mapCanvas.getContext('2d'),MAP_EXTENT=210;
 function drawKingdomMap(){
  const c=mapCtx,w=mapCanvas.width,h=mapCanvas.height;c.clearRect(0,0,w,h);
@@ -1285,7 +1285,7 @@ shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;sun.target.position.set(
  cameraDistanceCurrent+=(cameraDistance-cameraDistanceCurrent)*Math.min(1,dt*10);
  const horiz=Math.cos(cameraPitch)*cameraDistanceCurrent;
  const target=new THREE.Vector3(player.position.x+Math.sin(yaw)*horiz,player.position.y+Math.sin(cameraPitch)*cameraDistanceCurrent+1.2,player.position.z+Math.cos(yaw)*horiz);
- camera.position.lerp(target,.14);camera.lookAt(player.position.x,1.1,player.position.z);if(!document.querySelector('#mapPanel').classList.contains('hidden'))drawKingdomMap();
+ camera.position.lerp(target,.14);camera.lookAt(player.position.x,1.1,player.position.z);if(!document.querySelector('#mapPanel').classList.contains('hidden')&&t-lastMapDraw>500){lastMapDraw=t;drawKingdomMap();}
  clouds.forEach((c,i)=>{c.position.x+=dt*(.45+(i%3)*.12);if(c.position.x>165)c.position.x=-165;});renderer.render(scene,camera);if(user&&t-lastSave>4000){lastSave=t;saveResources()}}
 requestAnimationFrame(animate);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
