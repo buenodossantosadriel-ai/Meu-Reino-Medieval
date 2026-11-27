@@ -340,11 +340,11 @@ function prepareAvatarMotion(model,type){
 }
 let avatarModel=makeKnight();let avatarMotion=prepareAvatarMotion(avatarModel,'knight');player.add(avatarModel);
 const professionalAvatarUrls={
- knight:'https://vinish-models.pages.dev/knights/plate-armour-knight.glb',
- princess:'https://vinish-models.pages.dev/knights/knight-commander.glb',
+ knight:'https://vinish-models.pages.dev/knights/chain-mail-knight.glb',
+ princess:'https://vinish-models.pages.dev/knights/lady-knight.glb',
  ogre:'https://vinish-models.pages.dev/monsters/cyclops.glb'
 };
-const professionalAvatarNames={knight:'Cavaleiro de armadura',princess:'Princesa guerreira',ogre:'Ogro ciclope'};
+const professionalAvatarNames={knight:'Cavaleiro de malha e escudo',princess:'Cavaleira de armadura',ogre:'Ogro ciclope'};
 const avatarLoader=new GLTFLoader(),avatarAssetPromises=new Map();
 let avatarInstance=null,avatarLoadToken=0;
 function disposeProceduralModel(model){
@@ -358,7 +358,7 @@ async function loadProfessionalAvatar(type){
  }
  const gltf=await avatarAssetPromises.get(type),model=cloneSkeleton(gltf.scene);
  const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
- const targetHeight=type==='ogre'?2.42:2.12,scale=targetHeight/Math.max(size.y,.01);
+ const targetHeight=type==='ogre'?2.42:(type==='princess'?1.9:2.0),scale=targetHeight/Math.max(size.y,.01);
  model.scale.setScalar(scale);model.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
  model.traverse(o=>{
   if(o.isMesh){o.castShadow=true;o.receiveShadow=true;
@@ -367,17 +367,18 @@ async function loadProfessionalAvatar(type){
   }
  });
  const mixer=new THREE.AnimationMixer(model),findClip=pattern=>gltf.animations.find(c=>pattern.test(c.name));
- const idleClip=findClip(/idle|stand/i)||gltf.animations[0],walkClip=findClip(/walk/i)||findClip(/run/i)||idleClip;
- const idleAction=idleClip?mixer.clipAction(idleClip):null,walkAction=walkClip?mixer.clipAction(walkClip):idleAction;
+ const idleClip=findClip(/idle|stand/i)||gltf.animations[0],walkClip=findClip(/walk/i)||idleClip,runClip=findClip(/run/i)||walkClip;
+ const idleAction=idleClip?mixer.clipAction(idleClip):null,walkAction=walkClip?mixer.clipAction(walkClip):idleAction,runAction=runClip?mixer.clipAction(runClip):walkAction;
  if(idleAction)idleAction.play();
- return {model,mixer,idleAction,walkAction,current:'idle',type};
+ return {model,mixer,idleAction,walkAction,runAction,current:'idle',type};
 }
-function setProfessionalGait(instance,moving){
+function setProfessionalGait(instance,moving,running=false){
  if(!instance)return;
- const next=moving?'walk':'idle',action=next==='walk'?instance.walkAction:instance.idleAction;
+ const next=!moving?'idle':(running?'run':'walk');
+ const action=next==='run'?instance.runAction:(next==='walk'?instance.walkAction:instance.idleAction);
  if(!action||instance.current===next)return;
- const previous=instance.current==='walk'?instance.walkAction:instance.idleAction;
- action.reset().fadeIn(.18).play();if(previous&&previous!==action)previous.fadeOut(.18);
+ const previous=instance.current==='run'?instance.runAction:(instance.current==='walk'?instance.walkAction:instance.idleAction);
+ action.reset().fadeIn(.24).play();if(previous&&previous!==action)previous.fadeOut(.24);
  instance.current=next;
 }
 function removeCurrentLocalAvatar(){
@@ -741,7 +742,7 @@ let last=0,walkPhase=0;function animate(t){requestAnimationFrame(animate);const 
  if(castleGate){gateAngle+=(gateTarget-gateAngle)*Math.min(1,dt*2.8);castleGate.rotation.y=gateAngle;}
 sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.position.z/2)*2);sun.position.set(sun.target.position.x-35,55,sun.target.position.z+28);
  const gait=moving?Math.sin(walkPhase):0;
- if(avatarInstance){avatarInstance.mixer.update(dt);setProfessionalGait(avatarInstance,moving&&!mountedHorse);}
+ if(avatarInstance){avatarInstance.mixer.update(dt);setProfessionalGait(avatarInstance,moving&&!mountedHorse,false);}
  else{
   avatarModel.position.y=(moving?Math.abs(Math.sin(walkPhase*2))*.045:Math.sin(t*.0018)*.018);
   avatarModel.rotation.x=moving?Math.sin(walkPhase*2)*.045:Math.sin(t*.0015)*.012;
@@ -758,7 +759,7 @@ sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.po
  for(const remote of remotePlayers.values()){
   const delta=remote.target.clone().sub(remote.group.position),remoteMoving=delta.length()>.025;
   remote.group.position.lerp(remote.target,Math.min(1,dt*8));remote.group.rotation.y=remote.rotation;
-  if(remote.instance){remote.instance.mixer.update(dt);setProfessionalGait(remote.instance,remoteMoving);}
+  if(remote.instance){remote.instance.mixer.update(dt);setProfessionalGait(remote.instance,remoteMoving,delta.length()>0.12);}
   else{
    remote.phase+=dt*(remoteMoving?8:1.5);remote.model.position.y=remoteMoving?Math.abs(Math.sin(remote.phase*2))*.04:Math.sin(t*.0015)*.015;
    for(const a of remote.motion.arms)a.pivot.rotation.x=remoteMoving?Math.sin(remote.phase+(a.side<0?Math.PI:0))*.46:0;
