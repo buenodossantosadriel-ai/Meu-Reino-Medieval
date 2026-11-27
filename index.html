@@ -429,6 +429,7 @@ async function loadProfessionalAvatar(type){
  const idleClip=findClip(/idle|stand/i)||gltf.animations[0],walkClip=findClip(/walk/i)||idleClip,runClip=findClip(/run/i)||walkClip,attackClip=findClip(/attack|slash|swing|stomp/i);
  const idleAction=idleClip?mixer.clipAction(idleClip):null,walkAction=walkClip?mixer.clipAction(walkClip):idleAction,runAction=runClip?mixer.clipAction(runClip):walkAction,attackAction=attackClip?mixer.clipAction(attackClip):null;
  if(idleAction)idleAction.play();
+ if(attackAction)mixer.addEventListener('finished',ev=>{if(ev.action===attackAction)attackAction.fadeOut(.18)});
  return {model,mixer,idleAction,walkAction,runAction,attackAction,current:'idle',type,gaitBones};
 }
 function setProfessionalGait(instance,moving,running=false){
