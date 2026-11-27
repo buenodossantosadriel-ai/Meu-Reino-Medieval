@@ -218,7 +218,29 @@ function tower(x,z){
  for(let a=0;a<8;a++){const ang=a*Math.PI/4;const mer=box(x+Math.cos(ang)*1.35,5.9,z+Math.sin(ang)*1.35,.42,1,.42,0x8b8d82);mer.material=stoneMat}
  const slit=box(x,3.7,z+1.76,.28,1.1,.08,0x303b38);slit.material=darkStone;
 }
-let castleGate,castleBridge,gateAngle=0,gateTarget=0,castleBridgeTarget=0,fortressGuards=[];
+let castleGate,castleBridge,gateAngle=0,gateTarget=0,castleBridgeTarget=0,fortressGuards=[],celestialGuardians=[];
+
+function createCelestialAngel(index){
+ const g=new THREE.Group(),armor=new THREE.MeshStandardMaterial({color:0xe7e4d8,metalness:.72,roughness:.24}),gold=new THREE.MeshStandardMaterial({color:0xd5ad55,metalness:.78,roughness:.22}),skin=new THREE.MeshStandardMaterial({color:0xd9ad91,roughness:.72}),cloth=new THREE.MeshStandardMaterial({color:index%2?0xf1eee5:0xd9e1e8,roughness:.86}),feather=new THREE.MeshStandardMaterial({color:0xf5f3ed,roughness:.9}),dark=new THREE.MeshStandardMaterial({color:0x39424b,metalness:.68,roughness:.3});
+ const add=(geo,matr,x,y,z,sx=1,sy=1,sz=1,parent=g)=>{const m=new THREE.Mesh(geo,matr);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m};
+ add(new THREE.SphereGeometry(.31,20,16),skin,0,1.92,.02,1,.98,.86);
+ add(new THREE.SphereGeometry(.32,18,12),gold,0,2.23,-.03,1,.23,.9);
+ add(new THREE.CapsuleGeometry(.27,.64,7,12),cloth,0,1.22,0,1,.95,.72);
+ add(new THREE.SphereGeometry(.34,18,14),armor,0,1.48,.1,1,.86,.72);
+ add(new THREE.BoxGeometry(.56,.12,.12),gold,0,1.68,.12);
+ add(new THREE.CylinderGeometry(.055,.09,.7,10),armor,-.39,1.25,0,1,1,1);
+ add(new THREE.CylinderGeometry(.055,.09,.7,10),armor,.39,1.25,0,1,1,1);
+ for(const side of [-1,1]){const arm=add(new THREE.CapsuleGeometry(.105,.48,5,10),cloth,side*.48,1.28,.02);arm.rotation.z=side*-.2;add(new THREE.SphereGeometry(.12,12,10),skin,side*.55,.98,.1);const leg=add(new THREE.CapsuleGeometry(.12,.48,5,10),armor,side*.16,.48,0);leg.rotation.z=side*.05;add(new THREE.BoxGeometry(.24,.15,.4),dark,side*.16,.17,.1)}
+ const halo=new THREE.Mesh(new THREE.TorusGeometry(.38,.045,10,36),gold);halo.position.set(0,2.55,-.02);halo.rotation.x=Math.PI/2;g.add(halo);
+ const wings=[];
+ for(const side of [-1,1]){const pivot=new THREE.Group();pivot.position.set(side*.24,1.72,-.2);g.add(pivot);const root=add(new THREE.SphereGeometry(.22,12,10),feather,side*.32,.12,-.05,1.2,1.8,.55,pivot);for(let j=0;j<9;j++){const f=add(new THREE.SphereGeometry(.16,12,10),feather,side*(.42+j*.16),.1+j*.115,-.035,1.05,2.25,.52,pivot);f.rotation.z=side*(-.15-j*.055)}for(let j=0;j<5;j++){const f=add(new THREE.SphereGeometry(.13,10,8),feather,side*(.34+j*.14),-.18-j*.04,.035,1,1.8,.6,pivot);f.rotation.z=side*-.25}wings.push({pivot,side})}
+ const weapon=new THREE.Group();weapon.position.set(index%2?-.58:.58,1.03,.12);g.add(weapon);
+ if(index===2||index===3){const shaft=add(new THREE.CylinderGeometry(.035,.045,2.35,10),gold,0,.78,0,1,1,1,weapon);const tip=add(new THREE.ConeGeometry(.12,.48,8),armor,0,2.15,0,1,1,1,weapon);tip.rotation.z=0;add(new THREE.TorusGeometry(.075,.025,8,12),gold,0,1.91,0,1,1,1,weapon)}
+ else if(index===4||index===5){const bow=add(new THREE.TorusGeometry(.58,.045,10,24,Math.PI),gold,0,.8,0);bow.rotation.z=Math.PI/2;bow.parent.remove(bow);weapon.add(bow);const string=add(new THREE.CylinderGeometry(.012,.012,1.1,6),armor,0,.8,.01,1,1,1,weapon);string.rotation.z=Math.PI/2;const arrow=add(new THREE.CylinderGeometry(.018,.018,.92,6),dark,.12,.8,.05,1,1,1,weapon);arrow.rotation.z=Math.PI/2;const point=add(new THREE.ConeGeometry(.065,.2,6),gold,.62,.8,.05);point.rotation.z=-Math.PI/2;weapon.add(point)}
+ else{const grip=add(new THREE.CylinderGeometry(.045,.045,.42,8),dark,0,.48,0,1,1,1,weapon);const blade=add(new THREE.BoxGeometry(.13,1.35,.045),armor,0,1.35,0,1,1,1,weapon);const edge=add(new THREE.BoxGeometry(.035,1.2,.055),gold,.07,1.35,.005,1,1,1,weapon);add(new THREE.BoxGeometry(.48,.09,.13),gold,0,.77,0,1,1,1,weapon)}
+ return {group:g,wings,halo,weapon,index,phase:index*.9};
+}
+
 function castle(){
  // Muralhas de pedra com entrada frontal aberta, ameias e quatro torres.
  box(0,2,-8,17,4,1.25,0xaaa99b,stoneMat);
@@ -230,6 +252,7 @@ function castle(){
  const moatGroup=new THREE.Group();const moatBed=new THREE.Mesh(new THREE.RingGeometry(10.1,13.2,80),new THREE.MeshStandardMaterial({color:0x756044,roughness:1}));moatBed.rotation.x=-Math.PI/2;moatBed.position.y=.035;moatGroup.add(moatBed);const moatWater=new THREE.Mesh(new THREE.RingGeometry(10.45,12.85,80),new THREE.MeshStandardMaterial({color:0x347f9b,roughness:.2,metalness:.12,transparent:true,opacity:.9}));moatWater.rotation.x=-Math.PI/2;moatWater.position.y=.075;moatGroup.add(moatWater);scene.add(moatGroup);
  castleBridge=new THREE.Group();castleBridge.position.set(0,.32,8.65);scene.add(castleBridge);const bridgeWood=new THREE.MeshStandardMaterial({color:0x684326,roughness:.88}),bridgeIron=new THREE.MeshStandardMaterial({color:0x333a3b,metalness:.7,roughness:.35});const bridgeDeck=new THREE.Mesh(new THREE.BoxGeometry(4.1,.32,6.8),bridgeWood);bridgeDeck.position.z=3.4;bridgeDeck.castShadow=true;bridgeDeck.receiveShadow=true;castleBridge.add(bridgeDeck);for(let i=-3;i<=3;i++){const plank=new THREE.Mesh(new THREE.BoxGeometry(.08,.36,6.75),bridgeIron);plank.position.set(i*.57,0,3.4);castleBridge.add(plank)}for(const x of [-1.8,1.8]){const rail=new THREE.Mesh(new THREE.BoxGeometry(.16,.75,6.5),bridgeWood);rail.position.set(x,.48,3.4);castleBridge.add(rail)}
  fortressGuards=[];for(const [gx,gz] of [[-6.3,-6.3],[6.3,-6.3],[-6.3,6.3],[6.3,6.3]]){const g=new THREE.Group(),knight=makeKnight();knight.scale.setScalar(.78);g.add(knight);g.position.set(gx,0,gz);scene.add(g);fortressGuards.push({group:g,model:knight,home:new THREE.Vector3(gx,0,gz),nextStrike:0});}
+ celestialGuardians=[];for(let i=0;i<7;i++){const angel=createCelestialAngel(i);scene.add(angel.group);celestialGuardians.push({...angel,angle:i*Math.PI*2/7,radius:20+(i%3)*2,height:5.5+(i%4)*2.1});}
  // Portal em arco com moldura de blocos e portão de madeira articulado.
  const arch=new THREE.Mesh(new THREE.TorusGeometry(1.62,.24,10,24,Math.PI),stoneMat);arch.rotation.z=Math.PI;arch.position.set(0,3.85,8.02);arch.castShadow=true;scene.add(arch);
  for(let y=.35;y<3.6;y+=.62){box(-1.72,y,8,.38,.55,1.48,0x96978e,stoneMat);box(1.72,y,8,.38,.55,1.48,0x96978e,stoneMat)}
@@ -258,6 +281,8 @@ function castle(){
  for(const x of [-2.1,0,2.1]){const slit=box(x,3.25,.57,.28,.95,.1,0x18252c);slit.material=new THREE.MeshStandardMaterial({color:0x18252c,emissive:0x263d48,emissiveIntensity:.28});box(x,2.72,.64,.62,.12,.18,0x777c72,darkStone)}
  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.045,.06,4.2,8),ironMat);pole.position.set(0,8.9,-2);scene.add(pole);
  const banner=new THREE.Mesh(new THREE.PlaneGeometry(1.5,2.1),new THREE.MeshStandardMaterial({color:0x7d2028,roughness:.85,side:THREE.DoubleSide}));banner.position.set(.72,9.1,-2);banner.rotation.y=.12;scene.add(banner);
+ // Canhão permanente da fortaleza principal, no topo da torre de menagem.
+ if(!cannonMount){cannonMount=new THREE.Group();cannonMount.position.set(0,9.65,-2);const iron=new THREE.MeshStandardMaterial({color:0x30383b,metalness:.82,roughness:.28}),wood=new THREE.MeshStandardMaterial({color:0x573a25,roughness:.78});const base=new THREE.Mesh(new THREE.CylinderGeometry(1.15,1.35,.42,12),wood);base.position.y=.22;cannonMount.add(base);const pivot=new THREE.Group();pivot.position.y=1.05;cannonMount.add(pivot);cannonMount.userData.pivot=pivot;const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.38,.48,3.1,16),iron);barrel.rotation.x=Math.PI/2;barrel.position.z=1.25;pivot.add(barrel);const rim=new THREE.Mesh(new THREE.TorusGeometry(.39,.09,10,18),wood);rim.position.z=2.8;pivot.add(rim);for(const side of [-1,1]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.57,.57,.18,16),wood);w.rotation.z=Math.PI/2;w.position.set(side*.78,.52,-.1);cannonMount.add(w)}scene.add(cannonMount)}
  const crest=new THREE.Mesh(new THREE.BoxGeometry(.32,.62,.04),goldMatForCastle);crest.position.set(.72,9.12,-1.96);scene.add(crest);
 }
 const goldMatForCastle=new THREE.MeshStandardMaterial({color:0xd5ad55,metalness:.45,roughness:.42});
@@ -1065,7 +1090,7 @@ function renderBlock(b){
   addCylinder(0,14.25,-.25,.075,.075,2.0,roofGold,8);
   const royalFlag=new THREE.Mesh(new THREE.PlaneGeometry(1.65,1.0),new THREE.MeshStandardMaterial({color:0xc49a36,side:THREE.DoubleSide,roughness:.7}));royalFlag.position.set(.8,14.35,-.25);royalFlag.castShadow=true;group.add(royalFlag);
   scene.add(group);m=group;
-  if(!cannonMount){cannonMount=new THREE.Group();cannonMount.position.set(b.x,16.1,b.z-.25);const iron=new THREE.MeshStandardMaterial({color:0x30383b,metalness:.78,roughness:.32}),wood=new THREE.MeshStandardMaterial({color:0x573a25,roughness:.8});const base=new THREE.Mesh(new THREE.CylinderGeometry(1.15,1.35,.42,12),wood);base.position.y=.22;cannonMount.add(base);const pivot=new THREE.Group();pivot.position.y=1.05;cannonMount.add(pivot);cannonMount.userData.pivot=pivot;const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.38,.48,3.1,16),iron);barrel.rotation.x=Math.PI/2;barrel.position.z=1.25;pivot.add(barrel);const rim=new THREE.Mesh(new THREE.TorusGeometry(.39,.09,10,18),wood);rim.position.z=2.8;pivot.add(rim);const wheelMat=wood;for(const side of [-1,1]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.57,.57,.18,16),wheelMat);w.rotation.z=Math.PI/2;w.position.set(side*.78,.52,-.1);cannonMount.add(w)}scene.add(cannonMount);}
+  // O canhão pertence à fortaleza principal e não é criado por melhorias opcionais.
  }else if(b.block_type==='castle_guard'){
   const group=new THREE.Group();const guard=makeKnight();guard.scale.setScalar(.78);group.add(guard);group.position.set(b.x,0,b.z);group.rotation.y=Number(b.rotation)||0;scene.add(group);m=group;
  }else{m=box(b.x,b.y,b.z,2,2,2,b.block_type==='wood'?0x80542f:0x8e8b83)}
@@ -1750,6 +1775,8 @@ shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;sun.target.position.set(
   else{mountedHorse.group.position.y=Math.abs(Math.sin(t*.012))*.045;mountedHorse.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.012+i*Math.PI)*.48;});if(mountedHorse.tail)mountedHorse.tail.rotation.x=Math.sin(t*.003)*.18;}
  }
  updateEnemies(dt,t);
+ for(const angel of celestialGuardians){angel.phase+=dt;const castleDistance=Math.hypot(player.position.x,player.position.z);let tx,tz,ty;if(angel.index===0&&castleDistance>19){tx=player.position.x+Math.sin(t*.00035)*2.8;tz=player.position.z+Math.cos(t*.00035)*2.8;ty=player.position.y+7.5+Math.sin(t*.002)*.8;}else{const a=angel.angle+t*.000075*(angel.index%2?1:-1);tx=Math.cos(a)*angel.radius;tz=Math.sin(a)*angel.radius;ty=angel.height+Math.sin(angel.phase*1.25)*.7;}const pos=angel.group.position;pos.x+=(tx-pos.x)*Math.min(1,dt*(angel.index===0&&castleDistance>19?1.35:.65));pos.z+=(tz-pos.z)*Math.min(1,dt*(angel.index===0&&castleDistance>19?1.35:.65));pos.y+=(ty-pos.y)*Math.min(1,dt*1.1);const dx=tx-pos.x,dz=tz-pos.z;if(Math.hypot(dx,dz)>.05)angel.group.rotation.y=Math.atan2(dx,dz);for(const wing of angel.wings)wing.pivot.rotation.z=wing.side*(.12+Math.sin(angel.phase*5.2)*.34);angel.halo.rotation.z=Math.sin(angel.phase*1.4)*.08;}
+
  for(let i=cannonBalls.length-1;i>=0;i--){const b=cannonBalls[i];b.velocity.y-=9.8*dt;b.mesh.position.addScaledVector(b.velocity,dt);b.life-=dt;let target=enemyUnits.find(e=>e.alive&&e.group.position.distanceTo(b.mesh.position)<2.3),explode=!!target||b.mesh.position.y<.35||b.life<=0;if(explode){const p=b.mesh.position.clone();const fx=new THREE.Mesh(new THREE.SphereGeometry(2.5,14,10),new THREE.MeshBasicMaterial({color:0xff6a20,transparent:true,opacity:.7}));fx.position.copy(p);scene.add(fx);setTimeout(()=>scene.remove(fx),280);if(target){target.health=Math.max(0,target.health-125);updateEnemyHealth(target);if(target.health<=0){target.alive=false;target.respawnAt=Date.now()+18000;scene.remove(target.group);coins+=target.reward;updateStats();saveResources();advanceQuest('enemies',1);document.querySelector('#hint').textContent='💥 Inimigo eliminado pela bola de fogo! +'+target.reward+' moedas.';}}if(Math.hypot(p.x-player.position.x,p.z-player.position.z)<2.8&&p.y<player.position.y+2.5){health=Math.max(0,health-25);updateStats();saveResources();document.querySelector('#hint').textContent='🔥 Sua própria bola de fogo caiu no castelo e causou -25 de vida!';if(health<=0){health=35;leaveCannon();player.position.set(0,0,13);saveResources();}}scene.remove(b.mesh);cannonBalls.splice(i,1);}}
 
  for(const remote of remotePlayers.values()){
