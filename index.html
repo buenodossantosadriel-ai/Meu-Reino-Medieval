@@ -1027,7 +1027,8 @@ async function enterGame(session,emailFallback='') {
         const saved=await timeout(saveResources(),8000,'Salvamento inicial');
         if(saved.error) throw saved.error;
       }
-      try{await loadQuestProgress()}catch(e){console.error('Missões:',e);hint.textContent='Reino aberto. Não foi possível carregar suas missões: '+e.message}\n      hint.textContent='Bem-vindo ao reino! Explore e construa.';
+      try{await loadQuestProgress()}catch(e){console.error('Missões:',e);hint.textContent='Reino aberto. Não foi possível carregar suas missões: '+e.message}
+      hint.textContent='Bem-vindo ao reino! Explore e construa.';
     } catch(e) {
       console.error('Perfil/salvamento:',e);
       hint.textContent='Reino aberto. Não foi possível carregar/salvar seu progresso agora: '+(e.message||e);
