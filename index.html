@@ -39,7 +39,17 @@ document.querySelector('#chatToggle').onclick=()=>document.querySelector('#chatb
 async function loadWorld(){const [b,t,a,ch]=await Promise.all([db.from('world_blocks').select('*'),db.from('world_trees').select('*'),db.from('world_animals').select('*'),db.from('world_chat').select('*').order('created_at',{ascending:false}).limit(30)]);(b.data||[]).forEach(renderBlock);(t.data||[]).forEach(renderTree);(a.data||[]).forEach(renderAnimal);(ch.data||[]).reverse().forEach(showChat)}
 function showChat(m){const log=document.querySelector('#chatlog');const line=document.createElement('div');line.textContent=m.player_name+': '+m.message;log.appendChild(line);log.scrollTop=log.scrollHeight}
 document.querySelector('#chatform').onsubmit=async e=>{e.preventDefault();const input=document.querySelector('#chatinput');const message=input.value.trim();if(!message||!user)return;const {data,error}=await db.from('world_chat').insert({user_id:user.id,player_name:user.email.split('@')[0],message}).select().single();if(error){document.querySelector('#hint').textContent=error.message;return}showChat(data);input.value=''};
-function subscribeWorld(){db.channel('world-changes').on('postgres_changes',{event:'INSERT',schema:'public',table:'world_blocks'},p=>renderBlock(p.new)).on('postgres_changes',{event:'INSERT',schema:'public',table:'world_trees'},p=>renderTree(p.new)).on('postgres_changes',{event:'INSERT',schema:'public',table:'world_animals'},p=>renderAnimal(p.new)).on('postgres_changes',{event:'INSERT',schema:'public',table:'world_chat'},p=>{if(p.new.user_id!==user?.id)showChat(p.new)}).subscribe()}
+let worldChannel=null;
+function subscribeWorld(){
+  if(worldChannel) return;
+  worldChannel=db.channel('world-changes');
+  worldChannel
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_blocks'},p=>renderBlock(p.new))
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_trees'},p=>renderTree(p.new))
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_animals'},p=>renderAnimal(p.new))
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_chat'},p=>{if(p.new.user_id!==user?.id)showChat(p.new)})
+    .subscribe();
+}
 
 document.querySelector('#attack').onclick=()=>{document.querySelector('#hint').textContent='Você brandiu sua espada! Os inimigos ainda serão adicionados.'}
 const channel=()=>db.channel('world-live').on('presence',{event:'sync'},()=>{document.querySelector('#players').textContent='Online: '+Object.keys(channel.presenceState()).length}).subscribe(async status=>{if(status==='SUBSCRIBED'&&user)await channel.track({name:user.email.split('@')[0]})});
