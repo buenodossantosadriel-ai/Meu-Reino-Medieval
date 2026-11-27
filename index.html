@@ -4,7 +4,7 @@
 #mapPanel.hidden{display:none!important}#mapPanel:not(.hidden){display:flex!important}#cameraControls{position:fixed;right:12px;top:92px;display:flex;flex-direction:column;gap:7px;pointer-events:auto;z-index:4}#cameraControls button{width:42px;height:42px;padding:0;font-size:20px;background:#142019dc;border-color:#d5bb7b;box-shadow:0 2px 9px #0007}#cameraControls .small{font-size:11px}
 #avatarSelect{position:fixed;left:50%;top:68px;transform:translateX(-50%);display:flex;gap:5px;padding:6px;background:#142019dc;border:1px solid #b99b59;border-radius:12px;pointer-events:auto;z-index:4;white-space:nowrap}#avatarSelect button{padding:7px 9px;font-size:11px}#avatarSelect button.active{background:#94743d;border-color:#ffe2a0;box-shadow:0 0 0 1px #ffe2a0}#mount{background:#62482a}@media(max-width:520px){#avatarSelect{top:64px;gap:3px;padding:4px}#avatarSelect button{padding:7px 6px;font-size:10px}}#login{position:fixed;inset:0;background:#101a15eF;display:grid;place-items:center;z-index:5}#login.hidden{display:none}#login form{width:min(90vw,360px);background:#26382b;border:1px solid #b99b59;border-radius:16px;padding:22px}input{width:100%;padding:12px;margin:7px 0 12px;border-radius:8px;border:1px solid #b99b59;background:#101a15;color:white}#chatbox input{margin:4px 0}#hint{position:fixed;bottom:calc(44vh + 18px);left:50%;transform:translateX(-50%);z-index:12;pointer-events:none;white-space:normal;text-align:center;background:#142019ed;border:1px solid #b99b59;padding:9px 13px;border-radius:9px;max-width:min(92vw,520px);max-height:18vh;overflow:auto;box-shadow:0 4px 16px #0009}.hidden{display:none}@media(max-width:520px){.top{padding:7px;gap:5px}.panel{padding:7px 9px;font-size:12px}.bottom{left:145px;right:4px;bottom:8px;gap:5px;max-height:44vh}.bottom button{padding:9px 8px;font-size:12px}#joystick{left:12px;bottom:18px;width:116px;height:116px}#stick{width:50px;height:50px;margin:-25px}#hint{bottom:calc(44vh + 12px);font-size:12px;max-width:calc(100vw - 20px)}#lookTip{bottom:135px}}@media(min-width:700px){.bottom{left:auto;right:16px;bottom:20px;width:300px;justify-content:flex-end}#joystick{left:28px;bottom:28px}}
 </style></head><body><div id="game"></div><div id="hud"><div class="top"><div class="panel"><div class="brand">⚔ MEU REINO MEDIEVAL</div><div id="stats">Madeira: 0 · Pedra: 0</div><div style="font-size:9px;opacity:.68;margin-top:3px">Modelos 3D: Vinish.dev · CC BY 4.0</div></div><div class="panel" id="players">Entrando no reino…</div></div><div id="hint">WASD ou controles para caminhar · Explore o reino!</div><div id="questToast" style="position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:15;display:none;pointer-events:none;background:#24382aee;border:1px solid #e2c681;border-radius:12px;padding:12px 16px;text-align:center;max-width:90vw;box-shadow:0 5px 20px #0009"></div><div id="avatarSelect" aria-label="Escolha seu personagem"><button data-avatar="knight" class="active">⚔ Cavaleiro</button><button data-avatar="princess">👸 Princesa</button><button data-avatar="ogre">👹 Ogro</button></div><div class="bottom"><button id="collectTree" style="background:#496b35">🌲 Recolher árvore</button><button id="collectRock" style="background:#59616a">🪨 Recolher pedra</button><button id="animal">🐾 Criar animal</button><button id="attack">⚔ Atacar</button><button id="collect">🪓 Coletar próximo</button><button id="build">🧱 Bloco</button><button id="castleBuild">🏰 Meu castelo</button><button id="castleUpgrade">🛡 Aprimorar</button><button id="gate">🚪 Abrir portão</button><button id="plant">🌱 Plantar</button><button id="fence">🪵 Cercado</button><button id="products">🥚🥛 Recolher</button><button id="well">🪣 Poço</button><button id="shop">🛡 Loja</button><button id="mount">🐎 Montar</button><button id="mapToggle">🗺️ Mapa</button><button id="questsToggle">📜 Missões</button><button id="chatToggle">💬 Chat</button></div><div id="joystick" aria-label="Controle de movimento"><div id="stick"></div></div><div id="assetCredits" style="position:fixed;right:8px;bottom:4px;color:#fff9;font-size:9px;pointer-events:none;text-shadow:0 1px 3px #000">“Medieval guard captain” by VibeAssets, CC0 (https://vibeassets.io/a/9h7odik5fl) · Fire Dragon by vinish.dev, CC BY 4.0</div><div id="cameraControls" aria-label="Controles da câmera"><button id="zoomIn" aria-label="Aproximar" title="Aproximar">＋</button><button id="zoomOut" aria-label="Afastar" title="Afastar">−</button><button id="viewUp" class="small" aria-label="Ver mais de cima" title="Ver mais de cima">⬆</button><button id="viewDown" class="small" aria-label="Ver mais no horizonte" title="Ver mais no horizonte">⬇</button></div></div><div id="questsPanel" class="panel hidden" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,440px);max-height:78vh;overflow:auto;pointer-events:auto;z-index:8;border-color:#e2c681"><div style="display:flex;justify-content:space-between;align-items:center"><b>📜 Diário de missões</b><button id="questsClose" style="padding:5px 10px">✕</button></div><div id="questLevel" style="margin:10px 0;color:#f0cc78;font-weight:800">Nível 1 · 0 XP</div><div id="questList" style="display:grid;gap:8px"></div></div><div id="chatbox" class="panel hidden" style="position:fixed;right:12px;bottom:82px;width:min(92vw,320px);pointer-events:auto;z-index:3"><b>Chat do reino</b><div id="chatlog" style="height:150px;overflow:auto;margin:8px 0;font-size:13px"></div><form id="chatform"><input id="chatinput" maxlength="500" placeholder="Mensagem..." required><button>Enviar</button></form></div>
-<div id="mapPanel" class="panel hidden" style="position:fixed;inset:4vh 3vw;width:94vw;height:92vh;max-width:900px;margin:auto;z-index:10;pointer-events:auto;background:#d9c89c;color:#302819;border:3px solid #80633c;border-radius:16px;padding:12px;display:none;flex-direction:column;box-shadow:0 12px 50px #000b"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><div><b style="font-size:19px">🗺️ Mapa do Reino</b><div style="font-size:12px">Toque no mapa para colocar uma marcação</div></div><button id="mapClose">✕ Fechar</button></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin:9px 0"><button id="mapAdd" style="background:#526b3d">📍 Marcar local</button><button id="mapDelete" style="background:#754b37">🗑 Apagar última</button><span id="mapCount" style="align-self:center;font-size:12px">0 marcações</span></div><canvas id="kingdomMap" width="800" height="800" style="width:100%;flex:1;min-height:0;object-fit:contain;border:2px solid #94764b;border-radius:10px;background:#b9c58b;touch-action:manipulation"></canvas><div style="font-size:11px;margin-top:6px">N ↑ · Clique em “Marcar local” e depois escolha um ponto no mapa. As marcações ficam salvas na sua conta.</div></div><div id="login"><form id="auth"><h2>Entre no seu reino</h2><p>Use seu e-mail para salvar seu progresso.</p><input id="email" type="email" placeholder="E-mail" required><input id="password" type="password" placeholder="Senha (mín. 6 caracteres)" minlength="6" required><button style="width:100%">Entrar / Criar conta</button><p id="authmsg"></p></form></div>
+<div id="mapPanel" class="panel hidden" style="position:fixed;inset:4vh 3vw;width:94vw;height:92vh;max-width:900px;margin:auto;z-index:10;pointer-events:auto;background:#d9c89c;color:#302819;border:3px solid #80633c;border-radius:16px;padding:12px;display:none;flex-direction:column;box-shadow:0 12px 50px #000b"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><div><b style="font-size:19px">🗺️ Mapa do Reino</b><div style="font-size:12px">Toque no mapa para colocar uma marcação</div></div><button id="mapClose">✕ Fechar</button></div><div style="display:flex;gap:7px;flex-wrap:wrap;margin:9px 0"><button id="mapAdd" style="background:#526b3d">📍 Marcar local</button><button id="mapDelete" style="background:#754b37">🗑 Apagar última</button><button id="mapZoomIn" title="Aproximar mapa">＋ Zoom</button><button id="mapZoomOut" title="Afastar mapa">− Zoom</button><button id="mapCenter" title="Centralizar em você">◎ Minha posição</button><span id="mapCount" style="align-self:center;font-size:12px">0 marcações</span></div><canvas id="kingdomMap" width="800" height="800" style="width:100%;flex:1;min-height:0;object-fit:contain;border:2px solid #94764b;border-radius:10px;background:#b9c58b;touch-action:manipulation"></canvas><div style="font-size:11px;margin-top:6px">N ↑ · Castelo, Bosque, Floresta, Campos e Lagos. Use o zoom ou centralize em sua posição. Suas marcações ficam salvas na conta.</div></div><div id="login"><form id="auth"><h2>Entre no seu reino</h2><p>Use seu e-mail para salvar seu progresso.</p><input id="email" type="email" placeholder="E-mail" required><input id="password" type="password" placeholder="Senha (mín. 6 caracteres)" minlength="6" required><button style="width:100%">Entrar / Criar conta</button><p id="authmsg"></p></form></div>
 <script>
 window.addEventListener('error',e=>{
  const m=document.querySelector('#authmsg');
@@ -768,7 +768,7 @@ function mountNearestHorse(){
  mountedHorse=best;best.wild=false;best.timer=9999;best.target.set(best.group.position.x,0,best.group.position.z);player.position.set(best.group.position.x,1.58,best.group.position.z);player.rotation.y=best.group.rotation.y;playHorseAnimation(best,'Idle');document.querySelector('#mount').textContent='↘ Desmontar';showHorseHint('Você montou a cavalo! Use o joystick para cavalgar.');
 }
 document.querySelector('#mount').onclick=mountNearestHorse;
-let yaw=0,cameraPitch=.42,cameraDistance=11,cameraDistanceCurrent=11;
+let yaw=0,cameraPitch=.48,cameraDistance=17,cameraDistanceCurrent=17;
 const keys={};addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 const moveInput={x:0,y:0},joystick=document.querySelector('#joystick'),stick=document.querySelector('#stick');
 let joyPointer=null;
@@ -810,8 +810,8 @@ function releaseLook(e){
  if(e.pointerId===lookPointer){lookPointer=null;if(cameraPointers.size===1){const [id,p]=[...cameraPointers.entries()][0];lookPointer=id;lastLookX=p.x;lastLookY=p.y;}}
 }
 renderer.domElement.addEventListener('pointerup',releaseLook);renderer.domElement.addEventListener('pointercancel',releaseLook);
-document.querySelector('#zoomIn').onclick=()=>{cameraDistance=Math.max(3.8,cameraDistance-3.5);document.querySelector('#hint').textContent='Aproximando a câmera.'};
-document.querySelector('#zoomOut').onclick=()=>{cameraDistance=Math.min(42,cameraDistance+3.5);document.querySelector('#hint').textContent='Afastando a câmera.'};
+document.querySelector('#zoomIn').onclick=()=>{cameraDistance=Math.max(4,cameraDistance-4);document.querySelector('#hint').textContent='Aproximando a câmera.'};
+document.querySelector('#zoomOut').onclick=()=>{cameraDistance=Math.min(68,cameraDistance+5);document.querySelector('#hint').textContent='Afastando a câmera.'};
 document.querySelector('#viewUp').onclick=()=>cameraPitch=Math.min(1.42,cameraPitch+.12);
 document.querySelector('#viewDown').onclick=()=>cameraPitch=Math.max(.08,cameraPitch-.12);
 
@@ -1274,22 +1274,45 @@ document.querySelector('#attack').onclick=async()=>{
 };
 
 
-let kingdomMarkers=[],mapArmed=false,lastMapDraw=0;
+let kingdomMarkers=[],mapArmed=false,lastMapDraw=0,mapZoom=1,mapCenterX=0,mapCenterZ=0;
 const mapCanvas=document.querySelector('#kingdomMap'),mapCtx=mapCanvas.getContext('2d'),MAP_EXTENT=210;
 function drawKingdomMap(){
  const c=mapCtx,w=mapCanvas.width,h=mapCanvas.height;c.clearRect(0,0,w,h);
- c.fillStyle='#b9c58b';c.fillRect(0,0,w,h);
- for(let i=0;i<34;i++){const x=(i*173+71)%w,y=(i*293+39)%h;c.fillStyle=i%3?'#a8ba7d':'#9eb477';c.beginPath();c.arc(x,y,18+(i%5)*7,0,Math.PI*2);c.fill()}
- c.strokeStyle='#8d9e6a';c.lineWidth=2;c.globalAlpha=.45;
- for(let x=0;x<=w;x+=100){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke();}for(let y=0;y<=h;y+=100){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();}c.globalAlpha=1;
- const px=x=>((x+MAP_EXTENT)/(MAP_EXTENT*2))*w,py=z=>((z+MAP_EXTENT)/(MAP_EXTENT*2))*h;
- c.strokeStyle='#b99a63';c.lineWidth=12;c.lineCap='round';c.beginPath();c.moveTo(px(0),py(210));c.quadraticCurveTo(px(4),py(70),px(0),py(13));c.stroke();
- c.fillStyle='#4a6d82';c.beginPath();c.ellipse(px(-25),py(8),w*8/(MAP_EXTENT*2),h*5/(MAP_EXTENT*2),0,0,Math.PI*2);c.fill();
- c.fillStyle='#765532';c.fillRect(px(-5),py(-5),w*10/(MAP_EXTENT*2),h*10/(MAP_EXTENT*2));c.fillStyle='#f8e8bd';c.font='bold 20px system-ui';c.textAlign='center';c.fillText('🏰',px(0),py(0)+7);
- for(const m of kingdomMarkers){const x=px(m.x),y=py(m.z);c.fillStyle='#8a2020';c.beginPath();c.arc(x,y,12,0,Math.PI*2);c.fill();c.strokeStyle='#fff1cc';c.lineWidth=3;c.stroke();c.fillStyle='#302819';c.font='bold 17px system-ui';c.textAlign='left';c.fillText(m.label.slice(0,22),x+15,y+5);}
- if(player){const x=px(player.position.x),y=py(player.position.z);c.fillStyle='#175cbd';c.beginPath();c.arc(x,y,12,0,Math.PI*2);c.fill();c.strokeStyle='white';c.lineWidth=3;c.stroke();c.fillStyle='#17324a';c.font='bold 16px system-ui';c.textAlign='left';c.fillText('Você',x+15,y+5);}
- c.fillStyle='#493b28';c.font='bold 24px system-ui';c.textAlign='right';c.fillText('N ↑',w-22,34);
- document.querySelector('#mapCount').textContent=kingdomMarkers.length+' marcação(ões)';
+ c.fillStyle='#c3c995';c.fillRect(0,0,w,h);
+ const span=MAP_EXTENT/mapZoom;
+ const px=x=>((x-mapCenterX+span)/(span*2))*w,py=z=>((z-mapCenterZ+span)/(span*2))*h;
+ const label=(name,x,z,color='#34452d',size=19)=>{c.save();c.font='bold '+size+'px system-ui';c.textAlign='center';c.lineWidth=4;c.strokeStyle='#f1e5c4';c.strokeText(name,px(x),py(z));c.fillStyle=color;c.fillText(name,px(x),py(z));c.restore()};
+ // Textura suave do terreno e relevo
+ for(let i=0;i<95;i++){const x=(i*173+71)%w,y=(i*293+39)%h;c.fillStyle=i%3?'rgba(106,139,75,.16)':'rgba(230,214,157,.22)';c.beginPath();c.ellipse(x,y,12+(i%5)*8,8+(i%4)*6,(i%7)*.3,0,Math.PI*2);c.fill()}
+ // Campos abertos
+ c.fillStyle='#d1c17e';c.globalAlpha=.42;c.beginPath();c.ellipse(px(92),py(18),w*38/(span*2),h*31/(span*2),-.2,0,Math.PI*2);c.fill();
+ c.beginPath();c.ellipse(px(-112),py(-75),w*34/(span*2),h*27/(span*2),.3,0,Math.PI*2);c.fill();c.globalAlpha=1;
+ // Bosque e grande floresta ao norte
+ c.fillStyle='#557b43';c.globalAlpha=.72;c.beginPath();c.ellipse(px(-48),py(58),w*31/(span*2),h*39/(span*2),-.3,0,Math.PI*2);c.fill();
+ c.fillStyle='#365f38';c.globalAlpha=.82;c.beginPath();c.ellipse(px(5),py(83),w*61/(span*2),h*55/(span*2),.08,0,Math.PI*2);c.fill();c.globalAlpha=1;
+ // Copas estilizadas em grupos
+ for(let i=0;i<58;i++){const x=-54+((i*37)%112),z=35+((i*53)%94),r=3+(i%4)*1.4;c.fillStyle=i%2?'#47713e':'#628849';c.beginPath();c.arc(px(x),py(z),Math.max(1,r*w/(span*2)),0,Math.PI*2);c.fill()}
+ // Estradas e trilhas
+ c.strokeStyle='#b99a63';c.lineWidth=Math.max(3,w*5/(span*2));c.lineCap='round';c.beginPath();c.moveTo(px(0),py(205));c.bezierCurveTo(px(12),py(125),px(-12),py(68),px(0),py(13));c.stroke();
+ c.strokeStyle='#d8bd83';c.lineWidth=Math.max(2,w*2.5/(span*2));c.beginPath();c.moveTo(px(0),py(13));c.quadraticCurveTo(px(40),py(12),px(92),py(18));c.stroke();
+ // Lago existente e pequenos lagos ilustrados
+ c.fillStyle='#4b8294';c.beginPath();c.ellipse(px(-25),py(8),Math.max(3,w*8/(span*2)),Math.max(3,h*5/(span*2)),-.18,0,Math.PI*2);c.fill();
+ c.strokeStyle='#d6c49a';c.lineWidth=3;c.beginPath();c.ellipse(px(-25),py(8),Math.max(4,w*9.2/(span*2)),Math.max(4,h*6.1/(span*2)),-.18,0,Math.PI*2);c.stroke();
+ c.fillStyle='#5b91a0';c.beginPath();c.ellipse(px(116),py(-92),Math.max(2,w*7/(span*2)),Math.max(2,h*4/(span*2)),.3,0,Math.PI*2);c.fill();
+ // Castelo e pontos de interesse
+ c.fillStyle='#765532';c.fillRect(px(-5),py(-5),Math.max(4,w*10/(span*2)),Math.max(4,h*10/(span*2)));
+ c.fillStyle='#f8e8bd';c.font='bold 25px system-ui';c.textAlign='center';c.fillText('🏰',px(0),py(0)+8);
+ label('CASTELO',0,-13,'#4c3421',17);
+ label('BOSQUE',-49,27,'#244a2a',18);
+ label('FLORESTA',7,137,'#244a2a',20);
+ label('CAMPOS',92,-22,'#69552a',18);
+ label('LAGO AZUL',-25,19,'#244e68',15);
+ label('LAGO DO NORTE',116,-102,'#244e68',14);
+ // Marcações personalizadas
+ for(const m of kingdomMarkers){const x=px(m.x),y=py(m.z);c.fillStyle='#8a2020';c.beginPath();c.arc(x,y,10,0,Math.PI*2);c.fill();c.strokeStyle='#fff1cc';c.lineWidth=3;c.stroke();c.fillStyle='#302819';c.font='bold 15px system-ui';c.textAlign='left';c.lineWidth=3;c.strokeStyle='#f1e5c4';c.strokeText(m.label.slice(0,22),x+13,y+5);c.fillText(m.label.slice(0,22),x+13,y+5)}
+ if(player){const x=px(player.position.x),y=py(player.position.z);c.fillStyle='#175cbd';c.beginPath();c.arc(x,y,11,0,Math.PI*2);c.fill();c.strokeStyle='white';c.lineWidth=3;c.stroke();c.fillStyle='#17324a';c.font='bold 16px system-ui';c.textAlign='left';c.lineWidth=3;c.strokeStyle='#f1e5c4';c.strokeText('Você',x+14,y+5);c.fillText('Você',x+14,y+5)}
+ c.fillStyle='#493b28';c.font='bold 22px system-ui';c.textAlign='right';c.fillText('N ↑',w-22,30);
+ document.querySelector('#mapCount').textContent=kingdomMarkers.length+' marcação(ões) · Zoom '+mapZoom.toFixed(1)+'×';
 }
 async function saveKingdomMarkers(){
  const {data,error}=await db.auth.updateUser({data:{...(user?.user_metadata||{}),kingdom_map_markers:kingdomMarkers}});
@@ -1298,11 +1321,15 @@ async function saveKingdomMarkers(){
 }
 function openKingdomMap(){if(!user){document.querySelector('#hint').textContent='Entre na sua conta para usar o mapa.';return}document.querySelector('#mapPanel').classList.remove('hidden');document.querySelector('#mapPanel').style.display='flex';drawKingdomMap();}
 document.querySelector('#mapToggle').onclick=openKingdomMap;
+document.querySelector('#mapZoomIn').onclick=()=>{mapZoom=Math.min(3,mapZoom+.25);drawKingdomMap()};
+document.querySelector('#mapZoomOut').onclick=()=>{mapZoom=Math.max(.75,mapZoom-.25);drawKingdomMap()};
+document.querySelector('#mapCenter').onclick=()=>{if(player){mapCenterX=player.position.x;mapCenterZ=player.position.z;mapZoom=Math.max(mapZoom,1.25);drawKingdomMap()}};
+
 document.querySelector('#mapClose').onclick=()=>{document.querySelector('#mapPanel').classList.add('hidden');document.querySelector('#mapPanel').style.display='none';mapArmed=false;};
 document.querySelector('#mapAdd').onclick=()=>{mapArmed=true;document.querySelector('#hint').textContent='Agora toque no ponto do mapa que deseja marcar.';};
 mapCanvas.addEventListener('click',async ev=>{
  if(!mapArmed)return;const rect=mapCanvas.getBoundingClientRect(),x=(ev.clientX-rect.left)/rect.width*mapCanvas.width,z=(ev.clientY-rect.top)/rect.height*mapCanvas.height;
- const wx=(x/mapCanvas.width*2-1)*MAP_EXTENT,wz=(z/mapCanvas.height*2-1)*MAP_EXTENT,label=prompt('Nome deste local:','Meu ponto');
+ const wx=(x/mapCanvas.width-.5)*2*(MAP_EXTENT/mapZoom)+mapCenterX,wz=(z/mapCanvas.height-.5)*2*(MAP_EXTENT/mapZoom)+mapCenterZ,label=prompt('Nome deste local:','Meu ponto');
  if(!label?.trim()){mapArmed=false;return}
  kingdomMarkers.push({id:Date.now().toString(36),x:Math.round(wx),z:Math.round(wz),label:label.trim().slice(0,32)});
  mapArmed=false;if(await saveKingdomMarkers()){drawKingdomMap();document.querySelector('#hint').textContent='📍 Marcação salva no mapa!';}
