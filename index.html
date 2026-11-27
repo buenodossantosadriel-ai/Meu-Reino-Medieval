@@ -8,11 +8,15 @@
 <script>
 window.addEventListener('error',e=>{
  const m=document.querySelector('#authmsg');
- if(m) m.textContent='Erro ao abrir o jogo: '+(e.message||'falha no JavaScript')+'. Atualize a página e tente novamente.';
+ const detail=(e.error&&e.error.stack)||((e.filename||'JavaScript')+':'+(e.lineno||'?')+':'+(e.colno||'?'));
+ if(m) m.textContent='Erro ao abrir o jogo: '+(e.message||'falha no JavaScript')+' | '+detail;
+ console.error('Erro fatal do jogo:',e.error||e.message,e.filename,e.lineno,e.colno);
 });
 window.addEventListener('unhandledrejection',e=>{
  const m=document.querySelector('#authmsg');
- if(m) m.textContent='Falha inesperada do jogo: '+(e.reason?.message||String(e.reason||'erro desconhecido'));
+ const detail=(e.reason&&e.reason.stack)||String(e.reason||'erro desconhecido');
+ if(m) m.textContent='Falha inesperada do jogo: '+detail;
+ console.error('Promise rejeitada no jogo:',e.reason);
 });
 </script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
