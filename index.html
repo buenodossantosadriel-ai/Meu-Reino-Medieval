@@ -304,6 +304,7 @@ function castle(){
 }
 let cannonMount=null;
 const goldMatForCastle=new THREE.MeshStandardMaterial({color:0xd5ad55,metalness:.45,roughness:.42});
+const mat=(color,metalness=0,roughness=.72)=>new THREE.MeshStandardMaterial({color,metalness,roughness});
 castle();
 function toggleCastleGate(){gateTarget=gateTarget===0?-Math.PI/2:0;castleBridgeTarget=gateTarget===0?-.92:0;document.querySelector('#gate').textContent=gateTarget===0?'🚪 Abrir portão':'🚪 Fechar portão';document.querySelector('#hint').textContent=gateTarget===0?'O portão e a ponte levadiça estão fechando.':'O portão e a ponte levadiça estão baixando.'}
 document.querySelector('#gate').onclick=toggleCastleGate;
@@ -386,7 +387,6 @@ const player=new THREE.Group();
 player.position.set(0,0,13);
 scene.add(player);
 let selectedAvatar='knight';
-const mat=(color,metalness=0,roughness=.72)=>new THREE.MeshStandardMaterial({color,metalness,roughness});
 function part(group,geo,material,x,y,z,sx=1,sy=1,sz=1){
  const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;group.add(m);return m;
 }
