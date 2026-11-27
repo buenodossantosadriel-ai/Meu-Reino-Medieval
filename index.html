@@ -728,6 +728,7 @@ document.querySelector('#products').onclick=async()=>{
  if(nearby){
   const {data,error}=await db.from('world_animals').select('*').eq('id',nearby.id).maybeSingle();
   if(error||!data){document.querySelector('#hint').textContent='Não foi possível consultar o animal.';return}
+  if(data.owner_id!==user.id){document.querySelector('#hint').textContent='Só o dono pode recolher a produção deste animal.';return}
   const type=data.animal_type;if(type!=='chicken'&&type!=='cow'){document.querySelector('#hint').textContent='Este animal não produz ovos ou leite.';return}
   const state=data.state||{},last=Date.parse(state.lastProductAt||data.created_at),interval=type==='chicken'?60000:120000,qty=Math.min(5,Math.floor((Date.now()-last)/interval));
   if(qty<1){document.querySelector('#hint').textContent=type==='chicken'?'A galinha ainda não pôs ovo.':'A vaca ainda não produziu leite.';return}
