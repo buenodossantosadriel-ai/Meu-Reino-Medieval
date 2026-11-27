@@ -296,13 +296,25 @@ function createCelestialAngel(index){
   }
   wings.push({pivot,side});
  }
- // Bastão cerimonial discreto, em dourado claro.
+ // Cada anjo carrega uma arma própria: arco de fogo, lança ou espada.
+ const weaponType=['firebow','spear','sword'][index%3];
  const weapon=new THREE.Group();weapon.position.set(index%2?-.57:.57,1.03,.13);g.add(weapon);
- const staff=add(new THREE.CylinderGeometry(.035,.045,1.9,10),gold,0,.92,0,1,1,1,weapon);
- const star=add(new THREE.OctahedronGeometry(.19,1),robe,0,1.94,0,1,1,1,weapon);
+ if(weaponType==='firebow'){
+  const bow=add(new THREE.TorusGeometry(.42,.045,8,24,Math.PI*1.15),gold,0,.92,0,1,1,1,weapon);bow.rotation.z=Math.PI/2;
+  add(new THREE.CylinderGeometry(.012,.012,1.05,6),robe,0,.92,.015,1,1,1,weapon);
+  add(new THREE.SphereGeometry(.075,10,8),new THREE.MeshStandardMaterial({color:0xff7a28,emissive:0xff3b08,emissiveIntensity:1.5}),0,1.48,.02,1,1,1,weapon);
+ }else if(weaponType==='spear'){
+  const shaft=add(new THREE.CylinderGeometry(.035,.05,2.05,10),gold,0,.95,0,1,1,1,weapon);
+  const tip=add(new THREE.ConeGeometry(.13,.42,8),robe,0,2.18,0,1,1,1,weapon);
+  add(new THREE.TorusGeometry(.07,.025,6,12),gold,0,1.96,0,1,1,1,weapon);
+ }else{
+  add(new THREE.CylinderGeometry(.035,.055,1.22,8),robe,0,1.03,0,1,1,1,weapon);
+  const blade=add(new THREE.ConeGeometry(.105,.88,8),gold,0,2.02,0,1,1,1,weapon);
+  add(new THREE.BoxGeometry(.62,.09,.12),gold,0,1.48,0,1,1,1,weapon);
+ }
  const glow=new THREE.PointLight(0xffdf91,0,18,1.55);glow.position.set(0,2.25,.15);glow.castShadow=false;g.add(glow);
  const aura=new THREE.PointLight(0xfff0c8,0,7,2);aura.position.set(0,2.8,-.15);g.add(aura);
- return {group:g,wings,halo,weapon,glow,aura,index,phase:index*.9};
+ return {group:g,wings,halo,weapon,weaponType,glow,aura,index,phase:index*.9,nextAttack:0};
 }
 
 
@@ -1466,7 +1478,7 @@ async function restartAfterDeath(){
  document.querySelector('#hint').textContent='Você renasceu! Comece novamente coletando madeira e pedras para reconstruir seu castelo.';
 }
 
-let enemyUnits=[],enemyInvulnerableUntil=0;let cannonActive=false,cannonYaw=0,cannonPitch=.12,cannonPower=70,cannonBalls=[];let dragonFireballs=[],dragonLastBreath=0,dragonBurnUntil=0,lastDragonDamage=0;const DRAGON_LAIR={x:0,z:82};
+let enemyUnits=[],enemyInvulnerableUntil=0,angelProjectiles=[];let cannonActive=false,cannonYaw=0,cannonPitch=.12,cannonPower=70,cannonBalls=[];let dragonFireballs=[],dragonLastBreath=0,dragonBurnUntil=0,lastDragonDamage=0;const DRAGON_LAIR={x:0,z:82};
 function createEnemy(type,x,z){
  const group=new THREE.Group(),model=type==='ogre'?makeOgre():makeKnight();
  model.scale.setScalar(type==='ogre'?1.02:.88);
@@ -1901,7 +1913,35 @@ shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;const lightDirection=sun
  }
  updateEnemies(dt,t);
  for(const angel of celestialGuardians){angel.phase+=dt;let tx,tz,ty;const escort=angel.index<3;const followYaw=yaw;if(escort){const forwardX=Math.sin(followYaw),forwardZ=-Math.cos(followYaw),sideX=Math.cos(followYaw),sideZ=Math.sin(followYaw);if(angel.index===0){tx=player.position.x+forwardX*4.2;tz=player.position.z+forwardZ*4.2;ty=player.position.y+6.2+Math.sin(angel.phase*1.25)*.45;}else{const side=angel.index===1?-1:1;tx=player.position.x-forwardX*1.7+sideX*side*4.1;tz=player.position.z-forwardZ*1.7+sideZ*side*4.1;ty=player.position.y+5.5+Math.sin(angel.phase*1.25+angel.index)*.5;}}else{const a=angel.angle+t*.000075*(angel.index%2?1:-1);tx=Math.cos(a)*angel.radius;tz=Math.sin(a)*angel.radius;ty=angel.height+Math.sin(angel.phase*1.25)*.7;}const pos=angel.group.position;const followSpeed=escort?1.65:.65;pos.x+=(tx-pos.x)*Math.min(1,dt*followSpeed);pos.z+=(tz-pos.z)*Math.min(1,dt*followSpeed);pos.y+=(ty-pos.y)*Math.min(1,dt*1.1);const dx=tx-pos.x,dz=tz-pos.z;if(Math.hypot(dx,dz)>.05)angel.group.rotation.y=Math.atan2(dx,dz);for(const wing of angel.wings)wing.pivot.rotation.z=wing.side*(.12+Math.sin(angel.phase*5.2)*.34);angel.halo.rotation.z=Math.sin(angel.phase*1.4)*.08;const darkness=worldLight.night;angel.glow.intensity=darkness*(escort?3.8:1.7);angel.glow.distance=escort?21:13;angel.aura.intensity=darkness*(escort?1.35:.55);}
+ // Os sete guardiões priorizam qualquer inimigo que esteja perseguindo o jogador.
+ const threat=enemyUnits.filter(e=>e.alive&&e.hasAggro&&Math.hypot(e.group.position.x-player.position.x,e.group.position.z-player.position.z)<44)
+  .map(e=>({e,d:angel.group.position.distanceTo(e.group.position)})).filter(v=>v.d<52).sort((a,b)=>a.d-b.d)[0];
+ if(threat&&Date.now()>angel.nextAttack){
+  const target=threat.e,origin=angel.group.position.clone().add(new THREE.Vector3(0,-.25,.25)),aim=target.group.position.clone().add(new THREE.Vector3(0,1.15,0)),dir=aim.sub(origin).normalize();
+  angel.group.rotation.y=Math.atan2(dir.x,dir.z);angel.nextAttack=Date.now()+(angel.weaponType==='sword'?1250:angel.weaponType==='spear'?1750:1450);
+  if(angel.weaponType==='sword'&&threat.d<7){
+   target.health=Math.max(0,target.health-38);updateEnemyHealth(target);
+   document.querySelector('#hint').textContent='⚔ Um anjo golpeou o inimigo com sua espada!';
+   if(target.health<=0){target.alive=false;target.respawnAt=Date.now()+18000;scene.remove(target.group);coins+=target.reward;updateStats();saveResources();advanceQuest('enemies',1);document.querySelector('#hint').textContent='✨ O anjo derrotou um inimigo! +'+target.reward+' moedas.';}
+  }else{
+   const material=new THREE.MeshStandardMaterial({color:angel.weaponType==='firebow'?0xff762b:angel.weaponType==='spear'?0xd9c18a:0xffe6a3,emissive:angel.weaponType==='firebow'?0xff3b08:0x9b7134,emissiveIntensity:angel.weaponType==='firebow'?1.8:.65,metalness:.45,roughness:.32});
+   let mesh;
+   if(angel.weaponType==='firebow'){mesh=new THREE.Group();const shaft=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,1.05,6),material);shaft.rotation.x=Math.PI/2;mesh.add(shaft);const tip=new THREE.Mesh(new THREE.ConeGeometry(.085,.25,7),material);tip.rotation.x=-Math.PI/2;tip.position.z=-.62;mesh.add(tip);const flame=new THREE.PointLight(0xff5a18,1.6,4);mesh.add(flame);}
+   else if(angel.weaponType==='spear'){mesh=new THREE.Mesh(new THREE.CylinderGeometry(.055,.07,1.9,8),material);mesh.add(new THREE.Mesh(new THREE.ConeGeometry(.12,.42,8),material));mesh.children[0].position.y=.98;}
+   else{mesh=new THREE.Mesh(new THREE.ConeGeometry(.13,1.25,7),material);mesh.rotation.x=Math.PI/2;}
+   mesh.position.copy(origin);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,-1),dir);scene.add(mesh);
+   angelProjectiles.push({mesh,velocity:dir.multiplyScalar(angel.weaponType==='spear'?29:35),life:angel.weaponType==='spear'?2.1:2.4,damage:angel.weaponType==='spear'?34:angel.weaponType==='firebow'?25:30,target});
+  }
+ }
+}
 
+ // Projéteis dos anjos perseguem a ameaça e causam dano ao acertar.
+ for(let i=angelProjectiles.length-1;i>=0;i--){
+  const shot=angelProjectiles[i];shot.mesh.position.addScaledVector(shot.velocity,dt);shot.life-=dt;
+  const hit=shot.target&&shot.target.alive&&shot.mesh.position.distanceTo(shot.target.group.position.clone().add(new THREE.Vector3(0,1.1,0)))<1.75;
+  if(hit){const e=shot.target;e.health=Math.max(0,e.health-shot.damage);updateEnemyHealth(e);if(e.health<=0){e.alive=false;e.respawnAt=Date.now()+18000;scene.remove(e.group);coins+=e.reward;updateStats();saveResources();advanceQuest('enemies',1);document.querySelector('#hint').textContent='✨ Os anjos protegeram você e derrotaram um inimigo! +'+e.reward+' moedas.';}else document.querySelector('#hint').textContent='🪽 Um guardião celestial atingiu um perseguidor!';}
+  if(hit||shot.life<=0||!shot.target?.alive){scene.remove(shot.mesh);shot.mesh.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});angelProjectiles.splice(i,1);}
+ }
  for(let i=cannonBalls.length-1;i>=0;i--){const b=cannonBalls[i];b.velocity.y-=3.6*dt;b.mesh.position.addScaledVector(b.velocity,dt);b.life-=dt;
   let dragonHit=false;
   if(!b.dragonChecked&&dragonFlight.ready&&dragonFlight.group&&!dragonFlight.destroyed){const dragonCenter=dragonFlight.group.position.clone().add(new THREE.Vector3(0,1.2,0));if(b.mesh.position.distanceTo(dragonCenter)<5.2){b.dragonChecked=true;dragonHit=true;dragonFlight.destroyed=true;dragonFlight.ready=false;dragonFlight.group.visible=false;dragonGlow.intensity=0;const p=dragonCenter.clone();const burst=new THREE.Mesh(new THREE.SphereGeometry(7,20,14),new THREE.MeshBasicMaterial({color:0xff7a28,transparent:true,opacity:.82}));burst.position.copy(p);scene.add(burst);setTimeout(()=>{scene.remove(burst);burst.geometry.dispose();burst.material.dispose()},900);coins+=300;updateStats();saveResources();document.querySelector('#hint').textContent='🐉 DRAGÃO DESTRUÍDO! Recompensa: +300 moedas!';}
