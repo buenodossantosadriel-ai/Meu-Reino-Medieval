@@ -4,9 +4,12 @@ export function createImmersive4D(THREE, scene) {
   const state={weather:'clear',sound:false,audio:null,elapsed:0,lightning:0,wind:.35,stepClock:0,birdClock:0,musicClock:0,lastPosition:null,lastMoving:false,lastMounted:false,lastRunning:false};
   const weatherOptions=[['clear','☀️ Limpo'],['cloudy','☁️ Nublado'],['rain','🌧️ Chuva'],['storm','⛈️ Tempestade'],['snow','❄️ Neve'],['fog','🌫️ Neblina']];
   const panel=document.createElement('div');panel.id='immersive4dPanel';
-  panel.style.cssText='position:fixed;right:12px;top:150px;z-index:6;pointer-events:auto;background:#142019ee;border:1px solid #d3b775;border-radius:12px;padding:9px;color:#fff2d0;font:12px system-ui;box-shadow:0 4px 16px #0008;width:164px;max-width:45vw';
-  panel.innerHTML='<div style="font-weight:800;color:#f0cc78;margin-bottom:6px">🌍 MUNDO 4D</div><label for="weather4d">Clima</label><select id="weather4d" style="display:block;width:100%;margin:4px 0 7px;padding:7px;border-radius:7px;background:#293b2d;color:#fff;border:1px solid #c5a96b"></select><button id="sound4d" type="button" style="width:100%;padding:8px;font-size:11px">🔇 Ativar sons</button><div id="audioControls4d" style="display:none;margin-top:8px"><label>Música <input data-audio="music" type="range" min="0" max="100" value="24" style="width:100%"></label><label>Ambiente <input data-audio="ambient" type="range" min="0" max="100" value="55" style="width:100%"></label><label>Efeitos <input data-audio="effects" type="range" min="0" max="100" value="70" style="width:100%"></label></div><div id="weatherStatus4d" style="margin-top:6px;opacity:.8">Ciclo solar ativo</div>';
+  panel.style.cssText='position:fixed;right:10px;top:112px;z-index:6;pointer-events:auto;background:#142019ee;border:1px solid #d3b775;border-radius:12px;padding:7px;color:#fff2d0;font:12px system-ui;box-shadow:0 4px 16px #0008;width:154px;max-width:45vw;transition:width .18s ease';
+  panel.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;font-weight:800;color:#f0cc78"><span>🌍 MUNDO 4D</span><button id="collapse4d" type="button" aria-label="Recolher painel 4D" style="padding:2px 7px;font-size:13px">⌃</button></div><div id="body4d"><label for="weather4d">Clima</label><select id="weather4d" style="display:block;width:100%;margin:4px 0 7px;padding:7px;border-radius:7px;background:#293b2d;color:#fff;border:1px solid #c5a96b"></select><button id="sound4d" type="button" style="width:100%;padding:8px;font-size:11px">🔇 Ativar sons</button><div id="audioControls4d" style="display:none;margin-top:8px"><label>Música <input data-audio="music" type="range" min="0" max="100" value="24" style="width:100%"></label><label>Ambiente <input data-audio="ambient" type="range" min="0" max="100" value="55" style="width:100%"></label><label>Efeitos <input data-audio="effects" type="range" min="0" max="100" value="70" style="width:100%"></label></div><div id="weatherStatus4d" style="margin-top:6px;opacity:.8">Ciclo solar ativo</div></div>';
   document.body.appendChild(panel);
+  const body4d=panel.querySelector('#body4d'),collapse4d=panel.querySelector('#collapse4d');
+  panel.classList.add('collapsed');body4d.style.display='none';panel.style.width='116px';
+  collapse4d.addEventListener('click',()=>{const collapsed=panel.classList.toggle('collapsed');body4d.style.display=collapsed?'none':'block';panel.style.width=collapsed?'116px':'154px';collapse4d.textContent=collapsed?'⌄':'⌃';collapse4d.setAttribute('aria-label',collapsed?'Expandir painel 4D':'Recolher painel 4D');});
   const select=panel.querySelector('#weather4d');
   for(const [value,label] of weatherOptions){const option=document.createElement('option');option.value=value;option.textContent=label;select.appendChild(option);}
   select.addEventListener('change',()=>setWeather(select.value));
@@ -78,7 +81,15 @@ export function createImmersive4D(THREE, scene) {
     else if(name==='mount'){tone(240,'sine',.32,.13,360);tone(360,'sine',.28,.09,260);}
     else if(name==='birds'){tone(1500,'sine',.12,.055,2100);setTimeout(()=>{if(state.sound)tone(1900,'sine',.16,.045,1250)},125);}
     else if(name==='thunder'){noise(.95,.26,240);tone(58,'sine',.9,.22,32);}
-    else if(name==='fire')noise(.16,.1,2400);else return;
+    else if(name==='fire')noise(.16,.1,2400);
+    else if(name==='chicken'){tone(880,'triangle',.16,.16,1180);tone(620,'sawtooth',.22,.08,430);noise(.12,.07,1700);}
+    else if(name==='cow'){tone(92,'sawtooth',.62,.22,68);tone(138,'triangle',.48,.12,92);}
+    else if(name==='egg'){tone(520,'sine',.12,.12,780);tone(760,'sine',.18,.07,920);}
+    else if(name==='milk'){noise(.42,.11,1050);tone(310,'sine',.24,.045,220);}
+    else if(name==='cannon'){noise(.72,.34,420);tone(64,'sawtooth',.62,.28,32);tone(38,'sine',.9,.2,25);}
+    else if(name==='dragon'){noise(.8,.22,720);tone(72,'sawtooth',.7,.2,38);tone(115,'triangle',.5,.1,62);}
+    else if(name==='enemy'){noise(.34,.16,680);tone(105,'sawtooth',.28,.12,58);}
+    else return;
     out.gain.setTargetAtTime(1,now,.008);out.gain.setTargetAtTime(.0001,now+(name==='thunder' ? 0.85 : 0.3),.08);
     setTimeout(()=>{try{out.disconnect();panner.disconnect();}catch(_){}},1400);
   }
