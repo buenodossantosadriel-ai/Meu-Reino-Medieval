@@ -387,7 +387,7 @@ function castle(){
  // Molduras de pedra e arcos sobre as janelas da fachada.
  for(const x of [-1.5,1.5]){const frame=new THREE.Mesh(new THREE.BoxGeometry(.68,1.38,.16),darkStone);frame.position.set(x,3.4,.59);scene.add(frame);const glass=new THREE.Mesh(new THREE.BoxGeometry(.43,1.08,.1),new THREE.MeshStandardMaterial({color:0x263c4a,emissive:0x172d3c,emissiveIntensity:.55,roughness:.3}));glass.position.set(x,3.4,.69);scene.add(glass);const archStone=new THREE.Mesh(new THREE.TorusGeometry(.34,.09,8,18,Math.PI),stoneMat);archStone.position.set(x,4.08,.68);archStone.rotation.z=Math.PI;scene.add(archStone)}
  // Escada caracol externa, com degraus de cantaria e corrimão de ferro/madeira até o canhão.
- addStoneSpiralStaircase(scene,{centerX:0,centerZ:-2,baseY:.18,rise:8.35,turns:3.25,radius:4.15,steps:62,startAngle:Math.PI/2});
+ addStoneSpiralStaircase(scene,{centerX:0,centerZ:-2,baseY:.18,rise:9.2,turns:3.25,radius:4.15,steps:62,startAngle:Math.PI/2});
  for(const x of [-4.15,4.15]){const torch=new THREE.Group();const post=new THREE.Mesh(new THREE.CylinderGeometry(.07,.11,1.1,8),ironMat);post.position.y=.55;torch.add(post);const bowl=new THREE.Mesh(new THREE.CylinderGeometry(.2,.12,.18,10),goldMatForCastle);bowl.position.y=1.12;torch.add(bowl);const flame=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8),new THREE.MeshBasicMaterial({color:0xff9a35}));flame.position.y=1.35;torch.add(flame);torch.position.set(x,5.9,-2);scene.add(torch)}
  for(const x of [-1.5,1.5]){const win=box(x,3.4,.56,.45,1.1,.08,0x293b45);win.material=new THREE.MeshStandardMaterial({color:0x293b45,emissive:0x182c35})}
  // Janelas altas, bandeira real e detalhes de fachada.
@@ -1200,14 +1200,7 @@ function renderBlock(b){
   for(const p of [[-5.05,-5.05],[5.05,-5.05],[-5.05,5.05],[5.05,5.05]])addTower(p[0],p[1],8.2);
   addTower(0,-.25,13.2);
   // Escada helicoidal de pedra acompanha a torre real até a plataforma do canhão.
-  addStoneSpiralStaircase(group,{centerX:0,centerZ:-.25,baseY:.22,rise:14.45,turns:3.8,radius:4.05,steps:88,startAngle:Math.PI/2});
-  // Canhão real no terraço superior da fortaleza avançada.
-  const cannonIron=new THREE.MeshStandardMaterial({color:0x30383b,metalness:.86,roughness:.25}),cannonWood=new THREE.MeshStandardMaterial({color:0x593b26,roughness:.76});
-  const cannonBase=new THREE.Mesh(new THREE.CylinderGeometry(1.18,1.38,.42,20),cannonWood);cannonBase.position.set(0,15.0,-.25);cannonBase.castShadow=true;group.add(cannonBase);
-  const cannonPivot=new THREE.Group();cannonPivot.position.set(0,15.62,-.25);group.add(cannonPivot);
-  const cannonTube=new THREE.Mesh(new THREE.CylinderGeometry(.38,.5,3.35,20),cannonIron);cannonTube.rotation.x=Math.PI/2;cannonTube.position.z=1.32;cannonTube.castShadow=true;cannonPivot.add(cannonTube);
-  const muzzle=new THREE.Mesh(new THREE.TorusGeometry(.4,.09,10,20),cannonWood);muzzle.position.z=2.95;cannonPivot.add(muzzle);
-  for(const side of [-1,1]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.58,.58,.2,20),cannonWood);wheel.rotation.z=Math.PI/2;wheel.position.set(side*.82,.48,-.18);cannonPivot.add(wheel)}
+  addStoneSpiralStaircase(group,{centerX:0,centerZ:-.25,baseY:.22,rise:16.0,turns:3.8,radius:4.05,steps:88,startAngle:Math.PI/2});
   // Ameias no topo do salão e passarelas de ligação
   for(let i=0;i<9;i++){
    const p=-4.2+i*1.05;
@@ -1219,7 +1212,7 @@ function renderBlock(b){
   const royalFlag=new THREE.Mesh(new THREE.PlaneGeometry(1.65,1.0),new THREE.MeshStandardMaterial({color:0xc49a36,side:THREE.DoubleSide,roughness:.7}));royalFlag.position.set(.8,14.35,-.25);royalFlag.castShadow=true;group.add(royalFlag);
   scene.add(group);m=group;
   // Quando a Torre Real é construída, o canhão utilizável passa para seu terraço superior.
-  if(cannonMount)cannonMount.position.set(b.x,15.35,b.z-.25);
+  if(cannonMount)cannonMount.position.set(b.x,16.52,b.z-.25);
  }else if(b.block_type==='castle_guard'){
   const group=new THREE.Group();const guard=makeKnight();guard.scale.setScalar(.78);group.add(guard);group.position.set(b.x,0,b.z);group.rotation.y=Number(b.rotation)||0;scene.add(group);m=group;
  }else{m=box(b.x,b.y,b.z,2,2,2,b.block_type==='wood'?0x80542f:0x8e8b83)}
