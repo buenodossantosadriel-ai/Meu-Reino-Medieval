@@ -650,7 +650,7 @@ document.querySelector('#castleBuild').onclick=async()=>{
  const existing=await db.from('world_blocks').select('id').eq('owner_id',user.id).eq('block_type','tower').limit(1);
  if(existing.error){document.querySelector('#hint').textContent='Não foi possível verificar seu terreno: '+existing.error.message;return}
  if(existing.data?.length){document.querySelector('#hint').textContent='Você já construiu seu castelo. Amplie-o com blocos.';return}
- const x=Math.round(player.position.x/2)*2,z=Math.round(player.position.z/2)*2;
+ const x=Math.round((player.position.x+18)/2)*2,z=Math.round(player.position.z/2)*2;
  const rows=[
   ...[[-5,-5],[5,-5],[-5,5],[5,5]].map(([dx,dz])=>({owner_id:user.id,block_type:'tower',x:x+dx,y:2.6,z:z+dz,rotation:0})),
   {owner_id:user.id,block_type:'wall',x,y:1.8,z:z-5,rotation:0},
@@ -661,7 +661,7 @@ document.querySelector('#castleBuild').onclick=async()=>{
  const {data,error}=await db.from('world_blocks').insert(rows).select();
  if(error){document.querySelector('#hint').textContent='Falha ao construir castelo: '+error.message;return}
  wood-=20;stone-=30;data.forEach(renderBlock);updateStats();await saveResources();
- document.querySelector('#hint').textContent='Seu castelo foi erguido! Agora amplie as muralhas e proteja seu reino.';
+ document.querySelector('#hint').textContent='Seu castelo foi erguido no seu terreno! Fica a leste do ponto onde você estava. Amplie as muralhas e proteja seu reino.';
 };
 document.querySelector('#build').onclick=async()=>{if(!user)return;if(wood<3||stone<2){document.querySelector('#hint').textContent='Precisa de 3 madeiras e 2 pedras.';return}const x=Math.round(player.position.x/2)*2,z=Math.round((player.position.z-2)/2)*2;const {data,error}=await db.from('world_blocks').insert({owner_id:user.id,block_type:'stone',x,y:1,z,rotation:0}).select().single();if(error){document.querySelector('#hint').textContent='Falha ao salvar construção: '+error.message;return}wood-=3;stone-=2;updateStats();renderBlock(data);await saveResources()}; 
 function renderBlock(b){
