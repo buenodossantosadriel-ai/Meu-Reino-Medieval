@@ -1085,7 +1085,9 @@ function createEnemy(type,x,z){
  return {type,group,model,bar,fill,x,z,health:type==='ogre'?150:80,maxHealth:type==='ogre'?150:80,damage:type==='ogre'?13:8,speed:type==='ogre'?2.05:2.8,range:type==='ogre'?1.95:1.7,reward:type==='ogre'?35:14,state:'patrol',target:new THREE.Vector3(x,0,z),timer:1+Math.random()*2,attackAt:0,nextAttack:0,respawnAt:0,alive:true,phase:Math.random()*6};
 }
 function updateEnemyHealth(e){const ratio=Math.max(0,e.health/e.maxHealth);e.fill.scale.x=ratio;e.fill.position.x=-(1-ratio)*.56;e.fill.material.color.set(ratio<.3?0xe64b42:ratio<.6?0xe6b64b:0x43c66b)}
-function spawnEnemies(){if(enemyUnits.length)return;enemyUnits=[createEnemy('bandit',-12,7),createEnemy('bandit',13,8),createEnemy('bandit',-16,24),createEnemy('bandit',15,27),createEnemy('ogre',5,34)];}
+const ENEMY_FOREST={x:0,z:68,patrolRadius:24,leashRadius:38,aggroRadius:30};
+function insideEnemyForest(x,z,radius=ENEMY_FOREST.leashRadius){return Math.hypot(x-ENEMY_FOREST.x,z-ENEMY_FOREST.z)<=radius}
+function spawnEnemies(){if(enemyUnits.length)return;enemyUnits=[createEnemy('bandit',-12,57),createEnemy('bandit',13,59),createEnemy('bandit',-16,70),createEnemy('bandit',15,73),createEnemy('ogre',2,82)];}
 function enemyMove(e,dx,dz){const nx=e.group.position.x+dx,nz=e.group.position.z+dz;if(!collidesAt(nx,nz,.48)){e.group.position.x=nx;e.group.position.z=nz;return true}if(!collidesAt(nx,e.group.position.z,.48))e.group.position.x=nx;if(!collidesAt(e.group.position.x,nz,.48))e.group.position.z=nz;return false}
 function updateEnemies(dt,t){
  const now=Date.now();
@@ -1095,8 +1097,27 @@ function updateEnemies(dt,t){
   e.model.position.y=Math.sin(e.phase*(e.state==='chase'?8:2))*(e.state==='chase'?.035:.012);
   if(e.state==='windup')e.model.rotation.x=-.13+Math.sin(e.phase*18)*.045;else e.model.rotation.x=e.state==='chase'?.018:0;
   if(e.attackAt&&now>=e.attackAt){e.attackAt=0;e.model.rotation.x=-.22;if(dist<e.range+.35&&now>enemyInvulnerableUntil){health=Math.max(0,health-e.damage);updateStats();saveResources();document.querySelector('#hint').textContent=(e.type==='ogre'?'👹 O ciclope':'⚔ O bandido')+' acertou você! -'+e.damage+' de vida.';if(health<=0){health=35;player.position.set(0,0,13);enemyInvulnerableUntil=now+3500;updateStats();saveResources();document.querySelector('#hint').textContent='💫 Você foi derrotado e voltou ao castelo. Seu reino e seus recursos foram preservados!'}}}
-  if(dist<16){e.state=dist>e.range?'chase':'windup';if(dist>e.range){const speed=e.speed*(dist<5?1.12:1),moved=enemyMove(e,dx/Math.max(dist,.001)*speed*dt,dz/Math.max(dist,.001)*speed*dt);if(!moved&&Math.random()<dt*.8){e.target.set(e.group.position.x+(Math.random()-.5)*8,0,e.group.position.z+(Math.random()-.5)*8);e.timer=2}}else if(now>=e.nextAttack&&!e.attackAt&&now>enemyInvulnerableUntil){e.attackAt=now+420;e.nextAttack=now+(e.type==='ogre'?1900:1450);document.querySelector('#hint').textContent=(e.type==='ogre'?'👹 O ciclope prepara um golpe!':'⚔ Um bandido vai atacar!')}e.group.rotation.y=Math.atan2(dx,dz)}
-  else{e.state='patrol';e.timer-=dt;if(e.timer<=0||Math.hypot(e.target.x-e.group.position.x,e.target.z-e.group.position.z)<.8){e.target.set(e.x+(Math.random()-.5)*10,0,e.z+(Math.random()-.5)*10);e.timer=2.5+Math.random()*3.5}const px=e.target.x-e.group.position.x,pz=e.target.z-e.group.position.z,pd=Math.hypot(px,pz);if(pd>.3){enemyMove(e,px/pd*e.speed*.32*dt,pz/pd*e.speed*.32*dt);e.group.rotation.y=Math.atan2(px,pz)}}
+  // Inimigos pertencem à floresta: só detectam jogadores dentro do perímetro.
+  const playerInForest=insideEnemyForest(player.position.x,player.position.z,ENEMY_FOREST.aggroRadius);
+  const enemyInTerritory=insideEnemyForest(e.group.position.x,e.group.position.z,ENEMY_FOREST.leashRadius);
+  const canChase=playerInForest&&enemyInTerritory&&dist<16;
+  if(canChase){e.state=dist>e.range?'chase':'windup';if(dist>e.range){const speed=e.speed*(dist<5?1.12:1),moved=enemyMove(e,dx/Math.max(dist,.001)*speed*dt,dz/Math.max(dist,.001)*speed*dt);if(!moved&&Math.random()<dt*.8){e.target.set(e.x+(Math.random()-.5)*8,0,e.z+(Math.random()-.5)*8);e.timer=2}}else if(now>=e.nextAttack&&!e.attackAt&&now>enemyInvulnerableUntil){e.attackAt=now+420;e.nextAttack=now+(e.type==='ogre'?1900:1450);document.querySelector('#hint').textContent=(e.type==='ogre'?'👹 O ciclope prepara um golpe!':'⚔ Um bandido vai atacar!')}e.group.rotation.y=Math.atan2(dx,dz)}
+  else{
+   e.state='patrol';e.attackAt=0;
+   // Se o jogador sair da floresta, o inimigo retorna ao seu ponto de patrulha.
+   const homeDistance=Math.hypot(e.x-e.group.position.x,e.z-e.group.position.z);
+   if(!insideEnemyForest(e.group.position.x,e.group.position.z,ENEMY_FOREST.patrolRadius)||homeDistance>ENEMY_FOREST.patrolRadius){
+    e.target.set(e.x,0,e.z);
+   }else{
+    e.timer-=dt;
+    if(e.timer<=0||Math.hypot(e.target.x-e.group.position.x,e.target.z-e.group.position.z)<.8){
+     const a=Math.random()*Math.PI*2,r=Math.random()*ENEMY_FOREST.patrolRadius*.72;
+     e.target.set(e.x+Math.cos(a)*r,0,e.z+Math.sin(a)*r);e.timer=2.5+Math.random()*3.5;
+    }
+   }
+   const px=e.target.x-e.group.position.x,pz=e.target.z-e.group.position.z,pd=Math.hypot(px,pz);
+   if(pd>.3){enemyMove(e,px/pd*e.speed*.32*dt,pz/pd*e.speed*.32*dt);e.group.rotation.y=Math.atan2(px,pz)}
+  }
  }
 }
 document.querySelector('#attack').onclick=async()=>{
