@@ -94,7 +94,7 @@ export function createImmersive4D(THREE, scene) {
     setTimeout(()=>{try{out.disconnect();panner.disconnect();}catch(_){}},1400);
   }
   const mobile=innerWidth<=700;
-  const maxParticles = Math.min(mobile?360:760, Math.max(mobile?140:260, Math.floor((innerWidth*innerHeight)/(mobile?3200:2100))));
+  const maxParticles = Math.min(mobile?100:760, Math.max(mobile?70:260, Math.floor((innerWidth*innerHeight)/(mobile?9000:2100))));
   const positions = new Float32Array(maxParticles*3), velocities = new Float32Array(maxParticles*3);
   const particleGeo = new THREE.BufferGeometry(); particleGeo.setAttribute('position',new THREE.BufferAttribute(positions,3));
   const particleMat = new THREE.PointsMaterial({color:0xb9d7e8,size:.13,transparent:true,opacity:0,depthWrite:false,sizeAttenuation:true});
@@ -108,7 +108,7 @@ export function createImmersive4D(THREE, scene) {
   }
   const waterTargets=[];
   const foliage=[];
-  let scanTimer=0,sceneEffectsTimer=0;
+  let scanTimer=mobile?Infinity:0,sceneEffectsTimer=0;
   function scanScene() {
     waterTargets.length=0; foliage.length=0;
     scene.traverse(obj=>{
@@ -141,7 +141,7 @@ export function createImmersive4D(THREE, scene) {
   }
   function update(dt,time,playerPosition,worldLight,camera,movement) {
     state.elapsed+=dt; scanTimer-=dt;
-    if(scanTimer<=0){scanTimer=5;scanScene();}
+    if(!mobile&&scanTimer<=0){scanTimer=5;scanScene();}
     const storm=state.weather==='storm', rain=state.weather==='rain'||storm, snow=state.weather==='snow';
     particles.position.set(playerPosition.x,0,playerPosition.z);
     if(rain||snow) {
@@ -157,7 +157,7 @@ export function createImmersive4D(THREE, scene) {
     state.wind=.35+Math.abs(gust)*.8+(storm?1.25:0)+(rain ? 0.25 : 0);
     sceneEffectsTimer-=dt;
     if(sceneEffectsTimer<=0){
-      sceneEffectsTimer=mobile?.12:.08;
+      sceneEffectsTimer=mobile?.35:.08;
       for(let i=0;i<foliage.length;i++){
         const obj=foliage[i], base=obj.userData.windBase??(obj.userData.windBase=obj.rotation.z);
         obj.rotation.z=base+Math.sin(state.elapsed*1.6+i*.73)*.025*state.wind;
