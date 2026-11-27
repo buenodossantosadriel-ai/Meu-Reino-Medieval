@@ -15,6 +15,7 @@ window.addEventListener('unhandledrejection',e=>{
  if(m) m.textContent='Falha inesperada do jogo: '+(e.reason?.message||String(e.reason||'erro desconhecido'));
 });
 </script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
