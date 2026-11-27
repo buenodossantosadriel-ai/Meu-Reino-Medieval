@@ -1,4 +1,4 @@
-const CACHE='meu-reino-v2';
+const CACHE='meu-reino-v3';
 self.addEventListener('install',event=>{
   self.skipWaiting();
   event.waitUntil(caches.open(CACHE).then(cache=>cache.add('/manifest.json').catch(()=>{})));
