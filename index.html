@@ -19,6 +19,7 @@ window.addEventListener('unhandledrejection',e=>{
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/environments/RoomEnvironment.js';
 import { clone as cloneSkeleton } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/SkeletonUtils.js';
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const SUPABASE_URL='https://vuvjxrxljlhvoldugmpz.supabase.co';
@@ -37,13 +38,14 @@ renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.12;
+const charEnv=new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(),.04).texture;
 document.querySelector('#game').appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xdceeff,0x66734a,1.65));
 const sun=new THREE.DirectionalLight(0xffe2ad,2.4);
 sun.position.set(-35,55,28);sun.castShadow=true;
-sun.shadow.mapSize.set(1024,1024);
-sun.shadow.camera.left=-65;sun.shadow.camera.right=65;sun.shadow.camera.top=65;sun.shadow.camera.bottom=-65;
-sun.shadow.bias=-.00025;scene.add(sun);
+sun.shadow.mapSize.set(innerWidth>700?2048:1536,innerWidth>700?2048:1536);
+sun.shadow.camera.left=-40;sun.shadow.camera.right=40;sun.shadow.camera.top=40;sun.shadow.camera.bottom=-40;
+sun.shadow.bias=-.00025;scene.add(sun);scene.add(sun.target);
 const fill=new THREE.DirectionalLight(0x9dbbdf,.55);fill.position.set(30,18,-35);scene.add(fill);
 function makeGroundTexture(){
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=512;
@@ -237,7 +239,7 @@ function makePrincess(){
  return g;
 }
 function makeOgre(){
- const g=new THREE.Group(),green=mat(0x5d9a43),darkGreen=mat(0x386b32),leather=mat(0x65442b),ivory=mat(0xf1e4c2);
+ const g=new THREE.Group(),green=mat(0x5d9a43),darkGreen=mat(0x386b32),leather=mat(0x65442b),ivory=mat(0xf1e4c2),gold=mat(0xd2a64f,.6,.35);
  part(g,new THREE.CapsuleGeometry(.58,.78,6,12),green,0,1.12,0);
  part(g,new THREE.SphereGeometry(.52,16,12),green,0,2.05,.02);
  for(const x of [-.57,.57]){
@@ -330,7 +332,7 @@ async function loadProfessionalAvatar(type){
  model.traverse(o=>{
   if(o.isMesh){o.castShadow=true;o.receiveShadow=true;
    const materials=Array.isArray(o.material)?o.material:(o.material?[o.material]:[]);
-   materials.forEach(m=>{if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;m.needsUpdate=true;});
+   materials.forEach(m=>{if(m.map){m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=8;}m.envMap=charEnv;m.envMapIntensity=.7;m.needsUpdate=true;});
   }
  });
  const mixer=new THREE.AnimationMixer(model),findClip=pattern=>gltf.animations.find(c=>pattern.test(c.name));
@@ -703,10 +705,11 @@ let last=0,walkPhase=0;function animate(t){requestAnimationFrame(animate);const 
  if(keys.w||keys.arrowup)sy=1;if(keys.s||keys.arrowdown)sy=-1;if(keys.a||keys.arrowleft)sx=-1;if(keys.d||keys.arrowright)sx=1;
  const len=Math.hypot(sx,sy);const moving=len>.08;if(moving){walkPhase+=dt*(mountedHorse?10:8);const side=sx/Math.max(1,len),forward=sy/Math.max(1,len);
  const dx=(Math.sin(yaw)*forward+Math.cos(yaw)*side),dz=(-Math.cos(yaw)*forward+Math.sin(yaw)*side);
- player.position.x+=dx*(mountedHorse?10:6)*dt;player.position.z+=dz*(mountedHorse?10:6)*dt;player.rotation.y=Math.atan2(dx,dz);if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;}
+ player.position.x+=dx*(mountedHorse?10:6)*dt;player.position.z+=dz*(mountedHorse?10:6)*dt;const ta=Math.atan2(dx,dz),d=Math.atan2(Math.sin(ta-player.rotation.y),Math.cos(ta-player.rotation.y));player.rotation.y+=d*Math.min(1,dt*12);if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;}
  if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);player.position.y=1.22;}else player.position.y=0;
+sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.position.z/2)*2);sun.position.set(sun.target.position.x-35,55,sun.target.position.z+28);
  const gait=moving?Math.sin(walkPhase):0;
- if(avatarInstance){avatarInstance.mixer.update(dt);setProfessionalGait(avatarInstance,moving);}
+ if(avatarInstance){avatarInstance.mixer.update(dt);setProfessionalGait(avatarInstance,moving&&!mountedHorse);}
  else{
   avatarModel.position.y=(moving?Math.abs(Math.sin(walkPhase*2))*.045:Math.sin(t*.0018)*.018);
   avatarModel.rotation.x=moving?Math.sin(walkPhase*2)*.045:Math.sin(t*.0015)*.012;
