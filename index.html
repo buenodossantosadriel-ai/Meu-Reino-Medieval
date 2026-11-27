@@ -183,6 +183,16 @@ function makeKnight(){
  part(g,new THREE.BoxGeometry(.12,.28,.035),gold,0,1.18,.425);
  for(const x of [-.21,.21]){part(g,new THREE.SphereGeometry(.16,12,10),silver,x*.95,.48,.12);part(g,new THREE.BoxGeometry(.12,.08,.08),gold,x*.95,.15,.18)}
  part(g,new THREE.BoxGeometry(.12,.12,.12),gold,-.65,1.05,.23);
+ // Botas articuladas, luvas e lâminas com guarda metálica.
+ for(const x of [-.21,.21]){
+  part(g,new THREE.CylinderGeometry(.15,.18,.34,12),dark,x,.19,.02);
+  part(g,new THREE.SphereGeometry(.17,12,10),silver,x,.06,.12);
+  part(g,new THREE.SphereGeometry(.14,12,10),silver,x*.95,.67,.12);
+  part(g,new THREE.SphereGeometry(.12,12,10),silver,x*1.08,.55,.15);
+ }
+ part(g,new THREE.BoxGeometry(.07,.52,.045),silver,.61,1.48,.13);
+ part(g,new THREE.BoxGeometry(.34,.07,.08),gold,.61,1.12,.13);
+ part(g,new THREE.CylinderGeometry(.045,.055,.22,10),woodMat,.61,.91,.13);
  return g;
 }
 function makePrincess(){
@@ -206,6 +216,21 @@ function makePrincess(){
  part(g,new THREE.SphereGeometry(.075,10,8),gold,0,1.68,.3);part(g,new THREE.SphereGeometry(.035,8,8),pearl,0,1.68,.37);
  for(const x of [-.34,.34]){part(g,new THREE.SphereGeometry(.12,10,8),hair,x,1.94,-.02);part(g,new THREE.ConeGeometry(.055,.3,8),gold,x*.65,2.36,.02)}
  part(g,new THREE.TorusGeometry(.42,.035,6,20),gold,0,.42,0).rotation.x=Math.PI/2;
+ // Camadas de tecido, mangas, mãos e detalhes faciais delicados.
+ const iris=mat(0x527d87),whiteEye=mat(0xfff4e8),brow=mat(0x49301f);
+ for(const x of [-.105,.105]){
+  part(g,new THREE.SphereGeometry(.052,12,10),whiteEye,x,2.07,.255);
+  part(g,new THREE.SphereGeometry(.026,10,8),iris,x,2.07,.3);
+  part(g,new THREE.SphereGeometry(.014,8,8),eye,x,2.07,.32);
+  part(g,new THREE.BoxGeometry(.1,.025,.025),brow,x,2.15,.25);
+ }
+ for(const x of [-.43,.43]){
+  part(g,new THREE.SphereGeometry(.13,12,10),dress,x,1.48,.02);
+  part(g,new THREE.SphereGeometry(.1,12,10),skin,x*1.12,1.15,.1);
+  part(g,new THREE.CylinderGeometry(.045,.06,.38,10),gold,x*.78,1.55,.04);
+ }
+ part(g,new THREE.TorusGeometry(.48,.045,8,24),gold,0,.88,0).rotation.x=Math.PI/2;
+ for(let i=0;i<5;i++)part(g,new THREE.SphereGeometry(.045,8,8),pearl,Math.sin(i*1.25)*.38,.35,Math.cos(i*1.25)*.38);
  return g;
 }
 function makeOgre(){
@@ -230,6 +255,17 @@ function makeOgre(){
  part(g,new THREE.BoxGeometry(.24,.07,.04),ivory,0,1.78,.5);
  part(g,new THREE.TorusGeometry(.18,.035,6,12),leather,0,.85,.39);
  for(const x of [-.34,.34])part(g,new THREE.SphereGeometry(.1,10,8),gold,x,.84,.42);
+ // Orelhas com interior, barriga, unhas e cicatrizes de batalha.
+ const innerEar=mat(0x477637),scar=mat(0x9dbb65);
+ for(const x of [-.73,.73]){
+  part(g,new THREE.SphereGeometry(.12,10,8),innerEar,x*1.02,2.08,.04);
+  part(g,new THREE.CapsuleGeometry(.055,.3,4,8),green,x*.92,.55,.18);
+ }
+ part(g,new THREE.SphereGeometry(.34,14,10),darkGreen,0,1.12,.36).scale.set(1,.78,.42);
+ part(g,new THREE.TorusGeometry(.25,.035,6,16),leather,0,1.12,.39);
+ part(g,new THREE.BoxGeometry(.035,.28,.025),scar,.28,2.27,.47).rotation.z=-.25;
+ part(g,new THREE.BoxGeometry(.035,.18,.025),scar,-.31,2.0,.47).rotation.z=.3;
+ for(const x of [-.42,.42])part(g,new THREE.SphereGeometry(.09,8,8),leather,x,.38,.18);
  return g;
 }
 const avatarBuilders={knight:makeKnight,princess:makePrincess,ogre:makeOgre};
