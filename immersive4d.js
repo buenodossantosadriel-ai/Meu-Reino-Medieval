@@ -1,7 +1,7 @@
 // Camada 4D: clima vivo, vento, água, relâmpagos e áudio ambiente.
 // Mantém o ciclo solar original do jogo e acrescenta efeitos locais de baixo custo.
 export function createImmersive4D(THREE, scene) {
-  const state={weather:'clear',sound:false,audio:null,elapsed:0,lightning:0,wind:.35,stepClock:0,birdClock:0,lastPosition:null,lastMoving:false,lastMounted:false,lastRunning:false};
+  const state={weather:'clear',sound:false,audio:null,elapsed:0,lightning:0,wind:.35,stepClock:0,birdClock:0,musicClock:0,lastPosition:null,lastMoving:false,lastMounted:false,lastRunning:false};
   const weatherOptions=[['clear','☀️ Limpo'],['cloudy','☁️ Nublado'],['rain','🌧️ Chuva'],['storm','⛈️ Tempestade'],['snow','❄️ Neve'],['fog','🌫️ Neblina']];
   const panel=document.createElement('div');panel.id='immersive4dPanel';
   panel.style.cssText='position:fixed;right:12px;top:150px;z-index:6;pointer-events:auto;background:#142019ee;border:1px solid #d3b775;border-radius:12px;padding:9px;color:#fff2d0;font:12px system-ui;box-shadow:0 4px 16px #0008;width:164px;max-width:45vw';
@@ -42,6 +42,14 @@ export function createImmersive4D(THREE, scene) {
     drone.type='triangle';drone.frequency.value=110;drone2.type='sine';drone2.frequency.value=164.81;mg.gain.value=.035;
     drone.connect(mg);drone2.connect(mg);mg.connect(musicGain);drone.start();drone2.start();
     return {ctx,master,musicGain,ambientGain,effectsGain,wind,rain,fire,drone,drone2};
+  }
+  function playMusicNote(){
+    if(!state.audio||!state.sound)return;
+    const a=state.audio,ctx=a.ctx,notes=[146.83,174.61,220,293.66,349.23,440,293.66,220],freq=notes[Math.floor(Math.random()*notes.length)];
+    const o=ctx.createOscillator(),g=ctx.createGain(),filter=ctx.createBiquadFilter(),now=ctx.currentTime;
+    o.type='triangle';o.frequency.setValueAtTime(freq,now);filter.type='lowpass';filter.frequency.value=1500;
+    g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(.045,now+.025);g.gain.exponentialRampToValueAtTime(.0001,now+1.05);
+    o.connect(filter);filter.connect(g);g.connect(a.musicGain);o.start(now);o.stop(now+1.1);
   }
   function play(name,position){
     if(!state.audio||!state.sound)return;const a=state.audio,ctx=a.ctx,now=ctx.currentTime;
@@ -145,7 +153,7 @@ export function createImmersive4D(THREE, scene) {
       if(obj.geometry?.type==='RingGeometry') obj.rotation.z=Math.sin(state.elapsed*1.3+i)*.012;
       else if(obj.material && !Array.isArray(obj.material) && obj.material.transparent) obj.material.opacity=.78+Math.sin(state.elapsed*2+i)*.08;
     }
-    if(storm && Math.random()<dt*.16) state.lightning=.18+Math.random()*.28;
+    if(storm && Math.random()<dt*.16){state.lightning=.18+Math.random()*.28;play('thunder',playerPosition);}
     state.lightning=Math.max(0,state.lightning-dt);
     lightningLight.position.set(playerPosition.x+8,28,playerPosition.z-12);
     lightningLight.intensity=state.lightning>0?state.lightning*38:0;
@@ -154,6 +162,7 @@ export function createImmersive4D(THREE, scene) {
       const a=state.audio,now=a.ctx.currentTime;
       if(camera && a.ctx.listener.positionX){const l=a.ctx.listener,dir=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);l.positionX.setTargetAtTime(camera.position.x,now,.08);l.positionY.setTargetAtTime(camera.position.y,now,.08);l.positionZ.setTargetAtTime(camera.position.z,now,.08);l.forwardX.setTargetAtTime(dir.x,now,.08);l.forwardY.setTargetAtTime(dir.y,now,.08);l.forwardZ.setTargetAtTime(dir.z,now,.08);}
       a.drone.frequency.setTargetAtTime(worldLight?.night>.5?82:110,now,2);a.drone2.frequency.setTargetAtTime(worldLight?.night>.5?123:164.81,now,2);
+      state.musicClock-=dt;if(state.musicClock<=0){playMusicNote();state.musicClock=1.7+Math.random()*1.8;}
       state.birdClock-=dt;if(state.birdClock<=0 && worldLight?.day>.35 && !rain){play('birds',{x:playerPosition.x+(Math.random()-.5)*18,y:5,z:playerPosition.z-8-Math.random()*12});state.birdClock=7+Math.random()*11;}
       state.stepClock-=dt;if(state.stepClock<=0 && state.lastMoving){play(state.lastMounted?'hoof':'footstep',playerPosition);state.stepClock=state.lastMounted ? .31 : state.lastRunning ? .27 : .43;}
       state.lastPosition=playerPosition.clone();
