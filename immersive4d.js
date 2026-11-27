@@ -141,6 +141,7 @@ export function createImmersive4D(THREE, scene) {
   }
   function update(dt,time,playerPosition,worldLight,camera,movement) {
     state.elapsed+=dt; scanTimer-=dt;
+    realismUpdate(dt);fastUpdate(dt);
     if(!mobile&&scanTimer<=0){scanTimer=5;scanScene();}
     const storm=state.weather==='storm', rain=state.weather==='rain'||storm, snow=state.weather==='snow';
     particles.position.set(playerPosition.x,0,playerPosition.z);
@@ -183,6 +184,121 @@ export function createImmersive4D(THREE, scene) {
       state.stepClock-=dt;if(state.stepClock<=0 && state.lastMoving){play(state.lastMounted?'hoof':'footstep',playerPosition);state.stepClock=state.lastMounted ? .31 : state.lastRunning ? .27 : .43;}
       state.lastPosition=playerPosition.clone();
     }
+  }
+  // ===== Realismo dos personagens 3D =====
+  const realism={timer:0,env:null,blobTex:null,blobs:[],seen:new WeakSet()};
+  function realismEnv(){
+    if(realism.env)return realism.env;
+    const w=64,h=32,data=new Uint8Array(w*h*4);
+    const stops=[[0,[120,170,225]],[.42,[225,232,238]],[.5,[214,196,160]],[.56,[110,100,78]],[1,[58,64,46]]];
+    for(let y=0;y<h;y++){
+      const t=1-y/(h-1);let a=stops[0],b=stops[stops.length-1];
+      for(let i=0;i<stops.length-1;i++)if(t>=stops[i][0]&&t<=stops[i+1][0]){a=stops[i];b=stops[i+1];break;}
+      const k=(t-a[0])/Math.max(b[0]-a[0],1e-4);
+      for(let x=0;x<w;x++){const o=(y*w+x)*4;for(let c=0;c<3;c++)data[o+c]=Math.round(a[1][c]+(b[1][c]-a[1][c])*k);data[o+3]=255;}
+    }
+    const tex=new THREE.DataTexture(data,w,h,THREE.RGBAFormat);
+    tex.mapping=THREE.EquirectangularReflectionMapping;tex.colorSpace=THREE.SRGBColorSpace;
+    tex.magFilter=THREE.LinearFilter;tex.minFilter=THREE.LinearFilter;tex.generateMipmaps=false;tex.needsUpdate=true;
+    return realism.env=tex;
+  }
+  function realismBlobTexture(){
+    if(realism.blobTex)return realism.blobTex;
+    const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');
+    const gr=g.createRadialGradient(32,32,2,32,32,31);
+    gr.addColorStop(0,'rgba(0,0,0,.62)');gr.addColorStop(.55,'rgba(0,0,0,.28)');gr.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle=gr;g.fillRect(0,0,64,64);
+    const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return realism.blobTex=t;
+  }
+  function realismAddBlob(skinned){
+    let root=skinned;while(root.parent&&root.parent!==scene)root=root.parent;
+    if(!root.parent||root.userData.__blob)return;root.userData.__blob=true;
+    const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:realismBlobTexture(),transparent:true,opacity:.55,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+    mesh.rotation.x=-Math.PI/2;mesh.renderOrder=1;mesh.frustumCulled=false;
+    const size=new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3());
+    root.add(mesh);realism.blobs.push({mesh,root,span:Math.min(3.4,Math.max(1.1,Math.max(size.x,size.z)*1.25))});
+  }
+  function realismScan(){
+    scene.traverse(obj=>{
+      if(!obj.isSkinnedMesh||realism.seen.has(obj))return;realism.seen.add(obj);
+      const mats=Array.isArray(obj.material)?obj.material:(obj.material?[obj.material]:[]);
+      for(const m of mats){
+        if(!m||!m.isMeshStandardMaterial)continue;
+        if(mobile&&!m.envMap){m.envMap=realismEnv();m.envMapIntensity=.55;}
+        if(m.metalness>.55)m.roughness=Math.min(.78,Math.max(.26,m.roughness));
+        m.needsUpdate=true;
+      }
+      if(mobile)realismAddBlob(obj);
+    });
+  }
+  function realismUpdate(dt){
+    realism.timer-=dt;if(realism.timer<=0){realism.timer=mobile?2.5:1.5;realismScan();}
+    for(let i=realism.blobs.length-1;i>=0;i--){
+      const b=realism.blobs[i];if(!b.root.parent){realism.blobs.splice(i,1);continue;}
+      const s=b.root.scale.x||1,h=Math.max(0,b.root.position.y),o=.55*Math.max(0,1-h/5);
+      b.mesh.position.y=(.04-b.root.position.y)/(b.root.scale.y||1);b.mesh.scale.setScalar(b.span/s);
+      b.mesh.material.opacity=o;b.mesh.visible=o>.02;
+    }
+  }
+  // ===== Otimização de velocidade =====
+  // Junta as ~200 árvores (4 peças cada) e as ~100 pedras em poucos desenhos (InstancedMesh).
+  // Árvores perto do castelo (que trocam por modelo GLTF) e a lógica de colher não mudam.
+  const fast={timer:0,seen:new WeakSet(),zero:new THREE.Matrix4().makeScale(0,0,0),
+    parts:null,sig:null,keep:null,trees:[],treeCount:0,rock:null,rocks:[],rockCount:0};
+  const FAST_TREE_CAP=900,FAST_ROCK_CAP=300;
+  function fastMake(geometry,material,cap,cast){
+    const im=new THREE.InstancedMesh(geometry,material,cap);
+    im.count=0;im.frustumCulled=false;im.castShadow=!!cast;scene.add(im);return im;
+  }
+  function fastTreeSig(g){
+    const c=g.children;
+    if(c.length!==4||!c.every(m=>m.isMesh&&m.material&&m.material.color))return null;
+    if(c[0].geometry.type!=='CylinderGeometry'||c[1].geometry.type!=='IcosahedronGeometry')return null;
+    return c.map(m=>m.geometry.type+JSON.stringify(m.geometry.parameters)+m.material.color.getHex()).join('|');
+  }
+  function fastAddTree(g){
+    const sig=fastTreeSig(g);if(!sig)return;
+    if(!fast.parts){
+      fast.sig=sig;fast.keep=new Set();
+      fast.parts=g.children.map(m=>{fast.keep.add(m.geometry);fast.keep.add(m.material);return fastMake(m.geometry,m.material,FAST_TREE_CAP,m.castShadow);});
+    }
+    if(sig!==fast.sig||fast.treeCount>=FAST_TREE_CAP)return;
+    g.updateMatrix();const idx=fast.treeCount++,tmp=new THREE.Matrix4();
+    g.children.forEach((m,k)=>{m.updateMatrix();tmp.multiplyMatrices(g.matrix,m.matrix);fast.parts[k].setMatrixAt(idx,tmp);});
+    for(const m of g.children.slice()){
+      g.remove(m);
+      if(!fast.keep.has(m.geometry))m.geometry.dispose();
+      if(!fast.keep.has(m.material))m.material.dispose();
+    }
+    fast.parts.forEach(p=>{p.count=fast.treeCount;p.instanceMatrix.needsUpdate=true;});
+    fast.trees.push({g,idx,gone:false});
+  }
+  function fastAddRock(o){
+    if(fast.rockCount>=FAST_ROCK_CAP)return;
+    if(!fast.rock)fast.rock=fastMake(new THREE.DodecahedronGeometry(1,0),new THREE.MeshStandardMaterial({color:0x777b70,roughness:1}),FAST_ROCK_CAP,true);
+    o.updateMatrix();
+    const r=o.geometry.parameters.radius,m=new THREE.Matrix4().multiplyMatrices(o.matrix,new THREE.Matrix4().makeScale(r,r,r)),idx=fast.rockCount++;
+    fast.rock.setMatrixAt(idx,m);fast.rock.count=fast.rockCount;fast.rock.instanceMatrix.needsUpdate=true;
+    o.visible=false;o.geometry.dispose();o.material.dispose();fast.rocks.push({o,idx,gone:false});
+  }
+  function fastScan(){
+    for(const o of scene.children.slice()){
+      if(fast.seen.has(o))continue;
+      if(o.isGroup&&o.userData.harvestX!==undefined){
+        fast.seen.add(o);
+        if(Math.hypot(o.position.x,o.position.z-13)>=36)fastAddTree(o); // perto do castelo: mantém como está
+      }else if(o.isMesh&&!o.isInstancedMesh&&o.geometry.type==='DodecahedronGeometry'&&o.material.color&&o.material.color.getHex()===0x777b70&&o.castShadow){
+        fast.seen.add(o);fastAddRock(o);
+      }
+    }
+  }
+  function fastUpdate(dt){
+    fast.timer-=dt;if(fast.timer<=0){fast.timer=2;fastScan();}
+    let treeDirty=false,rockDirty=false;
+    for(const t of fast.trees)if(!t.gone&&!t.g.parent){t.gone=true;treeDirty=true;fast.parts.forEach(p=>p.setMatrixAt(t.idx,fast.zero));}
+    for(const r of fast.rocks)if(!r.gone&&!r.o.parent){r.gone=true;rockDirty=true;fast.rock.setMatrixAt(r.idx,fast.zero);}
+    if(treeDirty)fast.parts.forEach(p=>{p.instanceMatrix.needsUpdate=true;});
+    if(rockDirty)fast.rock.instanceMatrix.needsUpdate=true;
   }
   setWeather('clear');
   return {update,setWeather,play};
