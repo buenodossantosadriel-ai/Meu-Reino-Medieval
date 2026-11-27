@@ -230,10 +230,13 @@ const darkStone=new THREE.MeshStandardMaterial({color:0x666b62,roughness:1});
 const roofMat=new THREE.MeshStandardMaterial({color:0x70483a,roughness:.9});
 const woodMat=new THREE.MeshStandardMaterial({color:0x69452c,roughness:.9});
 function tower(x,z){
- const base=new THREE.Mesh(new THREE.CylinderGeometry(1.75,1.95,5.8,12),stoneMat);base.position.set(x,2.9,z);base.castShadow=true;base.receiveShadow=true;scene.add(base);
- const roof=new THREE.Mesh(new THREE.ConeGeometry(2.05,3.2,12),roofMat);roof.position.set(x,7.35,z);roof.castShadow=true;scene.add(roof);
- for(let a=0;a<8;a++){const ang=a*Math.PI/4;const mer=box(x+Math.cos(ang)*1.35,5.9,z+Math.sin(ang)*1.35,.42,1,.42,0x8b8d82);mer.material=stoneMat}
- const slit=box(x,3.7,z+1.76,.28,1.1,.08,0x303b38);slit.material=darkStone;
+ const base=new THREE.Mesh(new THREE.CylinderGeometry(1.75,1.95,5.8,20),stoneMat);base.position.set(x,2.9,z);base.castShadow=true;base.receiveShadow=true;scene.add(base);
+ for(const y of [.8,2.85,4.95]){const band=new THREE.Mesh(new THREE.CylinderGeometry(1.83,1.83,.16,20),darkStone);band.position.set(x,y,z);band.castShadow=true;scene.add(band)}
+ const roof=new THREE.Mesh(new THREE.ConeGeometry(2.12,3.35,20),roofMat);roof.position.set(x,7.35,z);roof.castShadow=true;scene.add(roof);
+ for(let row=0;row<5;row++){const ring=new THREE.Mesh(new THREE.TorusGeometry(1.72-row*.31,.045,6,24),woodMat);ring.position.set(x,6.05+row*.48,z);ring.rotation.x=Math.PI/2;scene.add(ring)}
+ for(let a=0;a<12;a++){const ang=a*Math.PI/6;const mer=box(x+Math.cos(ang)*1.42,5.9,z+Math.sin(ang)*1.42,.38,.92,.38,0x8b8d82);mer.material=stoneMat}
+ for(const a of [0,Math.PI/2,Math.PI,Math.PI*1.5]){const slit=box(x+Math.sin(a)*1.76,3.7,z+Math.cos(a)*1.76,.25,1.12,.09,0x303b38);slit.material=darkStone;slit.rotation.y=a}
+ const finial=new THREE.Mesh(new THREE.SphereGeometry(.14,12,10),goldMatForCastle);finial.position.set(x,9.12,z);scene.add(finial);
 }
 let castleGate,castleBridge,gateAngle=0,gateTarget=0,castleBridgeTarget=0,fortressGuards=[],celestialGuardians=[];
 
@@ -302,6 +305,33 @@ function createCelestialAngel(index){
  return {group:g,wings,halo,weapon,glow,aura,index,phase:index*.9};
 }
 
+
+function addStoneSpiralStaircase(parent,{centerX=0,centerZ=0,baseY=0,rise=8.55,turns=3.35,radius=4.25,steps=62}={}){
+ const stone=new THREE.MeshStandardMaterial({color:0xaaa596,roughness:.94});
+ const edge=new THREE.MeshStandardMaterial({color:0x77766e,roughness:.97});
+ const iron=new THREE.MeshStandardMaterial({color:0x343a3b,metalness:.72,roughness:.34});
+ const wood=new THREE.MeshStandardMaterial({color:0x65452b,roughness:.82});
+ const railPoints=[];
+ const rod=(a,b,r,material)=>{const d=new THREE.Vector3().subVectors(b,a),mesh=new THREE.Mesh(new THREE.CylinderGeometry(r,r,d.length(),8),material);mesh.position.copy(a).add(b).multiplyScalar(.5);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());mesh.castShadow=true;parent.add(mesh);return mesh};
+ for(let i=0;i<steps;i++){
+  const t=i/(steps-1),a=-Math.PI/2+t*turns*Math.PI*2,y=baseY+rise*t,x=centerX+Math.cos(a)*radius,z=centerZ+Math.sin(a)*radius;
+  const tread=new THREE.Mesh(new THREE.BoxGeometry(1.48,.23,.88),stone);
+  tread.position.set(x,y,z);tread.rotation.y=-a;tread.castShadow=true;tread.receiveShadow=true;parent.add(tread);
+  const nosing=new THREE.Mesh(new THREE.BoxGeometry(1.5,.055,.92),edge);
+  nosing.position.set(x,y+.115,z);nosing.rotation.y=-a;parent.add(nosing);
+  if(i%4===0||i===steps-1){
+   const outerX=centerX+Math.cos(a)*(radius+.82),outerZ=centerZ+Math.sin(a)*(radius+.82);
+   const foot=new THREE.Vector3(outerX,y+.12,outerZ),top=new THREE.Vector3(outerX,y+1.02,outerZ);
+   rod(foot,top,.065,iron);railPoints.push(top);
+  }
+ }
+ for(let i=1;i<railPoints.length;i++)rod(railPoints[i-1],railPoints[i],.075,wood);
+ const landing=new THREE.Mesh(new THREE.CylinderGeometry(radius+1.15,radius+1.15,.28,48),stone);
+ landing.position.set(centerX,baseY+rise+.08,centerZ);landing.castShadow=true;landing.receiveShadow=true;parent.add(landing);
+ const trim=new THREE.Mesh(new THREE.TorusGeometry(radius+1.12,.075,8,64),iron);
+ trim.rotation.x=Math.PI/2;trim.position.set(centerX,baseY+rise+.24,centerZ);parent.add(trim);
+}
+
 function castle(){
  // Muralhas de pedra com entrada frontal aberta, ameias e quatro torres.
  box(0,2,-8,17,4,1.25,0xaaa99b,stoneMat);
@@ -336,7 +366,16 @@ function castle(){
  box(0,5.3,-2,6.3,.35,5.3,0x777c72,darkStone);
  for(let x=-2.4;x<=2.4;x+=1.6){box(x,5.8,-4.25,.75,.9,.75,0xb8b5a7,stoneMat)}
  for(let z=-3.5;z<=-.5;z+=1.5){box(-3.1,5.8,z,.75,.9,.75,0xb8b5a7,stoneMat);box(3.1,5.8,z,.75,.9,.75,0xb8b5a7,stoneMat)}
- const keepRoof=new THREE.Mesh(new THREE.ConeGeometry(3.9,3.2,4),roofMat);keepRoof.position.set(0,7.1,-2);keepRoof.rotation.y=Math.PI/4;keepRoof.castShadow=true;scene.add(keepRoof);
+ const keepRoof=new THREE.Mesh(new THREE.ConeGeometry(3.9,3.2,8),roofMat);keepRoof.position.set(0,7.1,-2);keepRoof.rotation.y=Math.PI/8;keepRoof.castShadow=true;scene.add(keepRoof);
+ // Faixas de cantaria, contrafortes e blocos talhados dão profundidade à torre principal.
+ for(const y of [.55,1.72,2.9,4.08,5.25]){const course=new THREE.Mesh(new THREE.BoxGeometry(6.12,.105,5.12),darkStone);course.position.set(0,y,-2);course.castShadow=true;scene.add(course)}
+ for(const x of [-2.78,2.78])for(const z of [-4.12,.12]){const buttress=new THREE.Mesh(new THREE.BoxGeometry(.62,5.5,.62),stoneMat);buttress.position.set(x,2.75,z);buttress.castShadow=true;buttress.receiveShadow=true;scene.add(buttress);const cap=new THREE.Mesh(new THREE.BoxGeometry(.82,.22,.82),darkStone);cap.position.set(x,5.48,z);scene.add(cap)}
+ for(let row=0;row<5;row++){const y=.9+row*.88;for(let col=0;col<4;col++){const x=-2.22+col*1.48+(row%2)*.28;const block=new THREE.Mesh(new THREE.BoxGeometry(1.22,.68,.075),stoneMat);block.position.set(x,y,.585);block.castShadow=true;scene.add(block);const sideBlock=new THREE.Mesh(new THREE.BoxGeometry(.075,.68,1.0),stoneMat);sideBlock.position.set(3.085,y,-3.65+col*1.1+(row%2)*.18);sideBlock.castShadow=true;scene.add(sideBlock)}}
+ // Molduras de pedra e arcos sobre as janelas da fachada.
+ for(const x of [-1.5,1.5]){const frame=new THREE.Mesh(new THREE.BoxGeometry(.68,1.38,.16),darkStone);frame.position.set(x,3.4,.59);scene.add(frame);const glass=new THREE.Mesh(new THREE.BoxGeometry(.43,1.08,.1),new THREE.MeshStandardMaterial({color:0x263c4a,emissive:0x172d3c,emissiveIntensity:.55,roughness:.3}));glass.position.set(x,3.4,.69);scene.add(glass);const archStone=new THREE.Mesh(new THREE.TorusGeometry(.34,.09,8,18,Math.PI),stoneMat);archStone.position.set(x,4.08,.68);archStone.rotation.z=Math.PI;scene.add(archStone)}
+ // Escada caracol externa, com degraus de cantaria e corrimão de ferro/madeira até o canhão.
+ addStoneSpiralStaircase(scene,{centerX:0,centerZ:-2,baseY:.18,rise:8.35,turns:3.25,radius:4.15,steps:62});
+ for(const x of [-4.15,4.15]){const torch=new THREE.Group();const post=new THREE.Mesh(new THREE.CylinderGeometry(.07,.11,1.1,8),ironMat);post.position.y=.55;torch.add(post);const bowl=new THREE.Mesh(new THREE.CylinderGeometry(.2,.12,.18,10),goldMatForCastle);bowl.position.y=1.12;torch.add(bowl);const flame=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8),new THREE.MeshBasicMaterial({color:0xff9a35}));flame.position.y=1.35;torch.add(flame);torch.position.set(x,5.9,-2);scene.add(torch)}
  for(const x of [-1.5,1.5]){const win=box(x,3.4,.56,.45,1.1,.08,0x293b45);win.material=new THREE.MeshStandardMaterial({color:0x293b45,emissive:0x182c35})}
  // Janelas altas, bandeira real e detalhes de fachada.
  for(const x of [-2.1,0,2.1]){const slit=box(x,3.25,.57,.28,.95,.1,0x18252c);slit.material=new THREE.MeshStandardMaterial({color:0x18252c,emissive:0x263d48,emissiveIntensity:.28});box(x,2.72,.64,.62,.12,.18,0x777c72,darkStone)}
@@ -1147,6 +1186,15 @@ function renderBlock(b){
   // Torres de canto e torre de menagem central, em patamares distintos
   for(const p of [[-5.05,-5.05],[5.05,-5.05],[-5.05,5.05],[5.05,5.05]])addTower(p[0],p[1],8.2);
   addTower(0,-.25,13.2);
+  // Escada helicoidal de pedra acompanha a torre real até a plataforma do canhão.
+  addStoneSpiralStaircase(group,{centerX:0,centerZ:-.25,baseY:.22,rise:14.45,turns:3.8,radius:4.05,steps:88});
+  // Canhão real no terraço superior da fortaleza avançada.
+  const cannonIron=new THREE.MeshStandardMaterial({color:0x30383b,metalness:.86,roughness:.25}),cannonWood=new THREE.MeshStandardMaterial({color:0x593b26,roughness:.76});
+  const cannonBase=new THREE.Mesh(new THREE.CylinderGeometry(1.18,1.38,.42,20),cannonWood);cannonBase.position.set(0,15.0,-.25);cannonBase.castShadow=true;group.add(cannonBase);
+  const cannonPivot=new THREE.Group();cannonPivot.position.set(0,15.62,-.25);group.add(cannonPivot);
+  const cannonTube=new THREE.Mesh(new THREE.CylinderGeometry(.38,.5,3.35,20),cannonIron);cannonTube.rotation.x=Math.PI/2;cannonTube.position.z=1.32;cannonTube.castShadow=true;cannonPivot.add(cannonTube);
+  const muzzle=new THREE.Mesh(new THREE.TorusGeometry(.4,.09,10,20),cannonWood);muzzle.position.z=2.95;cannonPivot.add(muzzle);
+  for(const side of [-1,1]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.58,.58,.2,20),cannonWood);wheel.rotation.z=Math.PI/2;wheel.position.set(side*.82,.48,-.18);cannonPivot.add(wheel)}
   // Ameias no topo do salão e passarelas de ligação
   for(let i=0;i<9;i++){
    const p=-4.2+i*1.05;
@@ -1157,7 +1205,8 @@ function renderBlock(b){
   addCylinder(0,14.25,-.25,.075,.075,2.0,roofGold,8);
   const royalFlag=new THREE.Mesh(new THREE.PlaneGeometry(1.65,1.0),new THREE.MeshStandardMaterial({color:0xc49a36,side:THREE.DoubleSide,roughness:.7}));royalFlag.position.set(.8,14.35,-.25);royalFlag.castShadow=true;group.add(royalFlag);
   scene.add(group);m=group;
-  // O canhão pertence à fortaleza principal e não é criado por melhorias opcionais.
+  // Quando a Torre Real é construída, o canhão utilizável passa para seu terraço superior.
+  if(cannonMount)cannonMount.position.set(b.x,15.35,b.z-.25);
  }else if(b.block_type==='castle_guard'){
   const group=new THREE.Group();const guard=makeKnight();guard.scale.setScalar(.78);group.add(guard);group.position.set(b.x,0,b.z);group.rotation.y=Number(b.rotation)||0;scene.add(group);m=group;
  }else{m=box(b.x,b.y,b.z,2,2,2,b.block_type==='wood'?0x80542f:0x8e8b83)}
