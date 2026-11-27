@@ -101,48 +101,58 @@ let live;
 async function enterGame(session,emailFallback='') {
   user=session?.user;
   if(!user) throw new Error('Sessão não encontrada. Entre novamente com seu e-mail e senha.');
-  const msg=document.querySelector('#authmsg');
   const login=document.querySelector('#login');
   const players=document.querySelector('#players');
-  players.textContent='Preparando seu reino…';
-  msg.textContent='Carregando cenário e dados…';
+  const hint=document.querySelector('#hint');
+  const timeout=(promise,ms,label)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' demorou mais que '+Math.round(ms/1000)+' segundos')),ms))]);
+  // A sessão é válida: abrir o cenário antes das consultas opcionais.
+  login.classList.add('hidden');
+  players.textContent='Entrando no reino…';
+  hint.textContent='Reino aberto. Carregando seus dados salvos…';
   try {
-    const failedTables=await loadWorld();
     subscribeWorld();
-    if(live) { try { await db.removeChannel(live); } catch(e) { console.warn(e); } }
-    live=db.channel('world-live');
-    live.on('presence',{event:'sync'},()=>{
-      const count=Object.keys(live.presenceState()).length;
-      players.textContent='Online: '+count;
-    }).subscribe(async status=>{
-      if(status==='SUBSCRIBED'&&user) {
-        try { await live.track({name:(user.email||emailFallback||'Jogador').split('@')[0]}); }
-        catch(e) { console.warn('Presence:',e); }
-      }
-    });
-    const {data,error}=await db.from('players').select('*').eq('user_id',user.id).maybeSingle();
-    if(error) {
-      console.error('Perfil do jogador:',error);
-      document.querySelector('#hint').textContent='Entrou no reino; não foi possível recuperar o progresso salvo.';
-    } else if(data) {
-      player.position.set(Number(data.x)||0,0,Number(data.z)||0);
-      wood=Number(data.wood)||0; stone=Number(data.stone)||0;
-      health=Number(data.health)||100; updateStats();
-    } else {
-      const saved=await saveResources();
-      if(saved.error) document.querySelector('#hint').textContent='Reino aberto; salvamento indisponível: '+saved.error.message;
+    if(!live) {
+      live=db.channel('world-live');
+      live.on('presence',{event:'sync'},()=>{
+        players.textContent='Online: '+Object.keys(live.presenceState()).length;
+      }).subscribe(async status=>{
+        if(status==='SUBSCRIBED'&&user) {
+          try { await live.track({name:(user.email||emailFallback||'Jogador').split('@')[0]}); }
+          catch(e) { console.warn('Presence:',e); }
+        }
+      });
     }
-    login.classList.add('hidden');
-    players.textContent='Reino conectado';
-    document.querySelector('#hint').textContent=failedTables.length
-      ? 'Você entrou! Alguns dados não carregaram: '+failedTables.join(', ')
-      : 'Bem-vindo ao reino! Explore e construa.';
+    try {
+      const failedTables=await timeout(loadWorld(),12000,'Carregamento do mundo');
+      if(failedTables.length) hint.textContent='Reino aberto. Dados temporariamente indisponíveis: '+failedTables.join(', ');
+    } catch(e) {
+      console.warn('Carga do mundo:',e);
+      hint.textContent='Reino aberto. A conexão com os dados está lenta; você já pode explorar.';
+    }
+    try {
+      const result=await timeout(db.from('players').select('*').eq('user_id',user.id).maybeSingle(),10000,'Perfil do jogador');
+      if(result.error) throw result.error;
+      if(result.data) {
+        player.position.set(Number(result.data.x)||0,0,Number(result.data.z)||0);
+        wood=Number(result.data.wood)||0; stone=Number(result.data.stone)||0;
+        health=Number(result.data.health)||100; updateStats();
+      } else {
+        const saved=await timeout(saveResources(),8000,'Salvamento inicial');
+        if(saved.error) throw saved.error;
+      }
+      hint.textContent='Bem-vindo ao reino! Explore e construa.';
+    } catch(e) {
+      console.error('Perfil/salvamento:',e);
+      hint.textContent='Reino aberto. Não foi possível carregar/salvar seu progresso agora: '+(e.message||e);
+    }
+    players.textContent=players.textContent.startsWith('Online:')?players.textContent:'Reino aberto';
     return true;
   } catch(err) {
     console.error('Falha ao iniciar reino:',err);
-    login.classList.remove('hidden');
-    msg.textContent='Falha ao iniciar o jogo: '+(err?.message||String(err));
-    throw err;
+    login.classList.add('hidden');
+    players.textContent='Reino aberto';
+    hint.textContent='Reino aberto com recursos limitados: '+(err?.message||String(err));
+    return true;
   }
 }
 
