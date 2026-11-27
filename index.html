@@ -234,6 +234,55 @@ function makeOgre(){
 }
 const avatarBuilders={knight:makeKnight,princess:makePrincess,ogre:makeOgre};
 let avatarModel=makeKnight();player.add(avatarModel);
+function makeNameTag(name){
+ const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;
+ const ctx=canvas.getContext('2d');
+ ctx.fillStyle='rgba(13,23,18,.88)';ctx.strokeStyle='#e4c477';ctx.lineWidth=6;
+ ctx.beginPath();ctx.roundRect(8,8,496,112,28);ctx.fill();ctx.stroke();
+ ctx.font='bold 48px system-ui, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.fillStyle='#fff2cf';ctx.shadowColor='#000';ctx.shadowBlur=5;
+ let label=String(name||'Aventureiro').slice(0,22);ctx.fillText(label,256,65,460);
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+ const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:true}));
+ sprite.scale.set(3.25,.82,1);sprite.position.set(0,3.05,0);sprite.userData.nameCanvas=canvas;
+ return sprite;
+}
+function updateNameTag(sprite,name){
+ const ctx=sprite.userData.nameCanvas.getContext('2d');ctx.clearRect(0,0,512,128);
+ ctx.fillStyle='rgba(13,23,18,.88)';ctx.strokeStyle='#e4c477';ctx.lineWidth=6;
+ ctx.beginPath();ctx.roundRect(8,8,496,112,28);ctx.fill();ctx.stroke();
+ ctx.font='bold 48px system-ui, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.fillStyle='#fff2cf';ctx.shadowColor='#000';ctx.shadowBlur=5;ctx.fillText(String(name||'Aventureiro').slice(0,22),256,65,460);
+ sprite.material.map.needsUpdate=true;
+}
+let playerName='Aventureiro';
+const localNameTag=makeNameTag(playerName);player.add(localNameTag);
+const remotePlayers=new Map();
+function getPlayerName(){
+ return String(user?.user_metadata?.full_name||user?.user_metadata?.name||(user?.email||'Aventureiro').split('@')[0]).slice(0,22);
+}
+function syncRemotePlayers(){
+ if(!live)return;
+ const state=live.presenceState(),seen=new Set();
+ for(const entries of Object.values(state)){
+  const meta=entries[entries.length-1];if(!meta?.user_id||meta.user_id===user?.id)continue;
+  const id=meta.user_id;seen.add(id);
+  let remote=remotePlayers.get(id);
+  if(!remote){
+   const group=new THREE.Group(),model=(avatarBuilders[meta.avatar]||makeKnight)();
+   group.add(model);const tag=makeNameTag(meta.name||'Aventureiro');group.add(tag);scene.add(group);
+   remote={group,target:new THREE.Vector3(),rotation:0,tag,model};remotePlayers.set(id,remote);
+  }
+  remote.target.set(Number(meta.x)||0,0,Number(meta.z)||0);
+  remote.rotation=Number(meta.rotation)||0;
+  if(meta.name)updateNameTag(remote.tag,meta.name);
+  if(meta.avatar&&remote.avatar!==meta.avatar){
+   remote.group.remove(remote.model);remote.model.traverse(o=>{if(o.isMesh){o.geometry.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});
+   remote.model=avatarBuilders[meta.avatar]?.()||makeKnight();remote.group.add(remote.model);remote.avatar=meta.avatar;
+  }
+ }
+ for(const [id,remote] of remotePlayers){if(!seen.has(id)){scene.remove(remote.group);remote.group.traverse(o=>{if(o.isMesh){o.geometry.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else if(o.material)o.material.dispose();}});remotePlayers.delete(id);}}
+}
 function chooseAvatar(type){
  if(!avatarBuilders[type]||type===selectedAvatar)return;
  player.remove(avatarModel);avatarModel.traverse(o=>{if(o.isMesh){o.geometry.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});
@@ -410,12 +459,12 @@ function subscribeWorld(){
 }
 
 document.querySelector('#attack').onclick=()=>{document.querySelector('#hint').textContent='Você brandiu sua espada! Os inimigos ainda serão adicionados.'}
-let live;
+let live,lastPresenceUpdate=0;
 async function enterGame(session,emailFallback='') {
   if(!session?.user) throw new Error('Sessão não encontrada. Entre novamente com seu e-mail e senha.');
   // signInWithPassword já devolveu uma sessão autenticada pelo Supabase.
   // Evita uma segunda chamada de rede que podia deixar a tela presa em "Conectando".
-  user=session.user;
+  user=session.user;playerName=getPlayerName();updateNameTag(localNameTag,playerName);
   const login=document.querySelector('#login');
   const players=document.querySelector('#players');
   const hint=document.querySelector('#hint');
@@ -430,9 +479,10 @@ async function enterGame(session,emailFallback='') {
       live=db.channel('world-live');
       live.on('presence',{event:'sync'},()=>{
         players.textContent='Online: '+Object.keys(live.presenceState()).length;
+        syncRemotePlayers();
       }).subscribe(async status=>{
         if(status==='SUBSCRIBED'&&user) {
-          try { await live.track({name:(user.email||emailFallback||'Jogador').split('@')[0]}); }
+          try { await live.track({user_id:user.id,name:playerName,avatar:selectedAvatar,x:player.position.x,z:player.position.z,rotation:player.rotation.y}); }
           catch(e) { console.warn('Presence:',e); }
         }
       });
@@ -517,6 +567,8 @@ let last=0;function animate(t){requestAnimationFrame(animate);const dt=Math.min(
  if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);player.position.y=1.22;}else player.position.y=0;
  for(const h of horses){if(h===mountedHorse)continue;h.timer-=dt;if(h.timer<=0){h.target.set(h.group.position.x+(Math.random()-.5)*12,0,h.group.position.z+(Math.random()-.5)*10);h.timer=2+Math.random()*4;}const vx=h.target.x-h.group.position.x,vz=h.target.z-h.group.position.z,dl=Math.hypot(vx,vz);if(dl>.5){h.group.position.x+=vx/dl*.8*dt;h.group.position.z+=vz/dl*.8*dt;h.group.rotation.y=Math.atan2(vx,vz);}h.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.006+i*Math.PI)*.12;});}
  if(mountedHorse)mountedHorse.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.012+i*Math.PI)*.28;});
+ for(const remote of remotePlayers.values()){remote.group.position.lerp(remote.target,Math.min(1,dt*8));remote.group.rotation.y=remote.rotation;}
+ if(user&&live&&t-lastPresenceUpdate>350){lastPresenceUpdate=t;live.track({user_id:user.id,name:playerName,avatar:selectedAvatar,x:player.position.x,z:player.position.z,rotation:player.rotation.y}).catch(e=>console.warn('Presença:',e));}
  cameraDistanceCurrent+=(cameraDistance-cameraDistanceCurrent)*Math.min(1,dt*10);
  const horiz=Math.cos(cameraPitch)*cameraDistanceCurrent;
  const target=new THREE.Vector3(player.position.x+Math.sin(yaw)*horiz,player.position.y+Math.sin(cameraPitch)*cameraDistanceCurrent+1.2,player.position.z+Math.cos(yaw)*horiz);
