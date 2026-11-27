@@ -512,30 +512,54 @@ async function setRemoteProfessionalAvatar(remote,type){
   remote.model=instance.model;remote.instance=instance;remote.motion=null;remote.avatar=type;remote.group.add(instance.model);
  }catch(error){console.warn('Modelo remoto indisponível:',type,error);remote.avatar=type;}
 }
+function upsertRemoteAvatar(meta,sessionKey,source='presence'){
+ if(!meta?.user_id||meta.user_id===user?.id)return;
+ let remote=remotePlayers.get(sessionKey);
+ if(!remote){
+  for(const [key,value] of remotePlayers){if(value.id===meta.user_id){sessionKey=key;remote=value;break;}}
+ }
+ if(!remote){
+  const avatarType=avatarBuilders[meta.avatar]?meta.avatar:'knight',group=new THREE.Group(),model=avatarBuilders[avatarType](),motion=prepareAvatarMotion(model,avatarType);
+  group.add(model);const tag=makeNameTag(meta.name||meta.player_name||'Aventureiro');group.add(tag);scene.add(group);
+  remote={id:meta.user_id,sessionId:sessionKey,source,group,target:new THREE.Vector3(),rotation:0,tag,model,motion,instance:null,phase:Math.random()*Math.PI*2,avatar:null};remotePlayers.set(sessionKey,remote);
+ }
+ remote.id=meta.user_id;remote.source=source;remote.lastSeenAt=Date.now();
+ remote.target.set(Number(meta.x)||0,0,Number(meta.z)||0);
+ if(remote.group.position.lengthSq()===0)remote.group.position.copy(remote.target);
+ remote.rotation=Number(meta.rotation)||0;
+ if(meta.name||meta.player_name)updateNameTag(remote.tag,meta.name||meta.player_name);
+ const remoteType=avatarBuilders[meta.avatar]?meta.avatar:'knight';
+ if(remote.avatar!==remoteType)setRemoteProfessionalAvatar(remote,remoteType);
+}
+function removeRemoteAvatar(sessionKey){
+ const remote=remotePlayers.get(sessionKey);if(!remote)return;
+ scene.remove(remote.group);if(remote.motion)disposeProceduralModel(remote.model);
+ remote.tag.material.map?.dispose();remote.tag.material.dispose();remotePlayers.delete(sessionKey);
+}
 function syncRemotePlayers(){
  if(!live)return;
  const state=live.presenceState(),seen=new Set();
  for(const [presenceKey,entries] of Object.entries(state)){
   const meta=entries[entries.length-1];if(!meta?.user_id)continue;
-  // Cada aba/dispositivo tem uma identidade de presença própria. Não filtrar por user_id:
-  // duas pessoas (ou duas sessões) podem entrar usando a mesma conta.
   const sessionKey=String(meta.client_id||presenceKey);if(sessionKey===clientId)continue;
-  seen.add(sessionKey);
-  let remote=remotePlayers.get(sessionKey);
-  if(!remote){
-   const group=new THREE.Group(),avatarType=avatarBuilders[meta.avatar]?meta.avatar:'knight',model=avatarBuilders[avatarType]();
-   const motion=prepareAvatarMotion(model,avatarType);
-   group.add(model);const tag=makeNameTag(meta.name||'Aventureiro');group.add(tag);scene.add(group);
-   remote={id:meta.user_id,sessionId:sessionKey,group,target:new THREE.Vector3(),rotation:0,tag,model,motion,instance:null,phase:Math.random()*Math.PI*2,avatar:null};remotePlayers.set(sessionKey,remote);
-  }
-  remote.id=meta.user_id;remote.target.set(Number(meta.x)||0,0,Number(meta.z)||0);
-  if(remote.group.position.lengthSq()===0)remote.group.position.copy(remote.target);
-  remote.rotation=Number(meta.rotation)||0;
-  if(meta.name)updateNameTag(remote.tag,meta.name);
-  const remoteType=avatarBuilders[meta.avatar]?meta.avatar:'knight';
-  if(remote.avatar!==remoteType)setRemoteProfessionalAvatar(remote,remoteType);
+  seen.add(sessionKey);upsertRemoteAvatar(meta,sessionKey,'presence');
  }
- for(const [sessionKey,remote] of remotePlayers){if(!seen.has(sessionKey)){scene.remove(remote.group);if(remote.motion)disposeProceduralModel(remote.model);remote.tag.material.map?.dispose();remote.tag.material.dispose();remotePlayers.delete(sessionKey);}}
+ for(const [sessionKey,remote] of remotePlayers){if(remote.source==='presence'&&!seen.has(sessionKey))removeRemoteAvatar(sessionKey);}
+}
+async function syncDatabasePlayers(){
+ if(!user)return;
+ const cutoff=new Date(Date.now()-15000).toISOString();
+ const {data,error}=await db.from('players').select('user_id,player_name,x,z,updated_at').neq('user_id',user.id).gte('updated_at',cutoff);
+ if(error){console.warn('Sincronização de jogadores pelo banco:',error);return}
+ const active=new Set();
+ for(const p of data||[]){
+  const key='db:'+p.user_id;active.add(key);
+  upsertRemoteAvatar({user_id:p.user_id,player_name:p.player_name,x:p.x,z:p.z,avatar:'knight'},key,'database');
+ }
+ for(const [key,remote] of remotePlayers){if(remote.source==='database'&&key.startsWith('db:')&&!active.has(key))removeRemoteAvatar(key);}
+ const online=(data||[]).length+1;
+ const players=document.querySelector('#players');
+ if(players&&!players.textContent.includes('Offline'))players.textContent='Online: '+online;
 }
 function chooseAvatar(type){
  if(!avatarBuilders[type]||type===selectedAvatar)return;
@@ -996,6 +1020,9 @@ function subscribeWorld(){
   if(worldChannel) return worldChannel;
   const ch=db.channel('world-changes');
   ch
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'players'},p=>{if(p.new?.user_id!==user?.id)upsertRemoteAvatar({user_id:p.new.user_id,player_name:p.new.player_name,x:p.new.x,z:p.new.z,avatar:'knight'},'db:'+p.new.user_id,'database')})
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'players'},p=>{if(p.new?.user_id!==user?.id)upsertRemoteAvatar({user_id:p.new.user_id,player_name:p.new.player_name,x:p.new.x,z:p.new.z,avatar:'knight'},'db:'+p.new.user_id,'database')})
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'players'},p=>removeRemoteAvatar('db:'+p.old?.user_id))
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_blocks'},p=>renderBlock(p.new))
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_trees'},p=>renderTree(p.new))
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_animals'},p=>renderAnimal(p.new))
@@ -1104,7 +1131,7 @@ mapCanvas.addEventListener('click',async ev=>{
 });
 document.querySelector('#mapDelete').onclick=async()=>{if(!kingdomMarkers.length){document.querySelector('#hint').textContent='Não há marcações para apagar.';return}kingdomMarkers.pop();if(await saveKingdomMarkers()){drawKingdomMap();document.querySelector('#hint').textContent='Última marcação apagada.';}};
 const clientId=globalThis.crypto?.randomUUID?.()||('client-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));
-let live,lastPresenceUpdate=0;
+let live,lastPresenceUpdate=0,lastDbPlayersSync=0;
 async function enterGame(session,emailFallback='') {
   spawnEnemies();
   if(!session?.user) throw new Error('Sessão não encontrada. Entre novamente com seu e-mail e senha.');
@@ -1168,6 +1195,7 @@ async function enterGame(session,emailFallback='') {
       hint.textContent='Reino aberto. Não foi possível carregar/salvar seu progresso agora: '+(e.message||e);
     }
     updateStats();
+    await syncDatabasePlayers();
     players.textContent=players.textContent.startsWith('Online:')?players.textContent:'Reino aberto';
     return true;
   } catch(err) {
@@ -1295,6 +1323,7 @@ shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;sun.target.position.set(
   }
 }
  if(user&&live&&t-lastPresenceUpdate>350){lastPresenceUpdate=t;live.track({client_id:clientId,user_id:user.id,name:playerName,avatar:selectedAvatar,x:player.position.x,z:player.position.z,rotation:player.rotation.y}).catch(e=>console.warn('Presença:',e));}
+ if(user&&t-lastDbPlayersSync>3000){lastDbPlayersSync=t;syncDatabasePlayers();}
  cameraDistanceCurrent+=(cameraDistance-cameraDistanceCurrent)*Math.min(1,dt*10);
  const horiz=Math.cos(cameraPitch)*cameraDistanceCurrent;
  const target=new THREE.Vector3(player.position.x+Math.sin(yaw)*horiz,player.position.y+Math.sin(cameraPitch)*cameraDistanceCurrent+1.2,player.position.z+Math.cos(yaw)*horiz);
