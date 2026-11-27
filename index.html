@@ -945,12 +945,20 @@ document.querySelector('#auth').onsubmit=async e=>{
       new Promise((_,reject)=>setTimeout(()=>reject(new Error('A conexão demorou mais de 20 segundos. Verifique sua internet e tente novamente.')),20000))
     ]);
     if(result.error && /invalid login credentials|invalid login/i.test(result.error.message)) {
-      msg.textContent='Conta não encontrada ou senha incorreta. Se você já confirmou o e-mail, confira a senha e tente novamente.';
+      msg.textContent='Conta não encontrada. Criando seu usuário…';
+      const created=await db.auth.signUp({email,password,options:{emailRedirectTo:location.origin}});
+      if(created.error) throw created.error;
+      if(!created.data.session) {
+        msg.textContent='Cadastro recebido, mas o Supabase ainda exige confirmação por e-mail. O administrador precisa desativar “Confirm email” nas configurações de Auth para liberar a entrada imediata.';
+        return;
+      }
+      msg.textContent='Conta criada! Abrindo seu reino…';
+      await enterGame(created.data.session,email);
       return;
     }
     if(result.error) throw result.error;
     if(!result.data.session) {
-      msg.textContent='Sua conta ainda não possui uma sessão ativa. Confirme o e-mail pelo link mais recente e depois entre novamente.';
+      msg.textContent='Não foi possível iniciar a sessão. Verifique as configurações de confirmação de e-mail do projeto.';
       return;
     }
     msg.textContent='Conta autenticada. Abrindo o cenário…';
