@@ -16,3 +16,13 @@ O projeto usa o projeto Supabase `vuvjxrxljlhvoldugmpz`. A chave publishable é 
 
 ## Estado atual
 Este é um MVP inicial: terreno 3D, castelo simples, árvores, movimentação, controles touch/teclado, coleta demonstrativa, construção demonstrativa, autenticação e gravação básica de posição/recursos. Ainda não implementa o jogo completo: inventário autoritativo, combate real, ciclo dia/noite, IA de inimigos/animais, plantio com crescimento persistente, chat e sincronização completa de construções precisam ser desenvolvidos e testados nas próximas etapas.
+
+## Modo 4D (camada imersiva)
+- Ciclo solar dia/noite existente, com sol, lua, estrelas e iluminação variável.
+- Clima selecionável: céu limpo, nublado, chuva, tempestade com relâmpagos, neve e neblina.
+- Partículas climáticas acompanhando o jogador e vento animando elementos verdes do cenário.
+- Animação sutil de superfícies aquáticas e efeitos de transparência.
+- Som ambiente sintetizado no navegador, ativado pelo próprio jogador no painel 4D.
+- Painel móvel `🌍 MUNDO 4D` dentro do jogo; controles de clima e áudio.
+
+Os efeitos são executados localmente no navegador, sem chamadas adicionais ao Supabase. Crescimento persistente de plantações e simulação climática sincronizada entre jogadores continuam como etapas futuras.
