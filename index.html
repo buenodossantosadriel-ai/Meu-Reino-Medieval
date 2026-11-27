@@ -57,13 +57,44 @@ sun.shadow.camera.left=-40;sun.shadow.camera.right=40;sun.shadow.camera.top=40;s
 sun.shadow.bias=-.00025;scene.add(sun);scene.add(sun.target);
 const fill=new THREE.DirectionalLight(0x9dbbdf,.55);fill.position.set(30,18,-35);scene.add(fill);
 function makeGroundTexture(){
- const canvas=document.createElement('canvas');canvas.width=512;canvas.height=512;
- const ctx=canvas.getContext('2d');ctx.fillStyle='#638b45';ctx.fillRect(0,0,512,512);
- for(let i=0;i<15000;i++){const x=Math.random()*512,y=Math.random()*512,r=Math.random()*2.2+.4;ctx.fillStyle=Math.random()>.5?'rgba(35,75,34,.20)':'rgba(190,177,105,.15)';ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}
- const tex=new THREE.CanvasTexture(canvas);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(17,17);tex.colorSpace=THREE.SRGBColorSpace;return tex;
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=1024;
+ const ctx=canvas.getContext('2d');
+ let seed=72831;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+ const base=ctx.createLinearGradient(0,0,1024,1024);
+ base.addColorStop(0,'#668b4c');base.addColorStop(.5,'#587d40');base.addColorStop(1,'#718d4d');
+ ctx.fillStyle=base;ctx.fillRect(0,0,1024,1024);
+ // Manchas orgânicas de vegetação, terra úmida e capim seco.
+ for(let i=0;i<260;i++){
+  const x=rand()*1024,y=rand()*1024,rx=12+rand()*68,ry=8+rand()*42;
+  ctx.save();ctx.translate(x,y);ctx.rotate(rand()*Math.PI);
+  ctx.fillStyle=['rgba(38,72,35,.13)','rgba(116,133,68,.16)','rgba(166,145,85,.12)','rgba(28,65,39,.10)'][i%4];
+  ctx.beginPath();ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2);ctx.fill();ctx.restore();
+ }
+ // Grãos de solo e pequenas folhas.
+ for(let i=0;i<22000;i++){
+  const x=rand()*1024,y=rand()*1024,r=.35+rand()*1.65;
+  ctx.fillStyle=rand()>.5?'rgba(28,61,31,.24)':'rgba(210,194,132,.19)';
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+ }
+ // Fios de grama com variação de direção e tonalidade.
+ for(let i=0;i<3600;i++){
+  const x=rand()*1024,y=rand()*1024,len=2+rand()*6,angle=-.8+rand()*1.6;
+  ctx.strokeStyle=['rgba(39,79,35,.34)','rgba(160,171,91,.34)','rgba(196,177,108,.25)'][i%3];
+  ctx.lineWidth=.6+rand()*.8;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(angle)*len,y+Math.sin(angle)*len);ctx.stroke();
+ }
+ // Pedrinhas e pequenas flores esparsas, sem padrão repetitivo.
+ for(let i=0;i<150;i++){
+  const x=rand()*1024,y=rand()*1024;
+  ctx.fillStyle=i%4?'rgba(117,105,76,.38)':'rgba(229,218,164,.55)';
+  ctx.beginPath();ctx.arc(x,y,.7+rand()*1.5,0,Math.PI*2);ctx.fill();
+ }
+ const tex=new THREE.CanvasTexture(canvas);
+ tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(17,17);
+ tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+ return tex;
 }
 const groundTexture=makeGroundTexture();
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(420,420),new THREE.MeshStandardMaterial({map:groundTexture,bumpMap:groundTexture,bumpScale:.075,color:0xffffff,roughness:.96}));
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(420,420),new THREE.MeshStandardMaterial({map:groundTexture,bumpMap:groundTexture,bumpScale:.11,color:0xffffff,roughness:.99}));
 
 ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
 // Céu em degradê e horizonte com colinas distantes
