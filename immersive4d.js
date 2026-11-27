@@ -119,7 +119,7 @@ export function createImmersive4D(THREE, scene) {
     panel.querySelector('#weatherStatus4d').textContent=({clear:'Céu aberto e ciclo solar',cloudy:'Nuvens e luz difusa',rain:'Chuva sobre o reino',storm:'Tempestade: cuidado com raios',snow:'Neve caindo no reino',fog:'Neblina reduzindo a visibilidade'})[value];
     if(state.audio){const a=state.audio,now=a.ctx.currentTime;a.rain.gain.gain.setTargetAtTime(rain?.20:0,now,.7);a.wind.gain.gain.setTargetAtTime(value==='storm'?.32:value==='fog'?.24:.16,now,.8);a.fire.gain.gain.setTargetAtTime(value==='clear'?.025:.012,now,1);}
   }
-  function update(dt,time,playerPosition,worldLight,camera) {
+  function update(dt,time,playerPosition,worldLight,camera,movement) {
     state.elapsed+=dt; scanTimer-=dt;
     if(scanTimer<=0){scanTimer=5;scanScene();}
     const storm=state.weather==='storm', rain=state.weather==='rain'||storm, snow=state.weather==='snow';
@@ -149,14 +149,13 @@ export function createImmersive4D(THREE, scene) {
     state.lightning=Math.max(0,state.lightning-dt);
     lightningLight.position.set(playerPosition.x+8,28,playerPosition.z-12);
     lightningLight.intensity=state.lightning>0?state.lightning*38:0;
-    state.lastMoving=!!(state.sound && state.audio && playerPosition && state.lastPosition && playerPosition.distanceTo && playerPosition.distanceTo(state.lastPosition)>.025);
-    state.lastMounted=!!state.mountedHorse;state.lastRunning=!!state.running;
+    state.lastMoving=!!movement?.moving;state.lastMounted=!!movement?.mounted;state.lastRunning=!!movement?.running;
     if(state.audio && state.sound) {
       const a=state.audio,now=a.ctx.currentTime;
       if(camera && a.ctx.listener.positionX){const l=a.ctx.listener,dir=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);l.positionX.setTargetAtTime(camera.position.x,now,.08);l.positionY.setTargetAtTime(camera.position.y,now,.08);l.positionZ.setTargetAtTime(camera.position.z,now,.08);l.forwardX.setTargetAtTime(dir.x,now,.08);l.forwardY.setTargetAtTime(dir.y,now,.08);l.forwardZ.setTargetAtTime(dir.z,now,.08);}
       a.drone.frequency.setTargetAtTime(worldLight?.night>.5?82:110,now,2);a.drone2.frequency.setTargetAtTime(worldLight?.night>.5?123:164.81,now,2);
       state.birdClock-=dt;if(state.birdClock<=0 && worldLight?.day>.35 && !rain){play('birds',{x:playerPosition.x+(Math.random()-.5)*18,y:5,z:playerPosition.z-8-Math.random()*12});state.birdClock=7+Math.random()*11;}
-      state.stepClock-=dt;if(state.stepClock<=0 && state.lastMoving){play(state.lastMounted?'hoof':'footstep',playerPosition);state.stepClock=state.lastMounted?.31:state.lastRunning?.27:.43;}
+      state.stepClock-=dt;if(state.stepClock<=0 && state.lastMoving){play(state.lastMounted?'hoof':'footstep',playerPosition);state.stepClock=state.lastMounted ? .31 : state.lastRunning ? .27 : .43;}
       state.lastPosition=playerPosition.clone();
     }
   }
