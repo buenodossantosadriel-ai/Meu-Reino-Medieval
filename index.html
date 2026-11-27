@@ -1,8 +1,9 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#18251d"><link rel="manifest" href="/manifest.json"><title>Meu Reino Medieval</title><style>
 *{box-sizing:border-box}body{margin:0;background:#18251d;color:#f7f1df;font:15px system-ui;overflow:hidden;overscroll-behavior:none}#game{position:fixed;inset:0}#game canvas{display:block;touch-action:none}#hud{position:fixed;inset:0;pointer-events:none}.top{display:flex;justify-content:space-between;padding:12px;gap:8px}.panel{background:#142019d9;border:1px solid #b99b59;border-radius:12px;padding:9px 12px;box-shadow:0 3px 14px #0005}.brand{font-weight:800;color:#f0cc78}.bottom{position:absolute;bottom:14px;left:150px;right:8px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;padding:8px;pointer-events:auto}.bottom button{padding:10px 11px;font-size:13px}button{border:1px solid #c5a96b;background:#293b2d;color:#fff2d0;border-radius:10px;padding:11px 14px;font-weight:700;touch-action:manipulation}button:active{transform:scale(.96)}#joystick{position:fixed;left:20px;bottom:24px;width:124px;height:124px;border:2px solid #e2c68188;border-radius:50%;background:#17251dcc;box-shadow:0 4px 18px #0008;pointer-events:auto;touch-action:none;z-index:4}#joystick:before{content:'360°';position:absolute;inset:0;display:grid;place-items:center;color:#f5e5bd66;font-size:13px;font-weight:800;pointer-events:none}#stick{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px;border-radius:50%;background:linear-gradient(145deg,#d8bd79,#78603a);border:2px solid #f4dda5;box-shadow:0 3px 10px #0009;pointer-events:none}#lookTip{position:fixed;right:12px;bottom:158px;color:#fff;background:#14201999;border-radius:8px;padding:6px 9px;font-size:11px;pointer-events:none}
-#cameraControls{position:fixed;right:12px;top:92px;display:flex;flex-direction:column;gap:7px;pointer-events:auto;z-index:4}#cameraControls button{width:42px;height:42px;padding:0;font-size:20px;background:#142019dc;border-color:#d5bb7b;box-shadow:0 2px 9px #0007}#cameraControls .small{font-size:11px}#login{position:fixed;inset:0;background:#101a15eF;display:grid;place-items:center;z-index:5}#login.hidden{display:none}#login form{width:min(90vw,360px);background:#26382b;border:1px solid #b99b59;border-radius:16px;padding:22px}input{width:100%;padding:12px;margin:7px 0 12px;border-radius:8px;border:1px solid #b99b59;background:#101a15;color:white}#chatbox input{margin:4px 0}#hint{position:absolute;bottom:160px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#142019cc;padding:8px 12px;border-radius:9px;max-width:90vw;overflow:hidden;text-overflow:ellipsis}.hidden{display:none}@media(max-width:520px){.top{padding:7px;gap:5px}.panel{padding:7px 9px;font-size:12px}.bottom{left:145px;right:4px;bottom:8px;gap:5px}.bottom button{padding:9px 8px;font-size:12px}#joystick{left:12px;bottom:18px;width:116px;height:116px}#stick{width:50px;height:50px;margin:-25px}#hint{bottom:145px;font-size:11px}#lookTip{bottom:135px}}@media(min-width:700px){.bottom{left:auto;right:16px;bottom:20px;width:300px;justify-content:flex-end}#joystick{left:28px;bottom:28px}}
-</style></head><body><div id="game"></div><div id="hud"><div class="top"><div class="panel"><div class="brand">⚔ MEU REINO MEDIEVAL</div><div id="stats">Madeira: 0 · Pedra: 0</div></div><div class="panel" id="players">Entrando no reino…</div></div><div id="hint">WASD ou controles para caminhar · Explore o reino!</div><div class="bottom"><button id="collect">🌲 Coletar</button><button id="build">🧱 Construir</button><button id="attack">⚔ Atacar</button><button id="plant">🌱 Plantar</button><button id="animal">🐑 Animal</button><button id="chatToggle">💬 Chat</button></div><div id="joystick" aria-label="Controle de movimento"><div id="stick"></div></div><div id="lookTip">Arraste a tela para girar a câmera</div><div id="cameraControls" aria-label="Controles da câmera"><button id="zoomIn" aria-label="Aproximar" title="Aproximar">＋</button><button id="zoomOut" aria-label="Afastar" title="Afastar">−</button><button id="viewUp" class="small" aria-label="Ver mais de cima" title="Ver mais de cima">⬆</button><button id="viewDown" class="small" aria-label="Ver mais no horizonte" title="Ver mais no horizonte">⬇</button></div></div><div id="chatbox" class="panel hidden" style="position:fixed;right:12px;bottom:82px;width:min(92vw,320px);pointer-events:auto;z-index:3"><b>Chat do reino</b><div id="chatlog" style="height:150px;overflow:auto;margin:8px 0;font-size:13px"></div><form id="chatform"><input id="chatinput" maxlength="500" placeholder="Mensagem..." required><button>Enviar</button></form></div>
+#cameraControls{position:fixed;right:12px;top:92px;display:flex;flex-direction:column;gap:7px;pointer-events:auto;z-index:4}#cameraControls button{width:42px;height:42px;padding:0;font-size:20px;background:#142019dc;border-color:#d5bb7b;box-shadow:0 2px 9px #0007}#cameraControls .small{font-size:11px}
+#avatarSelect{position:fixed;left:50%;top:68px;transform:translateX(-50%);display:flex;gap:5px;padding:6px;background:#142019dc;border:1px solid #b99b59;border-radius:12px;pointer-events:auto;z-index:4;white-space:nowrap}#avatarSelect button{padding:7px 9px;font-size:11px}#avatarSelect button.active{background:#94743d;border-color:#ffe2a0;box-shadow:0 0 0 1px #ffe2a0}#mount{background:#62482a}@media(max-width:520px){#avatarSelect{top:64px;gap:3px;padding:4px}#avatarSelect button{padding:7px 6px;font-size:10px}}#login{position:fixed;inset:0;background:#101a15eF;display:grid;place-items:center;z-index:5}#login.hidden{display:none}#login form{width:min(90vw,360px);background:#26382b;border:1px solid #b99b59;border-radius:16px;padding:22px}input{width:100%;padding:12px;margin:7px 0 12px;border-radius:8px;border:1px solid #b99b59;background:#101a15;color:white}#chatbox input{margin:4px 0}#hint{position:absolute;bottom:160px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#142019cc;padding:8px 12px;border-radius:9px;max-width:90vw;overflow:hidden;text-overflow:ellipsis}.hidden{display:none}@media(max-width:520px){.top{padding:7px;gap:5px}.panel{padding:7px 9px;font-size:12px}.bottom{left:145px;right:4px;bottom:8px;gap:5px}.bottom button{padding:9px 8px;font-size:12px}#joystick{left:12px;bottom:18px;width:116px;height:116px}#stick{width:50px;height:50px;margin:-25px}#hint{bottom:145px;font-size:11px}#lookTip{bottom:135px}}@media(min-width:700px){.bottom{left:auto;right:16px;bottom:20px;width:300px;justify-content:flex-end}#joystick{left:28px;bottom:28px}}
+</style></head><body><div id="game"></div><div id="hud"><div class="top"><div class="panel"><div class="brand">⚔ MEU REINO MEDIEVAL</div><div id="stats">Madeira: 0 · Pedra: 0</div></div><div class="panel" id="players">Entrando no reino…</div></div><div id="hint">WASD ou controles para caminhar · Explore o reino!</div><div id="avatarSelect" aria-label="Escolha seu personagem"><button data-avatar="knight" class="active">⚔ Cavaleiro</button><button data-avatar="princess">👸 Princesa</button><button data-avatar="ogre">👹 Ogro</button></div><div class="bottom"><button id="collect">🌲 Coletar</button><button id="build">🧱 Construir</button><button id="attack">⚔ Atacar</button><button id="plant">🌱 Plantar</button><button id="animal">🐑 Animal</button><button id="mount">🐎 Montar</button><button id="chatToggle">💬 Chat</button></div><div id="joystick" aria-label="Controle de movimento"><div id="stick"></div></div><div id="lookTip">Arraste a tela para girar a câmera</div><div id="cameraControls" aria-label="Controles da câmera"><button id="zoomIn" aria-label="Aproximar" title="Aproximar">＋</button><button id="zoomOut" aria-label="Afastar" title="Afastar">−</button><button id="viewUp" class="small" aria-label="Ver mais de cima" title="Ver mais de cima">⬆</button><button id="viewDown" class="small" aria-label="Ver mais no horizonte" title="Ver mais no horizonte">⬇</button></div></div><div id="chatbox" class="panel hidden" style="position:fixed;right:12px;bottom:82px;width:min(92vw,320px);pointer-events:auto;z-index:3"><b>Chat do reino</b><div id="chatlog" style="height:150px;overflow:auto;margin:8px 0;font-size:13px"></div><form id="chatform"><input id="chatinput" maxlength="500" placeholder="Mensagem..." required><button>Enviar</button></form></div>
 <div id="login"><form id="auth"><h2>Entre no seu reino</h2><p>Use seu e-mail para salvar seu progresso.</p><input id="email" type="email" placeholder="E-mail" required><input id="password" type="password" placeholder="Senha (mín. 6 caracteres)" minlength="6" required><button style="width:100%">Entrar / Criar conta</button><p id="authmsg"></p></form></div>
 <script>
 window.addEventListener('error',e=>{
@@ -148,22 +149,116 @@ for(let i=0;i<55;i++){const x=(Math.random()-.5)*110,z=(Math.random()-.5)*110;if
 const pathMat=new THREE.MeshStandardMaterial({color:0x9b805b,roughness:1});
 const path=new THREE.Mesh(new THREE.PlaneGeometry(5,48),pathMat);path.rotation.x=-Math.PI/2;path.position.set(0,.025,18);scene.add(path);
 for(let i=0;i<18;i++){const peb=new THREE.Mesh(new THREE.DodecahedronGeometry(.18+Math.random()*.18,0),new THREE.MeshStandardMaterial({color:0xb5a17b,roughness:1}));peb.position.set((Math.random()-.5)*3,.06,40-i*2.2);peb.scale.set(1,.25,1.4);scene.add(peb)}
-// Personagem: cavaleiro com armadura, elmo, capa e espada
+// Personagens selecionáveis: cavaleiro detalhado, princesa e ogro
 const player=new THREE.Group();
-const armor=new THREE.MeshStandardMaterial({color:0x526c83,metalness:.55,roughness:.42});
-const trim=new THREE.MeshStandardMaterial({color:0xc5a45e,metalness:.65,roughness:.35});
-const cloth=new THREE.MeshStandardMaterial({color:0x7d2930,roughness:.9});
-const skin=new THREE.MeshStandardMaterial({color:0xd6a77e,roughness:.9});
-const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.43,.72,5,10),armor);torso.position.y=1.12;torso.castShadow=true;player.add(torso);
-const chest=new THREE.Mesh(new THREE.BoxGeometry(.58,.5,.12),trim);chest.position.set(0,1.25,.36);player.add(chest);
-const head=new THREE.Mesh(new THREE.SphereGeometry(.28,16,12),skin);head.position.y=1.82;player.add(head);
-const helmet=new THREE.Mesh(new THREE.SphereGeometry(.34,16,10,0,Math.PI*2,0,Math.PI/2),armor);helmet.position.y=1.92;player.add(helmet);
-const visor=box(0,1.82,.29,.42,.1,.08,0x252e36);visor.position.set(0,1.82,.29);player.add(visor);scene.remove(visor);
-const cape=new THREE.Mesh(new THREE.BoxGeometry(.62,.9,.12),cloth);cape.position.set(0,1.05,-.38);cape.rotation.x=-.12;player.add(cape);
-for(const x of [-.48,.48]){const shoulder=new THREE.Mesh(new THREE.SphereGeometry(.25,10,8),armor);shoulder.position.set(x,1.42,0);player.add(shoulder)}
-for(const x of [-.19,.19]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.23,.58,.27),armor);leg.position.set(x,.34,0);player.add(leg)}
-const sword=new THREE.Group();const blade=new THREE.Mesh(new THREE.BoxGeometry(.09,.85,.12),new THREE.MeshStandardMaterial({color:0xd9e1e4,metalness:.8,roughness:.22}));blade.position.y=.48;sword.add(blade);const grip=new THREE.Mesh(new THREE.BoxGeometry(.34,.09,.16),trim);grip.position.y=.08;sword.add(grip);sword.position.set(.55,.9,.12);sword.rotation.z=-.18;player.add(sword);
 scene.add(player);
+let selectedAvatar='knight';
+const mat=(color,metalness=0,roughness=.72)=>new THREE.MeshStandardMaterial({color,metalness,roughness});
+function part(group,geo,material,x,y,z,sx=1,sy=1,sz=1){
+ const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;group.add(m);return m;
+}
+function makeKnight(){
+ const g=new THREE.Group(),armor=mat(0x536d87,.62,.34),silver=mat(0xc4cbd0,.72,.28),gold=mat(0xd2a64f,.72,.3),red=mat(0x792b35),dark=mat(0x202a32);
+ part(g,new THREE.CapsuleGeometry(.39,.62,6,12),armor,0,1.12,0);
+ part(g,new THREE.BoxGeometry(.58,.48,.12),silver,0,1.25,.34);
+ part(g,new THREE.BoxGeometry(.48,.09,.14),gold,0,.91,.36);
+ part(g,new THREE.SphereGeometry(.27,16,12),mat(0xd7aa86),0,1.82,0);
+ part(g,new THREE.SphereGeometry(.34,16,12,0,Math.PI*2,0,Math.PI/2),armor,0,1.92,0);
+ part(g,new THREE.BoxGeometry(.43,.12,.1),dark,0,1.82,.29);
+ part(g,new THREE.ConeGeometry(.09,.42,8),gold,0,2.25,0);
+ part(g,new THREE.BoxGeometry(.65,.95,.13),red,0,1.04,-.4).rotation.x=-.12;
+ for(const x of [-.47,.47]){
+  part(g,new THREE.SphereGeometry(.25,12,10),silver,x,1.43,0);
+  part(g,new THREE.CylinderGeometry(.105,.13,.62,10),armor,x,.82,.02);
+  part(g,new THREE.BoxGeometry(.24,.62,.28),armor,x*.42,.35,0);
+  part(g,new THREE.BoxGeometry(.27,.16,.32),silver,x*.42,.08,.03);
+  part(g,new THREE.CylinderGeometry(.075,.09,.48,10),silver,x*.95,1.02,.04);
+ }
+ const shield=part(g,new THREE.CylinderGeometry(.36,.29,.09,6),red,-.65,1.05,.16);shield.rotation.z=Math.PI/2;shield.rotation.x=.2;
+ part(g,new THREE.BoxGeometry(.09,.88,.12),silver,.61,1.08,.1).rotation.z=-.16;
+ part(g,new THREE.BoxGeometry(.34,.09,.16),gold,.61,.64,.1);
+ return g;
+}
+function makePrincess(){
+ const g=new THREE.Group(),dress=mat(0x8b3c79,.08,.5),light=mat(0xe8b7d5),gold=mat(0xe5bf61,.65,.3),hair=mat(0x58331e),skin=mat(0xf0c5a1);
+ part(g,new THREE.CylinderGeometry(.18,.68,1.35,16),dress,0,.72,0);
+ part(g,new THREE.CylinderGeometry(.22,.58,.16,16),light,0,.12,0);
+ part(g,new THREE.CapsuleGeometry(.28,.55,5,12),light,0,1.55,0);
+ part(g,new THREE.SphereGeometry(.27,16,12),skin,0,2.05,.02);
+ part(g,new THREE.SphereGeometry(.31,16,12,0,Math.PI*2,0,Math.PI*.72),hair,0,2.13,-.02);
+ for(const x of [-.27,.27])part(g,new THREE.CylinderGeometry(.09,.12,.62,10),hair,x,1.83,-.04);
+ part(g,new THREE.ConeGeometry(.22,.35,5),gold,0,2.42,0);
+ for(const x of [-.43,.43]){
+  part(g,new THREE.CapsuleGeometry(.09,.48,4,8),skin,x,1.45,.02).rotation.z=x>0?-.25:.25;
+  part(g,new THREE.SphereGeometry(.11,10,8),skin,x*1.08,1.18,.08);
+ }
+ part(g,new THREE.BoxGeometry(.42,.08,.12),gold,0,1.92,.25);
+ return g;
+}
+function makeOgre(){
+ const g=new THREE.Group(),green=mat(0x5d9a43),darkGreen=mat(0x386b32),leather=mat(0x65442b),ivory=mat(0xf1e4c2);
+ part(g,new THREE.CapsuleGeometry(.58,.78,6,12),green,0,1.12,0);
+ part(g,new THREE.SphereGeometry(.52,16,12),green,0,2.05,.02);
+ for(const x of [-.57,.57]){
+  part(g,new THREE.SphereGeometry(.22,12,10),green,x,2.08,0);
+  part(g,new THREE.ConeGeometry(.12,.34,8),darkGreen,x*1.15,2.1,.02).rotation.z=x>0?-.7:.7;
+  part(g,new THREE.CapsuleGeometry(.16,.62,4,8),green,x*.9,1.18,0).rotation.z=x>0?-.18:.18;
+  part(g,new THREE.BoxGeometry(.32,.68,.38),darkGreen,x*.48,.38,0);
+ }
+ part(g,new THREE.BoxGeometry(.7,.38,.12),leather,0,.82,.35);
+ part(g,new THREE.BoxGeometry(.42,.13,.12),ivory,0,1.86,.46);
+ for(const x of [-.17,.17])part(g,new THREE.SphereGeometry(.055,8,8),mat(0x201b13),x,2.12,.47);
+ for(const x of [-.18,.18])part(g,new THREE.ConeGeometry(.07,.22,8),ivory,x,1.77,.46);
+ part(g,new THREE.BoxGeometry(.2,.09,.1),darkGreen,0,1.96,.47);
+ return g;
+}
+const avatarBuilders={knight:makeKnight,princess:makePrincess,ogre:makeOgre};
+let avatarModel=makeKnight();player.add(avatarModel);
+function chooseAvatar(type){
+ if(!avatarBuilders[type]||type===selectedAvatar)return;
+ player.remove(avatarModel);avatarModel.traverse(o=>{if(o.isMesh){o.geometry.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});
+ selectedAvatar=type;avatarModel=avatarBuilders[type]();player.add(avatarModel);
+ document.querySelectorAll('#avatarSelect button').forEach(b=>b.classList.toggle('active',b.dataset.avatar===type));
+ document.querySelector('#hint').textContent='Personagem escolhido: '+({knight:'Cavaleiro',princess:'Princesa',ogre:'Ogro'}[type])+'.';
+}
+document.querySelectorAll('#avatarSelect button').forEach(b=>b.addEventListener('click',()=>chooseAvatar(b.dataset.avatar)));
+
+// Cavalos livres pelo campo: modelos simples articulados e opção de montar
+function makeHorse(color=0x8a5633){
+ const g=new THREE.Group(),coat=mat(color,0,.82),mane=mat(0x30231b),hoof=mat(0x302b27),white=mat(0xf0e7d5);
+ part(g,new THREE.BoxGeometry(.72,.78,1.35),coat,0,1.18,-.05);
+ part(g,new THREE.SphereGeometry(.38,12,10),coat,0,1.75,.55).scale.set(.72,1.15,.72);
+ part(g,new THREE.ConeGeometry(.23,.62,10),coat,0,2.02,.82).rotation.x=-.25;
+ part(g,new THREE.BoxGeometry(.12,.68,.16),mane,0,2.02,.42);
+ for(const x of [-.2,.2]){part(g,new THREE.ConeGeometry(.07,.25,8),coat,x,2.34,.67);part(g,new THREE.SphereGeometry(.045,8,8),white,x>0?.2:-.2,1.84,1.05)}
+ const legs=[];
+ for(const x of [-.24,.24])for(const z of [-.48,.48]){
+  const leg=new THREE.Group();leg.position.set(x,.94,z);
+  part(leg,new THREE.CylinderGeometry(.075,.09,.78,8),coat,0,-.39,0);
+  part(leg,new THREE.BoxGeometry(.17,.16,.22),hoof,0,-.78,.035);g.add(leg);legs.push(leg);
+ }
+ part(g,new THREE.CylinderGeometry(.055,.11,.72,8),coat,0,1.52,-.78).rotation.x=-.55;
+ part(g,new THREE.BoxGeometry(.12,.72,.14),mane,0,1.9,-.02);
+ return {group:g,legs};
+}
+const horses=[];
+for(let i=0;i<5;i++){
+ const h=makeHorse([0x8a5633,0x3e3029,0xb7a18a,0x65412d,0xd0c6b5][i]);
+ h.group.position.set(-19+i*9,0,25+(i%2)*8);h.group.rotation.y=Math.random()*Math.PI;
+ scene.add(h.group);h.wild=true;h.timer=1+i*.7;h.target=new THREE.Vector3(h.group.position.x,h.group.position.y,h.group.position.z);horses.push(h);
+}
+let mountedHorse=null;
+function mountNearestHorse(){
+ if(mountedHorse){
+  mountedHorse.wild=true;mountedHorse.group.position.set(player.position.x+1.8,0,player.position.z+1.5);mountedHorse=null;player.position.y=0;
+  document.querySelector('#mount').textContent='🐎 Montar';document.querySelector('#hint').textContent='Você desmontou. O cavalo ficou livre.';return;
+ }
+ let best=null,dist=4.5;
+ for(const h of horses){if(!h.wild)continue;const d=Math.hypot(h.group.position.x-player.position.x,h.group.position.z-player.position.z);if(d<dist){dist=d;best=h}}
+ if(!best){document.querySelector('#hint').textContent='Chegue mais perto de um cavalo para montar.';return}
+ mountedHorse=best;best.wild=false;player.position.y=1.22;document.querySelector('#mount').textContent='↘ Desmontar';document.querySelector('#hint').textContent='Você montou a cavalo! Use o joystick para cavalgar.';
+}
+document.querySelector('#mount').onclick=mountNearestHorse;
 let yaw=0,cameraPitch=.42,cameraDistance=11;
 const keys={};addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 const moveInput={x:0,y:0},joystick=document.querySelector('#joystick'),stick=document.querySelector('#stick');
@@ -390,7 +485,10 @@ let last=0;function animate(t){requestAnimationFrame(animate);const dt=Math.min(
  if(keys.w||keys.arrowup)sy=1;if(keys.s||keys.arrowdown)sy=-1;if(keys.a||keys.arrowleft)sx=-1;if(keys.d||keys.arrowright)sx=1;
  const len=Math.hypot(sx,sy);if(len>.08){const side=sx/Math.max(1,len),forward=sy/Math.max(1,len);
  const dx=(Math.sin(yaw)*forward+Math.cos(yaw)*side),dz=(-Math.cos(yaw)*forward+Math.sin(yaw)*side);
- player.position.x+=dx*6*dt;player.position.z+=dz*6*dt;player.rotation.y=Math.atan2(dx,dz);}
+ player.position.x+=dx*(mountedHorse?10:6)*dt;player.position.z+=dz*(mountedHorse?10:6)*dt;player.rotation.y=Math.atan2(dx,dz);if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;}
+ if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);player.position.y=1.22;}else player.position.y=0;
+ for(const h of horses){if(h===mountedHorse)continue;h.timer-=dt;if(h.timer<=0){h.target.set(h.group.position.x+(Math.random()-.5)*12,0,h.group.position.z+(Math.random()-.5)*10);h.timer=2+Math.random()*4;}const vx=h.target.x-h.group.position.x,vz=h.target.z-h.group.position.z,dl=Math.hypot(vx,vz);if(dl>.5){h.group.position.x+=vx/dl*.8*dt;h.group.position.z+=vz/dl*.8*dt;h.group.rotation.y=Math.atan2(vx,vz);}h.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.006+i*Math.PI)*.12;});}
+ if(mountedHorse)mountedHorse.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.012+i*Math.PI)*.28;});
  const horiz=Math.cos(cameraPitch)*cameraDistance;
  const target=new THREE.Vector3(player.position.x+Math.sin(yaw)*horiz,player.position.y+Math.sin(cameraPitch)*cameraDistance+1.2,player.position.z+Math.cos(yaw)*horiz);
  camera.position.lerp(target,.14);camera.lookAt(player.position.x,1.1,player.position.z);
