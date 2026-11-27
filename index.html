@@ -285,6 +285,7 @@ function castle(){
  if(!cannonMount){cannonMount=new THREE.Group();cannonMount.position.set(0,9.65,-2);const iron=new THREE.MeshStandardMaterial({color:0x30383b,metalness:.82,roughness:.28}),wood=new THREE.MeshStandardMaterial({color:0x573a25,roughness:.78});const base=new THREE.Mesh(new THREE.CylinderGeometry(1.15,1.35,.42,12),wood);base.position.y=.22;cannonMount.add(base);const pivot=new THREE.Group();pivot.position.y=1.05;cannonMount.add(pivot);cannonMount.userData.pivot=pivot;const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.38,.48,3.1,16),iron);barrel.rotation.x=Math.PI/2;barrel.position.z=1.25;pivot.add(barrel);const rim=new THREE.Mesh(new THREE.TorusGeometry(.39,.09,10,18),wood);rim.position.z=2.8;pivot.add(rim);for(const side of [-1,1]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.57,.57,.18,16),wood);w.rotation.z=Math.PI/2;w.position.set(side*.78,.52,-.1);cannonMount.add(w)}scene.add(cannonMount)}
  const crest=new THREE.Mesh(new THREE.BoxGeometry(.32,.62,.04),goldMatForCastle);crest.position.set(.72,9.12,-1.96);scene.add(crest);
 }
+let cannonMount=null;
 const goldMatForCastle=new THREE.MeshStandardMaterial({color:0xd5ad55,metalness:.45,roughness:.42});
 castle();
 function toggleCastleGate(){gateTarget=gateTarget===0?-Math.PI/2:0;castleBridgeTarget=gateTarget===0?-.92:0;document.querySelector('#gate').textContent=gateTarget===0?'🚪 Abrir portão':'🚪 Fechar portão';document.querySelector('#hint').textContent=gateTarget===0?'O portão e a ponte levadiça estão fechando.':'O portão e a ponte levadiça estão baixando.'}
@@ -1342,7 +1343,7 @@ async function restartAfterDeath(){
  document.querySelector('#hint').textContent='Você renasceu! Comece novamente coletando madeira e pedras para reconstruir seu castelo.';
 }
 
-let enemyUnits=[],enemyInvulnerableUntil=0;let cannonMount=null,cannonActive=false,cannonYaw=0,cannonPitch=.12,cannonPower=70,cannonBalls=[];let dragonFireballs=[],dragonLastBreath=0,dragonBurnUntil=0,lastDragonDamage=0;const DRAGON_LAIR={x:0,z:82};
+let enemyUnits=[],enemyInvulnerableUntil=0;let cannonActive=false,cannonYaw=0,cannonPitch=.12,cannonPower=70,cannonBalls=[];let dragonFireballs=[],dragonLastBreath=0,dragonBurnUntil=0,lastDragonDamage=0;const DRAGON_LAIR={x:0,z:82};
 function createEnemy(type,x,z){
  const group=new THREE.Group(),model=type==='ogre'?makeOgre():makeKnight();
  model.scale.setScalar(type==='ogre'?1.02:.88);
