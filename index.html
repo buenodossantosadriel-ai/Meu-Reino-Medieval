@@ -809,10 +809,16 @@ async function loadRealHorse(h,type){
 }
 const horses=[];
 const horseTypes=['horse-bay','horse-arabian','horse-western','horse-friesian','horse-draft'];
-for(let i=0;i<5;i++){
- const h=makeHorse([0x8a5633,0x3e3029,0xb7a18a,0x65412d,0xd0c6b5][i]);
- h.group.position.set(-8+i*4,0,19+(i%2)*3);h.group.rotation.y=Math.random()*Math.PI;
- scene.add(h.group);h.wild=true;h.timer=1+i*.7;h.target=new THREE.Vector3(h.group.position.x,h.group.position.y,h.group.position.z);h.phase=Math.random()*6;h.horseType=horseTypes[i];horses.push(h);
+// Cinco cavalos ficam sempre na ronda externa do castelo; quatro patrulham pontos da floresta.
+const horseHomes=[
+ ...Array.from({length:5},(_,i)=>({x:Math.cos(i*Math.PI*2/5)*18,z:13+Math.sin(i*Math.PI*2/5)*18,zone:'castle',radius:5.5})),
+ {x:-18,z:56,zone:'forest',radius:7},{x:17,z:61,zone:'forest',radius:7},
+ {x:-12,z:82,zone:'forest',radius:8},{x:14,z:91,zone:'forest',radius:8}
+];
+for(let i=0;i<horseHomes.length;i++){
+ const home=horseHomes[i],h=makeHorse([0x8a5633,0x3e3029,0xb7a18a,0x65412d,0xd0c6b5][i%5]);
+ h.group.position.set(home.x,0,home.z);h.group.rotation.y=Math.random()*Math.PI;
+ scene.add(h.group);h.wild=true;h.timer=1+i*.45;h.target=new THREE.Vector3(home.x,0,home.z);h.home=new THREE.Vector3(home.x,0,home.z);h.patrolRadius=home.radius;h.zone=home.zone;h.phase=Math.random()*6;h.horseType=horseTypes[i%horseTypes.length];horses.push(h);
  if(i===2){h.loading=true;loadRealHorse(h,h.horseType).catch(error=>{h.loadFailed=true;console.warn('Modelo real de cavalo indisponível; mantendo o modelo reserva:',h.horseType,error);}).finally(()=>h.loading=false);}
 }
 let mountedHorse=null;
@@ -1375,7 +1381,7 @@ async function loadBanditVisual(enemy){
 function updateEnemyHealth(e){const ratio=Math.max(0,e.health/e.maxHealth);e.fill.scale.x=ratio;e.fill.position.x=-(1-ratio)*.56;e.fill.material.color.set(ratio<.3?0xe64b42:ratio<.6?0xe6b64b:0x43c66b)}
 const ENEMY_FOREST={x:0,z:68,patrolRadius:24,leashRadius:38,aggroRadius:30};
 function insideEnemyForest(x,z,radius=ENEMY_FOREST.leashRadius){return Math.hypot(x-ENEMY_FOREST.x,z-ENEMY_FOREST.z)<=radius}
-function spawnEnemies(){if(enemyUnits.length)return;enemyUnits=[createEnemy('bandit',-12,54),createEnemy('bandit',13,57),createEnemy('bandit',-19,64),createEnemy('bandit',18,68),createEnemy('ogre',2,82),createEnemy('bandit',-7,88),createEnemy('bandit',9,93),createEnemy('ogre',-22,82),createEnemy('bandit',24,55),createEnemy('bandit',-28,73),createEnemy('ogre',20,91),createEnemy('bandit',3,104)];enemyUnits.filter(e=>e.type==='bandit').forEach(loadBanditVisual);}
+function spawnEnemies(){if(enemyUnits.length)return;enemyUnits=[createEnemy('bandit',-12,54),createEnemy('bandit',13,57),createEnemy('bandit',-19,64),createEnemy('bandit',18,68),createEnemy('ogre',2,82),createEnemy('bandit',-7,88),createEnemy('bandit',9,93),createEnemy('ogre',-22,82),createEnemy('bandit',24,55),createEnemy('bandit',-28,73),createEnemy('ogre',20,91),createEnemy('bandit',3,104),createEnemy('bandit',-31,62),createEnemy('bandit',30,83),createEnemy('ogre',-34,94),createEnemy('bandit',12,112),createEnemy('bandit',-15,109),createEnemy('ogre',34,67)];enemyUnits.filter(e=>e.type==='bandit').forEach(loadBanditVisual);}
 function enemyMove(e,dx,dz){const nx=e.group.position.x+dx,nz=e.group.position.z+dz;if(!collidesAt(nx,nz,.48)){e.group.position.x=nx;e.group.position.z=nz;return true}if(!collidesAt(nx,e.group.position.z,.48))e.group.position.x=nx;if(!collidesAt(e.group.position.x,nz,.48))e.group.position.z=nz;return false}
 function updateEnemies(dt,t){
  const now=Date.now();
@@ -1724,7 +1730,7 @@ let last=0,walkPhase=0,shadowRefresh=0,motionBlend=0;function animate(t){request
  if(keys.w||keys.arrowup)sy=1;if(keys.s||keys.arrowdown)sy=-1;if(keys.a||keys.arrowleft)sx=-1;if(keys.d||keys.arrowright)sx=1;
  const len=Math.hypot(sx,sy);const moving=len>.08,running=moving&&!mountedHorse&&len>.86;if(moving&&!cannonActive){walkPhase+=dt*(mountedHorse?10:(running?11:8));const side=sx/Math.max(1,len),forward=sy/Math.max(1,len);
  const dx=(-Math.sin(yaw)*forward+Math.cos(yaw)*side),dz=(-Math.cos(yaw)*forward-Math.sin(yaw)*side);
- moveWithCollisions(dx*(mountedHorse?10:(running?8:6))*dt,dz*(mountedHorse?10:(running?8:6))*dt);const ta=Math.atan2(dx,dz),d=Math.atan2(Math.sin(ta-player.rotation.y),Math.cos(ta-player.rotation.y));player.rotation.y+=d*Math.min(1,dt*12);if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;}
+ moveWithCollisions(dx*(mountedHorse?15:(running?8:6))*dt,dz*(mountedHorse?10:(running?8:6))*dt);const ta=Math.atan2(dx,dz),d=Math.atan2(Math.sin(ta-player.rotation.y),Math.cos(ta-player.rotation.y));player.rotation.y+=d*Math.min(1,dt*12);if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;}
  if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);mountedHorse.group.rotation.y=player.rotation.y;player.position.y=1.48;}else player.position.y=0;
  if(castleGate){gateAngle+=(gateTarget-gateAngle)*Math.min(1,dt*2.8);castleGate.rotation.y=gateAngle;}if(castleBridge){castleBridge.rotation.x+=(castleBridgeTarget-castleBridge.rotation.x)*Math.min(1,dt*1.8);}
 shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.position.z/2)*2);sun.position.set(sun.target.position.x-35,55,sun.target.position.z+28);renderer.shadowMap.needsUpdate=true;}
@@ -1765,9 +1771,9 @@ shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;sun.target.position.set(
   if(!h.model&&!h.loading&&!h.loadFailed&&horseDistance<18){h.loading=true;loadRealHorse(h,h.horseType).catch(error=>{h.loadFailed=true;console.warn('Modelo de cavalo não carregou:',h.horseType,error);}).finally(()=>h.loading=false);}
   if(h.mixer)h.mixer.update(dt);
   if(h===mountedHorse)continue;
-  h.timer-=dt;if(h.timer<=0){h.target.set(h.group.position.x+(Math.random()-.5)*12,0,h.group.position.z+(Math.random()-.5)*10);h.timer=3+Math.random()*5;}
+  h.timer-=dt;if(h.timer<=0){const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*h.patrolRadius;h.target.set(h.home.x+Math.cos(a)*r,0,h.home.z+Math.sin(a)*r);h.timer=2.2+Math.random()*3.2;}
   const vx=h.target.x-h.group.position.x,vz=h.target.z-h.group.position.z,dl=Math.hypot(vx,vz),walking=dl>.5;
-  if(walking){h.group.position.x+=vx/dl*1.15*dt;h.group.position.z+=vz/dl*1.15*dt;h.group.rotation.y=Math.atan2(vx,vz);}
+  if(walking){const speed=h.zone==='forest'?2.65:2.35;h.group.position.x+=vx/dl*speed*dt;h.group.position.z+=vz/dl*speed*dt;h.group.rotation.y=Math.atan2(vx,vz);}
   if(h.mixer)playHorseAnimation(h,walking?'Walk':'Idle');
   else{h.legs.forEach((leg,i)=>{leg.rotation.x=walking?Math.sin(t*.006+i*Math.PI)*.38:Math.sin(t*.0012+i)*.025;});if(h.tail)h.tail.rotation.x=Math.sin(t*.002)*.16;if(h.head)h.head.rotation.x=Math.sin(t*.0018+h.phase)*.025;}
  }
