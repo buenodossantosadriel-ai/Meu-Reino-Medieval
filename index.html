@@ -187,6 +187,8 @@ const path=new THREE.Mesh(new THREE.PlaneGeometry(5,48),pathMat);path.rotation.x
 for(let i=0;i<18;i++){const peb=new THREE.Mesh(new THREE.DodecahedronGeometry(.18+Math.random()*.18,0),new THREE.MeshStandardMaterial({color:0xb5a17b,roughness:1}));peb.position.set((Math.random()-.5)*3,.06,40-i*2.2);peb.scale.set(1,.25,1.4);scene.add(peb)}
 // Personagens selecionáveis: cavaleiro detalhado, princesa e ogro
 const player=new THREE.Group();
+// Ponto inicial livre, do lado de fora do castelo.
+player.position.set(0,0,13);
 scene.add(player);
 let selectedAvatar='knight';
 const mat=(color,metalness=0,roughness=.72)=>new THREE.MeshStandardMaterial({color,metalness,roughness});
@@ -672,6 +674,8 @@ async function enterGame(session,emailFallback='') {
       if(result.error) throw result.error;
       if(result.data) {
         player.position.set(Number(result.data.x)||0,0,Number(result.data.z)||0);
+        // Corrige posições antigas salvas dentro de paredes ou prédios.
+        if(collidesAt(player.position.x,player.position.z,.52)) player.position.set(0,0,13);
         wood=Number(result.data.wood)||0; stone=Number(result.data.stone)||0;
         health=Number(result.data.health)||100; updateStats();
       } else {
