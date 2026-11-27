@@ -306,7 +306,8 @@ function createCelestialAngel(index){
 }
 
 
-function addStoneSpiralStaircase(parent,{centerX=0,centerZ=0,baseY=0,rise=8.55,turns=3.35,radius=4.25,steps=62}={}){
+const spiralStaircases=[];
+function addStoneSpiralStaircase(parent,{centerX=0,centerZ=0,baseY=0,rise=8.55,turns=3.35,radius=4.25,steps=62,startAngle=Math.PI/2}={}){
  const stone=new THREE.MeshStandardMaterial({color:0xaaa596,roughness:.94});
  const edge=new THREE.MeshStandardMaterial({color:0x77766e,roughness:.97});
  const iron=new THREE.MeshStandardMaterial({color:0x343a3b,metalness:.72,roughness:.34});
@@ -314,7 +315,7 @@ function addStoneSpiralStaircase(parent,{centerX=0,centerZ=0,baseY=0,rise=8.55,t
  const railPoints=[];
  const rod=(a,b,r,material)=>{const d=new THREE.Vector3().subVectors(b,a),mesh=new THREE.Mesh(new THREE.CylinderGeometry(r,r,d.length(),8),material);mesh.position.copy(a).add(b).multiplyScalar(.5);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());mesh.castShadow=true;parent.add(mesh);return mesh};
  for(let i=0;i<steps;i++){
-  const t=i/(steps-1),a=-Math.PI/2+t*turns*Math.PI*2,y=baseY+rise*t,x=centerX+Math.cos(a)*radius,z=centerZ+Math.sin(a)*radius;
+  const t=i/(steps-1),a=startAngle+t*turns*Math.PI*2,y=baseY+rise*t,x=centerX+Math.cos(a)*radius,z=centerZ+Math.sin(a)*radius;
   const tread=new THREE.Mesh(new THREE.BoxGeometry(1.48,.23,.88),stone);
   tread.position.set(x,y,z);tread.rotation.y=-a;tread.castShadow=true;tread.receiveShadow=true;parent.add(tread);
   const nosing=new THREE.Mesh(new THREE.BoxGeometry(1.5,.055,.92),edge);
@@ -330,6 +331,18 @@ function addStoneSpiralStaircase(parent,{centerX=0,centerZ=0,baseY=0,rise=8.55,t
  landing.position.set(centerX,baseY+rise+.08,centerZ);landing.castShadow=true;landing.receiveShadow=true;parent.add(landing);
  const trim=new THREE.Mesh(new THREE.TorusGeometry(radius+1.12,.075,8,64),iron);
  trim.rotation.x=Math.PI/2;trim.position.set(centerX,baseY+rise+.24,centerZ);parent.add(trim);
+ spiralStaircases.push({centerX:centerX+(parent.position?.x||0),centerZ:centerZ+(parent.position?.z||0),baseY:baseY+(parent.position?.y||0),rise,turns,radius,steps,startAngle});
+}
+function getSpiralStairElevation(x,z,currentY=0){
+ let best=null,bestScore=Infinity;
+ for(const stair of spiralStaircases){
+  for(let i=0;i<=180;i++){
+   const t=i/180,a=stair.startAngle+t*stair.turns*Math.PI*2,px=stair.centerX+Math.cos(a)*stair.radius,pz=stair.centerZ+Math.sin(a)*stair.radius,py=stair.baseY+stair.rise*t;
+   const dx=x-px,dz=z-pz,dist2=dx*dx+dz*dz,dy=py-currentY,score=dist2+dy*dy*.22;
+   if(dist2<1.35*1.35&&score<bestScore){bestScore=score;best=py}
+  }
+ }
+ return best===null?0:best;
 }
 
 function castle(){
@@ -374,7 +387,7 @@ function castle(){
  // Molduras de pedra e arcos sobre as janelas da fachada.
  for(const x of [-1.5,1.5]){const frame=new THREE.Mesh(new THREE.BoxGeometry(.68,1.38,.16),darkStone);frame.position.set(x,3.4,.59);scene.add(frame);const glass=new THREE.Mesh(new THREE.BoxGeometry(.43,1.08,.1),new THREE.MeshStandardMaterial({color:0x263c4a,emissive:0x172d3c,emissiveIntensity:.55,roughness:.3}));glass.position.set(x,3.4,.69);scene.add(glass);const archStone=new THREE.Mesh(new THREE.TorusGeometry(.34,.09,8,18,Math.PI),stoneMat);archStone.position.set(x,4.08,.68);archStone.rotation.z=Math.PI;scene.add(archStone)}
  // Escada caracol externa, com degraus de cantaria e corrimão de ferro/madeira até o canhão.
- addStoneSpiralStaircase(scene,{centerX:0,centerZ:-2,baseY:.18,rise:8.35,turns:3.25,radius:4.15,steps:62});
+ addStoneSpiralStaircase(scene,{centerX:0,centerZ:-2,baseY:.18,rise:8.35,turns:3.25,radius:4.15,steps:62,startAngle:Math.PI/2});
  for(const x of [-4.15,4.15]){const torch=new THREE.Group();const post=new THREE.Mesh(new THREE.CylinderGeometry(.07,.11,1.1,8),ironMat);post.position.y=.55;torch.add(post);const bowl=new THREE.Mesh(new THREE.CylinderGeometry(.2,.12,.18,10),goldMatForCastle);bowl.position.y=1.12;torch.add(bowl);const flame=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8),new THREE.MeshBasicMaterial({color:0xff9a35}));flame.position.y=1.35;torch.add(flame);torch.position.set(x,5.9,-2);scene.add(torch)}
  for(const x of [-1.5,1.5]){const win=box(x,3.4,.56,.45,1.1,.08,0x293b45);win.material=new THREE.MeshStandardMaterial({color:0x293b45,emissive:0x182c35})}
  // Janelas altas, bandeira real e detalhes de fachada.
@@ -1187,7 +1200,7 @@ function renderBlock(b){
   for(const p of [[-5.05,-5.05],[5.05,-5.05],[-5.05,5.05],[5.05,5.05]])addTower(p[0],p[1],8.2);
   addTower(0,-.25,13.2);
   // Escada helicoidal de pedra acompanha a torre real até a plataforma do canhão.
-  addStoneSpiralStaircase(group,{centerX:0,centerZ:-.25,baseY:.22,rise:14.45,turns:3.8,radius:4.05,steps:88});
+  addStoneSpiralStaircase(group,{centerX:0,centerZ:-.25,baseY:.22,rise:14.45,turns:3.8,radius:4.05,steps:88,startAngle:Math.PI/2});
   // Canhão real no terraço superior da fortaleza avançada.
   const cannonIron=new THREE.MeshStandardMaterial({color:0x30383b,metalness:.86,roughness:.25}),cannonWood=new THREE.MeshStandardMaterial({color:0x593b26,roughness:.76});
   const cannonBase=new THREE.Mesh(new THREE.CylinderGeometry(1.18,1.38,.42,20),cannonWood);cannonBase.position.set(0,15.0,-.25);cannonBase.castShadow=true;group.add(cannonBase);
@@ -1841,7 +1854,7 @@ let last=0,walkPhase=0,shadowRefresh=0,motionBlend=0;function animate(t){request
  const len=Math.hypot(sx,sy);const moving=len>.08,running=moving&&!mountedHorse&&len>.86;if(moving&&!cannonActive){walkPhase+=dt*(mountedHorse?10:(running?11:8));const side=sx/Math.max(1,len),forward=sy/Math.max(1,len);
  const dx=(-Math.sin(yaw)*forward+Math.cos(yaw)*side),dz=(-Math.cos(yaw)*forward-Math.sin(yaw)*side);
  moveWithCollisions(dx*(mountedHorse?15:(running?8:6))*dt,dz*(mountedHorse?10:(running?8:6))*dt);const ta=Math.atan2(dx,dz),d=Math.atan2(Math.sin(ta-player.rotation.y),Math.cos(ta-player.rotation.y));player.rotation.y+=d*Math.min(1,dt*12);if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;}
- if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);mountedHorse.group.rotation.y=player.rotation.y;player.position.y=1.48;}else player.position.y=0;
+ if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);mountedHorse.group.rotation.y=player.rotation.y;player.position.y=1.48;}else player.position.y=getSpiralStairElevation(player.position.x,player.position.z,player.position.y);
  if(castleGate){gateAngle+=(gateTarget-gateAngle)*Math.min(1,dt*2.8);castleGate.rotation.y=gateAngle;}if(castleBridge){castleBridge.rotation.x+=(castleBridgeTarget-castleBridge.rotation.x)*Math.min(1,dt*1.8);}
 shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;const lightDirection=sun.position.clone().sub(sun.target.position).normalize();sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.position.z/2)*2);sun.position.copy(sun.target.position).add(lightDirection.multiplyScalar(90));renderer.shadowMap.needsUpdate=true;}
  const activeMotion=moving&&!mountedHorse?1:0;motionBlend+=(activeMotion-motionBlend)*Math.min(1,dt*5.5);
