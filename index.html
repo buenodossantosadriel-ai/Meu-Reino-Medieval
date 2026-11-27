@@ -400,10 +400,10 @@ function prepareAvatarMotion(model,type){
 let avatarModel=makeKnight();let avatarMotion=prepareAvatarMotion(avatarModel,'knight');player.add(avatarModel);
 const professionalAvatarUrls={
  knight:'https://vibeassets.io/download/9h7odik5fl',
- princess:'https://vinish-models.pages.dev/knights/lady-knight.glb',
- ogre:'https://vinish-models.pages.dev/monsters/cyclops.glb'
+ princess:'/api/farm-model?type=princess',
+ ogre:'/api/farm-model?type=ogre'
 };
-const professionalAvatarNames={knight:'Cavaleiro humano de barba grisalha e armadura',princess:'Cavaleira de armadura',ogre:'Ogro ciclope'};
+const professionalAvatarNames={knight:'Cavaleiro humano de barba grisalha e armadura',princess:'Princesa guerreira em armadura medieval',ogre:'Ogro ciclope gigante com clava'};
 const avatarLoader=new GLTFLoader(),avatarAssetPromises=new Map();
 let avatarInstance=null,avatarLoadToken=0;
 function disposeProceduralModel(model){
@@ -417,7 +417,7 @@ async function loadProfessionalAvatar(type){
  }
  const gltf=await avatarAssetPromises.get(type),model=cloneSkeleton(gltf.scene);
  const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
- const targetHeight=type==='ogre'?2.42:(type==='princess'?1.9:1.94),scale=targetHeight/Math.max(size.y,.01);
+ const targetHeight=type==='ogre'?2.62:(type==='princess'?1.72:1.94),scale=targetHeight/Math.max(size.y,.01);
  model.scale.setScalar(scale);model.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
  model.traverse(o=>{
   if(o.isMesh){o.castShadow=true;o.receiveShadow=true;
@@ -554,22 +554,51 @@ function makeHorse(color=0x8a5633){
  part(g,new THREE.SphereGeometry(.07,8,8),metal,0,1.82,.96);
  return {group:g,legs,tail:g.children.find(o=>o.userData?.horseTail)||null,head:g.children.find(o=>o.userData?.horseHead)||null};
 }
+const horseLoader=new GLTFLoader(),horseAssetPromises=new Map();
+function playHorseAnimation(h,name,fade=.24){
+ if(!h?.horseActions)return;
+ const key=String(name||'Idle').toLowerCase(),next=h.horseActions[key]||h.horseActions.idle;
+ if(!next||h.currentHorseAction===next)return;
+ const previous=h.currentHorseAction;
+ next.reset().fadeIn(fade).play();
+ if(previous&&previous!==next)previous.fadeOut(fade);
+ h.currentHorseAction=next;
+}
+async function loadRealHorse(h,type){
+ if(!horseAssetPromises.has(type)){
+  const p=horseLoader.loadAsync('/api/farm-model?type='+type);
+  horseAssetPromises.set(type,p);p.catch(()=>horseAssetPromises.delete(type));
+ }
+ const gltf=await horseAssetPromises.get(type),model=cloneSkeleton(gltf.scene);
+ const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+ const scale=2.28/Math.max(size.y,.01);
+ model.scale.setScalar(scale);
+ model.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
+ model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=false;const ms=Array.isArray(o.material)?o.material:(o.material?[o.material]);ms.forEach(m=>{if(m.map){m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=4;}m.envMap=charEnv;m.envMapIntensity=.48;m.needsUpdate=true;});}});
+ for(const child of [...h.group.children]){h.group.remove(child);child.traverse(o=>{if(o.isMesh){o.geometry?.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose();}});}
+ h.group.add(model);h.model=model;h.mixer=new THREE.AnimationMixer(model);h.horseActions={};
+ for(const clip of gltf.animations){const key=clip.name.toLowerCase().replace(/[ _-]/g,'');const action=h.mixer.clipAction(clip);action.setLoop(THREE.LoopRepeat,Infinity);if(key.includes('idle'))h.horseActions.idle=action;else if(key.includes('walk'))h.horseActions.walk=action;else if(key.includes('trot'))h.horseActions.trot=action;else if(key.includes('gallop'))h.horseActions.gallop=action;else if(key.includes('graze'))h.horseActions.graze=action;else if(key.includes('rear'))h.horseActions.rear=action;}
+ playHorseAnimation(h,'Idle',0);
+ return h;
+}
 const horses=[];
+const horseTypes=['horse-bay','horse-arabian','horse-western','horse-friesian','horse-draft'];
 for(let i=0;i<5;i++){
  const h=makeHorse([0x8a5633,0x3e3029,0xb7a18a,0x65412d,0xd0c6b5][i]);
  h.group.position.set(-19+i*9,0,25+(i%2)*8);h.group.rotation.y=Math.random()*Math.PI;
- scene.add(h.group);h.wild=true;h.timer=1+i*.7;h.target=new THREE.Vector3(h.group.position.x,h.group.position.y,h.group.position.z);horses.push(h);
+ scene.add(h.group);h.wild=true;h.timer=1+i*.7;h.target=new THREE.Vector3(h.group.position.x,h.group.position.y,h.group.position.z);h.phase=Math.random()*6;h.horseType=horseTypes[i];horses.push(h);
+ loadRealHorse(h,h.horseType).catch(error=>console.warn('Modelo real de cavalo indisponível; mantendo o modelo reserva:',h.horseType,error));
 }
 let mountedHorse=null;
 function mountNearestHorse(){
  if(mountedHorse){
-  mountedHorse.wild=true;mountedHorse.group.position.set(player.position.x+1.8,0,player.position.z+1.5);mountedHorse=null;player.position.y=0;
+  mountedHorse.wild=true;mountedHorse.group.position.set(player.position.x+1.8,0,player.position.z+1.5);playHorseAnimation(mountedHorse,'Idle');mountedHorse=null;player.position.y=0;
   document.querySelector('#mount').textContent='🐎 Montar';document.querySelector('#hint').textContent='Você desmontou. O cavalo ficou livre.';return;
  }
  let best=null,dist=4.5;
  for(const h of horses){if(!h.wild)continue;const d=Math.hypot(h.group.position.x-player.position.x,h.group.position.z-player.position.z);if(d<dist){dist=d;best=h}}
  if(!best){document.querySelector('#hint').textContent='Chegue mais perto de um cavalo para montar.';return}
- mountedHorse=best;best.wild=false;player.position.y=1.22;document.querySelector('#mount').textContent='↘ Desmontar';document.querySelector('#hint').textContent='Você montou a cavalo! Use o joystick para cavalgar.';
+ mountedHorse=best;best.wild=false;playHorseAnimation(best,'Idle');player.position.y=1.36;document.querySelector('#mount').textContent='↘ Desmontar';document.querySelector('#hint').textContent='Você montou a cavalo! Use o joystick para cavalgar.';
 }
 document.querySelector('#mount').onclick=mountNearestHorse;
 let yaw=0,cameraPitch=.42,cameraDistance=11,cameraDistanceCurrent=11;
@@ -1003,7 +1032,7 @@ let last=0,walkPhase=0,shadowRefresh=0,motionBlend=0;function animate(t){request
  const len=Math.hypot(sx,sy);const moving=len>.08;if(moving){walkPhase+=dt*(mountedHorse?10:8);const side=sx/Math.max(1,len),forward=sy/Math.max(1,len);
  const dx=(-Math.sin(yaw)*forward+Math.cos(yaw)*side),dz=(-Math.cos(yaw)*forward-Math.sin(yaw)*side);
  moveWithCollisions(dx*(mountedHorse?10:6)*dt,dz*(mountedHorse?10:6)*dt);const ta=Math.atan2(dx,dz),d=Math.atan2(Math.sin(ta-player.rotation.y),Math.cos(ta-player.rotation.y));player.rotation.y+=d*Math.min(1,dt*12);if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;}
- if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);player.position.y=1.22;}else player.position.y=0;
+ if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);mountedHorse.group.rotation.y=player.rotation.y;player.position.y=1.36;}else player.position.y=0;
  if(castleGate){gateAngle+=(gateTarget-gateAngle)*Math.min(1,dt*2.8);castleGate.rotation.y=gateAngle;}
 shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.position.z/2)*2);sun.position.set(sun.target.position.x-35,55,sun.target.position.z+28);renderer.shadowMap.needsUpdate=true;}
  const activeMotion=moving&&!mountedHorse?1:0;motionBlend+=(activeMotion-motionBlend)*Math.min(1,dt*5.5);
@@ -1037,8 +1066,19 @@ shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;sun.target.position.set(
   }
  }
  for(const animal of meshes.animals.values()){const u=animal.userData;u.phase=(u.phase||0)+dt*2.1;if(u.staticAsset){if(u.type==='chicken'){u.roam=(u.roam||0)+dt*.22;animal.position.x=u.baseX+Math.sin(u.roam)*.8;animal.position.z=u.baseZ+Math.cos(u.roam*.73)*.65;animal.rotation.y=Math.sin(u.roam*.73+1)*.45;animal.position.y=Math.abs(Math.sin(u.phase*2))*.025;}continue}animal.position.y=Math.abs(Math.sin(u.phase*2))*.018;if(u.head)u.head.rotation.x=Math.sin(u.phase*.7)*.045;if(u.tail)u.tail.rotation.x=Math.sin(u.phase*1.8)*.22;u.legs?.forEach((leg,i)=>{leg.rotation.x=Math.sin(u.phase*2.4+i*Math.PI)*.08;});}
- for(const h of horses){if(h===mountedHorse)continue;h.timer-=dt;if(h.timer<=0){h.target.set(h.group.position.x+(Math.random()-.5)*12,0,h.group.position.z+(Math.random()-.5)*10);h.timer=3+Math.random()*5;}const vx=h.target.x-h.group.position.x,vz=h.target.z-h.group.position.z,dl=Math.hypot(vx,vz),walking=dl>.5;if(walking){h.group.position.x+=vx/dl*1.15*dt;h.group.position.z+=vz/dl*1.15*dt;h.group.rotation.y=Math.atan2(vx,vz);}h.legs.forEach((leg,i)=>{leg.rotation.x=walking?Math.sin(t*.006+i*Math.PI)*.48:Math.sin(t*.0012+i)*.035;});if(h.tail)h.tail.rotation.x=Math.sin(t*.002)*.22;if(h.head)h.head.rotation.x=Math.sin(t*.0018+h.phase)*.035;}
- if(mountedHorse){mountedHorse.group.position.y=Math.abs(Math.sin(t*.012))*.065;mountedHorse.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.012+i*Math.PI)*.62;});if(mountedHorse.tail)mountedHorse.tail.rotation.x=Math.sin(t*.003)*.24;}
+ for(const h of horses){
+  if(h.mixer)h.mixer.update(dt);
+  if(h===mountedHorse)continue;
+  h.timer-=dt;if(h.timer<=0){h.target.set(h.group.position.x+(Math.random()-.5)*12,0,h.group.position.z+(Math.random()-.5)*10);h.timer=3+Math.random()*5;}
+  const vx=h.target.x-h.group.position.x,vz=h.target.z-h.group.position.z,dl=Math.hypot(vx,vz),walking=dl>.5;
+  if(walking){h.group.position.x+=vx/dl*1.15*dt;h.group.position.z+=vz/dl*1.15*dt;h.group.rotation.y=Math.atan2(vx,vz);}
+  if(h.mixer)playHorseAnimation(h,walking?'Walk':'Idle');
+  else{h.legs.forEach((leg,i)=>{leg.rotation.x=walking?Math.sin(t*.006+i*Math.PI)*.38:Math.sin(t*.0012+i)*.025;});if(h.tail)h.tail.rotation.x=Math.sin(t*.002)*.16;if(h.head)h.head.rotation.x=Math.sin(t*.0018+h.phase)*.025;}
+ }
+ if(mountedHorse){
+  if(mountedHorse.mixer){mountedHorse.mixer.update(dt);playHorseAnimation(mountedHorse,moving?'Gallop':'Idle');}
+  else{mountedHorse.group.position.y=Math.abs(Math.sin(t*.012))*.045;mountedHorse.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.012+i*Math.PI)*.48;});if(mountedHorse.tail)mountedHorse.tail.rotation.x=Math.sin(t*.003)*.18;}
+ }
  for(const remote of remotePlayers.values()){
   const delta=remote.target.clone().sub(remote.group.position),remoteMoving=delta.length()>.025;
   remote.group.position.lerp(remote.target,Math.min(1,dt*8));remote.group.rotation.y=remote.rotation;
