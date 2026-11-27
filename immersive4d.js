@@ -79,7 +79,7 @@ export function createImmersive4D(THREE, scene) {
     else if(name==='birds'){tone(1500,'sine',.12,.055,2100);setTimeout(()=>{if(state.sound)tone(1900,'sine',.16,.045,1250)},125);}
     else if(name==='thunder'){noise(.95,.26,240);tone(58,'sine',.9,.22,32);}
     else if(name==='fire')noise(.16,.1,2400);else return;
-    out.gain.setTargetAtTime(1,now,.008);out.gain.setTargetAtTime(.0001,now+(name==='thunder'?.85:.3),.08);
+    out.gain.setTargetAtTime(1,now,.008);out.gain.setTargetAtTime(.0001,now+(name==='thunder' ? 0.85 : 0.3),.08);
     setTimeout(()=>{try{out.disconnect();panner.disconnect();}catch(_){}},1400);
   }
   const maxParticles = Math.min(1100, Math.max(260, Math.floor((innerWidth*innerHeight)/1500)));
@@ -116,8 +116,8 @@ export function createImmersive4D(THREE, scene) {
     const rain=value==='rain'||value==='storm', snow=value==='snow';
     particles.visible=rain||snow;
     particleMat.color.set(snow?0xf4f7ff:0x9ecbe8);
-    particleMat.size=snow?.22:.12;
-    particleMat.opacity=rain?.68:snow?.9;
+    particleMat.size=snow ? 0.22 : 0.12;
+    particleMat.opacity=rain ? 0.68 : (snow ? 0.9 : particleMat.opacity);
     particleMat.sizeAttenuation=!rain;
     for(let i=0;i<maxParticles;i++) velocities[i*3+1]=snow?-(.7+Math.random()*1.3):-(10+Math.random()*13);
     if(value==='fog'){scene.fog.near=8;scene.fog.far=105;}
@@ -125,7 +125,7 @@ export function createImmersive4D(THREE, scene) {
     else if(value==='cloudy'){scene.fog.near=85;scene.fog.far=245;}
     else {scene.fog.near=145;scene.fog.far=340;}
     panel.querySelector('#weatherStatus4d').textContent=({clear:'Céu aberto e ciclo solar',cloudy:'Nuvens e luz difusa',rain:'Chuva sobre o reino',storm:'Tempestade: cuidado com raios',snow:'Neve caindo no reino',fog:'Neblina reduzindo a visibilidade'})[value];
-    if(state.audio){const a=state.audio,now=a.ctx.currentTime;a.rain.gain.gain.setTargetAtTime(rain?.20:0,now,.7);a.wind.gain.gain.setTargetAtTime(value==='storm'?.32:value==='fog'?.24:.16,now,.8);a.fire.gain.gain.setTargetAtTime(value==='clear'?.025:.012,now,1);}
+    if(state.audio){const a=state.audio,now=a.ctx.currentTime;a.rain.gain.gain.setTargetAtTime(rain ? 0.20 : 0,now,.7);a.wind.gain.gain.setTargetAtTime(value==='storm' ? 0.32 : (value==='fog' ? 0.24 : 0.16),now,.8);a.fire.gain.gain.setTargetAtTime(value==='clear' ? 0.025 : 0.012,now,1);}
   }
   function update(dt,time,playerPosition,worldLight,camera,movement) {
     state.elapsed+=dt; scanTimer-=dt;
@@ -142,7 +142,7 @@ export function createImmersive4D(THREE, scene) {
       particleGeo.attributes.position.needsUpdate=true;
     }
     const gust=(Math.sin(state.elapsed*.47)+Math.sin(state.elapsed*.19+1.7)*.55)*.5;
-    state.wind=.35+Math.abs(gust)*.8+(storm?1.25:0)+(rain?.25:0);
+    state.wind=.35+Math.abs(gust)*.8+(storm?1.25:0)+(rain ? 0.25 : 0);
     for(let i=0;i<foliage.length;i++){
       const obj=foliage[i], base=obj.userData.windBase??(obj.userData.windBase=obj.rotation.z);
       obj.rotation.z=base+Math.sin(state.elapsed*1.6+i*.73)*.025*state.wind;
