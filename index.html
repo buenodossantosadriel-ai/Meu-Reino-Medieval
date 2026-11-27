@@ -1138,12 +1138,7 @@ document.querySelector('#castleUpgrade').onclick=async()=>{
  if(!found.data?.length){document.querySelector('#hint').textContent='Construa primeiro seu castelo usando 🏰 Meu castelo.';return}
  const xs=found.data.map(v=>Number(v.x)),zs=found.data.map(v=>Number(v.z));
  const cx=(Math.min(...xs)+Math.max(...xs))/2,cz=(Math.min(...zs)+Math.max(...zs))/2;
-  const choice=prompt('APRIMORAR CASTELO
-
-1 - Erguer muralhas e ameias (35 madeira + 55 pedra)
-2 - Construir fosso com água (45 madeira + 35 pedra + 30 moedas)
-3 - Contratar 4 guardas (30 madeira + 30 pedra + 60 moedas)
-4 - Erguer Torre Real (25 madeira + 40 pedra + 90 moedas)','1');
+  const choice=prompt('APRIMORAR CASTELO\n\n1 - Erguer muralhas e ameias (35 madeira + 55 pedra)\n2 - Construir fosso com água (45 madeira + 35 pedra + 30 moedas)\n3 - Contratar 4 guardas (30 madeira + 30 pedra + 60 moedas)\n4 - Erguer Torre Real (25 madeira + 40 pedra + 90 moedas)','1');
  if(!choice)return;
  const type=({'1':'castle_wall_upgrade','2':'castle_moat','3':'castle_guard','4':'castle_keep_upgrade'})[String(choice).trim()];
  if(!type){document.querySelector('#hint').textContent='Escolha inválida.';return}
@@ -1387,12 +1382,7 @@ document.querySelector('#shear').onclick=async()=>{
 };
 document.querySelector('#shop').onclick=async()=>{
  if(!user)return;
- const c=prompt('LOJA DO REINO
-1 Espada de ferro: 25 moedas (+2 poder)
-2 Machado de guerra: 60 moedas (+4 poder)
-3 Armadura reforçada: 40 moedas (+3 poder)
-4 Vender toda a lã ('+wool+' novelos) por 8 moedas cada
-5 Comprar +25 de vida: 20 moedas (máximo 100)','5');
+ const c=prompt('LOJA DO REINO\n1 Espada de ferro: 25 moedas (+2 poder)\n2 Machado de guerra: 60 moedas (+4 poder)\n3 Armadura reforçada: 40 moedas (+3 poder)\n4 Vender toda a lã ('+wool+' novelos) por 8 moedas cada\n5 Comprar +25 de vida: 20 moedas (máximo 100)','5');
  if(String(c||'').trim()==='5'){
   if(health>=100){document.querySelector('#hint').textContent='Sua vida já está completa.';return}
   if(coins<20){document.querySelector('#hint').textContent='Você precisa de 20 moedas para comprar o tratamento.';return}
@@ -1905,7 +1895,7 @@ let last=0,walkPhase=0,shadowRefresh=0,motionBlend=0,playerMoveSpeed=0;function 
  if(castleGate){gateAngle+=(gateTarget-gateAngle)*Math.min(1,dt*2.8);castleGate.rotation.y=gateAngle;}if(castleBridge){castleBridge.rotation.x+=(castleBridgeTarget-castleBridge.rotation.x)*Math.min(1,dt*1.8);}
 shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;const lightDirection=sun.position.clone().sub(sun.target.position).normalize();sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.position.z/2)*2);sun.position.copy(sun.target.position).add(lightDirection.multiplyScalar(90));renderer.shadowMap.needsUpdate=true;}
  const activeMotion=activeMoving&&!mountedHorse?Math.min(1,playerMoveSpeed/4.25):0;motionBlend+=(activeMotion-motionBlend)*Math.min(1,dt*7);
- const jumpBlend=Math.min(1,jumpOffset/.65),dodgeBlend=dodgeUntil>t?1:0,hitBlend=playerHitUntil>Date.now()?1:0;
+ const jumpBlend=Math.min(1,jumpOffset/.65),dodgeBlend=dodgeUntil>Date.now()?1:0,hitBlend=playerHitUntil>Date.now()?1:0;
  const gait=Math.sin(walkPhase),bob=Math.abs(Math.sin(walkPhase*2));
  if(avatarInstance){
   avatarInstance.mixer.update(dt);setProfessionalGait(avatarInstance,activeMoving&&!mountedHorse,playerMoveSpeed>5.6);
@@ -1913,8 +1903,7 @@ shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;const lightDirection=sun
   const offset=(bone,x=0,y=0,z=0)=>{if(!bone)return;bone.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(x,y,z,'XYZ')))};
   // Pequenos movimentos aditivos preservam a animação original do modelo.
   avatarInstance.model.position.y=.018*Math.sin(t*.0021)+bob*.025*blend+jumpOffset*.025;
-  avatarInstance.model.rotation.x=-.025*blend+Math.sin(t*.0017)*.006-jumpBlend*.12+hitBlend*.16;
-  avatarInstance.model.rotation.z=Math.sin(phase)*.018*blend-dodgeBlend*.12+hitBlend*.09;
+  avatarInstance.model.rotation.x=-.025*blend+Math.sin(t*.0017)*.006-jumpBlend*.12+hitBlend*.16;\n  avatarInstance.model.rotation.z=Math.sin(phase)*.018*blend-dodgeBlend*.12+hitBlend*.09;
   offset(b.leftLeg,Math.sin(phase)*.34*blend);
   offset(b.rightLeg,-Math.sin(phase)*.34*blend);
   offset(b.leftArm,-Math.sin(phase)*.19*blend);
