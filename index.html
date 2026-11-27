@@ -177,6 +177,12 @@ function makeKnight(){
  const shield=part(g,new THREE.CylinderGeometry(.36,.29,.09,6),red,-.65,1.05,.16);shield.rotation.z=Math.PI/2;shield.rotation.x=.2;
  part(g,new THREE.BoxGeometry(.09,.88,.12),silver,.61,1.08,.1).rotation.z=-.16;
  part(g,new THREE.BoxGeometry(.34,.09,.16),gold,.61,.64,.1);
+ // Acabamentos: rebites, visor, correias, joelheiras e detalhes do escudo.
+ for(const x of [-.19,.19]){part(g,new THREE.SphereGeometry(.035,8,8),gold,x,1.28,.415);part(g,new THREE.SphereGeometry(.045,8,8),dark,x,1.82,.345)}
+ part(g,new THREE.BoxGeometry(.25,.035,.035),gold,0,1.72,.365);
+ part(g,new THREE.BoxGeometry(.12,.28,.035),gold,0,1.18,.425);
+ for(const x of [-.21,.21]){part(g,new THREE.SphereGeometry(.16,12,10),silver,x*.95,.48,.12);part(g,new THREE.BoxGeometry(.12,.08,.08),gold,x*.95,.15,.18)}
+ part(g,new THREE.BoxGeometry(.12,.12,.12),gold,-.65,1.05,.23);
  return g;
 }
 function makePrincess(){
@@ -193,6 +199,13 @@ function makePrincess(){
   part(g,new THREE.SphereGeometry(.11,10,8),skin,x*1.08,1.18,.08);
  }
  part(g,new THREE.BoxGeometry(.42,.08,.12),gold,0,1.92,.25);
+ // Rosto, olhos, sobrancelhas, joias e camadas do vestido.
+ const eye=mat(0x34251f),lip=mat(0xa64f63),pearl=mat(0xffe8d2);
+ for(const x of [-.105,.105]){part(g,new THREE.SphereGeometry(.035,10,8),eye,x,2.07,.255);part(g,new THREE.BoxGeometry(.09,.025,.025),hair,x,2.13,.25)}
+ part(g,new THREE.SphereGeometry(.035,8,8),skin,0,2.0,.27);part(g,new THREE.BoxGeometry(.11,.025,.025),lip,0,1.94,.265);
+ part(g,new THREE.SphereGeometry(.075,10,8),gold,0,1.68,.3);part(g,new THREE.SphereGeometry(.035,8,8),pearl,0,1.68,.37);
+ for(const x of [-.34,.34]){part(g,new THREE.SphereGeometry(.12,10,8),hair,x,1.94,-.02);part(g,new THREE.ConeGeometry(.055,.3,8),gold,x*.65,2.36,.02)}
+ part(g,new THREE.TorusGeometry(.42,.035,6,20),gold,0,.42,0).rotation.x=Math.PI/2;
  return g;
 }
 function makeOgre(){
@@ -210,6 +223,13 @@ function makeOgre(){
  for(const x of [-.17,.17])part(g,new THREE.SphereGeometry(.055,8,8),mat(0x201b13),x,2.12,.47);
  for(const x of [-.18,.18])part(g,new THREE.ConeGeometry(.07,.22,8),ivory,x,1.77,.46);
  part(g,new THREE.BoxGeometry(.2,.09,.1),darkGreen,0,1.96,.47);
+ // Expressão facial e acessórios rústicos do ogro.
+ const eye=mat(0xf3e8ce),pupil=mat(0x241d16),nostril=mat(0x294b29);
+ for(const x of [-.2,.2]){part(g,new THREE.SphereGeometry(.09,10,8),eye,x,2.12,.43);part(g,new THREE.SphereGeometry(.045,8,8),pupil,x,2.12,.505);part(g,new THREE.BoxGeometry(.2,.09,.1),darkGreen,x,2.25,.43)}
+ for(const x of [-.11,.11])part(g,new THREE.SphereGeometry(.035,8,8),nostril,x,1.98,.49);
+ part(g,new THREE.BoxGeometry(.24,.07,.04),ivory,0,1.78,.5);
+ part(g,new THREE.TorusGeometry(.18,.035,6,12),leather,0,.85,.39);
+ for(const x of [-.34,.34])part(g,new THREE.SphereGeometry(.1,10,8),gold,x,.84,.42);
  return g;
 }
 const avatarBuilders={knight:makeKnight,princess:makePrincess,ogre:makeOgre};
@@ -239,6 +259,14 @@ function makeHorse(color=0x8a5633){
  }
  part(g,new THREE.CylinderGeometry(.055,.11,.72,8),coat,0,1.52,-.78).rotation.x=-.55;
  part(g,new THREE.BoxGeometry(.12,.72,.14),mane,0,1.9,-.02);
+ // Crina em mechas, focinho, olhos e arreios para dar leitura mais natural.
+ for(let i=0;i<5;i++)part(g,new THREE.ConeGeometry(.07,.38,7),mane,(i-2)*.11,2.16,.3);
+ part(g,new THREE.SphereGeometry(.16,10,8),coat,0,1.88,1.02);
+ for(const x of [-.13,.13]){part(g,new THREE.SphereGeometry(.035,8,8),hoof,x,1.91,1.12);part(g,new THREE.SphereGeometry(.045,8,8),white,x,2.02,.78)}
+ const bridle=mat(0x4a3022),metal=mat(0xc2a15e,.55,.35);
+ part(g,new THREE.BoxGeometry(.48,.055,.06),bridle,0,1.83,.91);
+ part(g,new THREE.BoxGeometry(.06,.32,.07),bridle,0,1.96,.9);
+ part(g,new THREE.SphereGeometry(.07,8,8),metal,0,1.82,.96);
  return {group:g,legs};
 }
 const horses=[];
@@ -259,7 +287,7 @@ function mountNearestHorse(){
  mountedHorse=best;best.wild=false;player.position.y=1.22;document.querySelector('#mount').textContent='↘ Desmontar';document.querySelector('#hint').textContent='Você montou a cavalo! Use o joystick para cavalgar.';
 }
 document.querySelector('#mount').onclick=mountNearestHorse;
-let yaw=0,cameraPitch=.42,cameraDistance=11;
+let yaw=0,cameraPitch=.42,cameraDistance=11,cameraDistanceCurrent=11;
 const keys={};addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 const moveInput={x:0,y:0},joystick=document.querySelector('#joystick'),stick=document.querySelector('#stick');
 let joyPointer=null;
@@ -290,7 +318,7 @@ renderer.domElement.addEventListener('pointerdown',e=>{
 renderer.domElement.addEventListener('pointermove',e=>{
  if(e.pointerType==='touch'&&cameraPointers.has(e.pointerId)){
   cameraPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(cameraPointers.size>=2){const next=pointerGap();if(pinchDistance>0&&next>0)cameraDistance=Math.max(5,Math.min(38,cameraDistance*pinchDistance/next));pinchDistance=next;e.preventDefault();return;}
+  if(cameraPointers.size>=2){const next=pointerGap();if(pinchDistance>0&&next>0)cameraDistance=Math.max(3.8,Math.min(42,cameraDistance*pinchDistance/next));pinchDistance=next;e.preventDefault();return;}
  }
  if(e.pointerId!==lookPointer)return;
  const dx=e.clientX-lastLookX,dy=e.clientY-lastLookY;lastLookX=e.clientX;lastLookY=e.clientY;
@@ -301,8 +329,8 @@ function releaseLook(e){
  if(e.pointerId===lookPointer){lookPointer=null;if(cameraPointers.size===1){const [id,p]=[...cameraPointers.entries()][0];lookPointer=id;lastLookX=p.x;lastLookY=p.y;}}
 }
 renderer.domElement.addEventListener('pointerup',releaseLook);renderer.domElement.addEventListener('pointercancel',releaseLook);
-document.querySelector('#zoomIn').onclick=()=>cameraDistance=Math.max(5,cameraDistance-2);
-document.querySelector('#zoomOut').onclick=()=>cameraDistance=Math.min(38,cameraDistance+2);
+document.querySelector('#zoomIn').onclick=()=>{cameraDistance=Math.max(3.8,cameraDistance-3.5);document.querySelector('#hint').textContent='Aproximando a câmera.'};
+document.querySelector('#zoomOut').onclick=()=>{cameraDistance=Math.min(42,cameraDistance+3.5);document.querySelector('#hint').textContent='Afastando a câmera.'};
 document.querySelector('#viewUp').onclick=()=>cameraPitch=Math.min(1.42,cameraPitch+.12);
 document.querySelector('#viewDown').onclick=()=>cameraPitch=Math.max(.08,cameraPitch-.12);
 function updateStats(){document.querySelector('#stats').textContent='❤️ '+health+' · Madeira: '+wood+' · Pedra: '+stone}
@@ -489,8 +517,9 @@ let last=0;function animate(t){requestAnimationFrame(animate);const dt=Math.min(
  if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);player.position.y=1.22;}else player.position.y=0;
  for(const h of horses){if(h===mountedHorse)continue;h.timer-=dt;if(h.timer<=0){h.target.set(h.group.position.x+(Math.random()-.5)*12,0,h.group.position.z+(Math.random()-.5)*10);h.timer=2+Math.random()*4;}const vx=h.target.x-h.group.position.x,vz=h.target.z-h.group.position.z,dl=Math.hypot(vx,vz);if(dl>.5){h.group.position.x+=vx/dl*.8*dt;h.group.position.z+=vz/dl*.8*dt;h.group.rotation.y=Math.atan2(vx,vz);}h.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.006+i*Math.PI)*.12;});}
  if(mountedHorse)mountedHorse.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.012+i*Math.PI)*.28;});
- const horiz=Math.cos(cameraPitch)*cameraDistance;
- const target=new THREE.Vector3(player.position.x+Math.sin(yaw)*horiz,player.position.y+Math.sin(cameraPitch)*cameraDistance+1.2,player.position.z+Math.cos(yaw)*horiz);
+ cameraDistanceCurrent+=(cameraDistance-cameraDistanceCurrent)*Math.min(1,dt*10);
+ const horiz=Math.cos(cameraPitch)*cameraDistanceCurrent;
+ const target=new THREE.Vector3(player.position.x+Math.sin(yaw)*horiz,player.position.y+Math.sin(cameraPitch)*cameraDistanceCurrent+1.2,player.position.z+Math.cos(yaw)*horiz);
  camera.position.lerp(target,.14);camera.lookAt(player.position.x,1.1,player.position.z);
  clouds.forEach((c,i)=>{c.position.x+=dt*(.45+(i%3)*.12);if(c.position.x>165)c.position.x=-165;});renderer.render(scene,camera);if(user&&t-lastSave>4000){lastSave=t;saveResources()}}
 requestAnimationFrame(animate);
