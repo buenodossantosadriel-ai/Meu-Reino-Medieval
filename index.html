@@ -753,6 +753,8 @@ async function loadWorld(){
     ['construções',db.from('world_blocks').select('*')],
     ['árvores',db.from('world_trees').select('*')],
     ['animais',db.from('world_animals').select('*')],
+    ['cercados',db.from('world_fences').select('*')],
+    ['poços',db.from('world_wells').select('*')],
     ['chat',db.from('world_chat').select('*').order('created_at',{ascending:false}).limit(30)]
   ];
   const results=await Promise.all(jobs.map(async ([name,query])=>{
@@ -764,6 +766,8 @@ async function loadWorld(){
     if(r.name==='construções') r.data.forEach(renderBlock);
     if(r.name==='árvores') r.data.forEach(renderTree);
     if(r.name==='animais') r.data.forEach(renderAnimal);
+    if(r.name==='cercados') r.data.forEach(renderFence);
+    if(r.name==='poços') r.data.forEach(renderWell);
     if(r.name==='chat') r.data.reverse().forEach(showChat);
   }
   return results.filter(r=>r.error).map(r=>r.name);
@@ -778,6 +782,9 @@ function subscribeWorld(){
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_blocks'},p=>renderBlock(p.new))
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_trees'},p=>renderTree(p.new))
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_animals'},p=>renderAnimal(p.new))
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_fences'},p=>renderFence(p.new))
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_wells'},p=>renderWell(p.new))
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_combat'},p=>handleCombatEvent(p.new))
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_chat'},p=>{if(p.new.user_id!==user?.id)showChat(p.new)})
     .subscribe(status=>{
       if(status==='CHANNEL_ERROR'||status==='TIMED_OUT') {
@@ -789,7 +796,31 @@ function subscribeWorld(){
   return ch;
 }
 
-document.querySelector('#attack').onclick=()=>{document.querySelector('#hint').textContent='Você brandiu sua espada! Os inimigos ainda serão adicionados.'}
+
+let lastAttackAt=0;
+async function handleCombatEvent(ev){
+ if(!user||ev.target_id!==user.id||ev.attacker_id===user.id)return;
+ health=Math.max(0,health-Number(ev.damage||5));updateStats();await saveResources();
+ document.querySelector('#hint').textContent='Você recebeu um golpe! Vida restante: '+health+'.';
+ if(health<=0)await restartAfterDeath();
+}
+async function restartAfterDeath(){
+ document.querySelector('#hint').textContent='Você morreu! Reiniciando seu reino...';
+ const tables=['world_blocks','world_trees','world_animals','world_fences','world_wells'];
+ await Promise.all(tables.map(t=>db.from(t).delete().eq('owner_id',user.id)));
+ for(const map of [meshes.blocks,meshes.animals,meshes.trees,meshes.fences,meshes.wells]){
+  for(const [id,obj] of map){scene.remove(obj.group||obj);map.delete(id)}
+ }
+ wood=0;stone=0;coins=0;power=1;weapon='Espada de madeira';health=100;player.position.set(0,0,13);updateStats();await saveResources();
+ document.querySelector('#hint').textContent='Você renasceu! Comece novamente coletando madeira e pedras para reconstruir seu castelo.';
+}
+document.querySelector('#attack').onclick=async()=>{
+ if(!user)return;const now=Date.now();if(now-lastAttackAt<900){document.querySelector('#hint').textContent='Aguarde para atacar novamente.';return}lastAttackAt=now;
+ const target=[...remotePlayers.values()].map(r=>({r,d:Math.hypot(r.group.position.x-player.position.x,r.group.position.z-player.position.z)})).filter(v=>v.d<3.4).sort((a,b)=>a.d-b.d)[0];
+ if(!target){document.querySelector('#hint').textContent='Nenhum jogador ao alcance. Aproxime-se de outro jogador.';return}
+ const {error}=await db.from('world_combat').insert({attacker_id:user.id,target_id:target.r.id,damage:Math.min(25,4+power*2)});
+ document.querySelector('#hint').textContent=error?'Falha ao atacar: '+error.message:'Golpe enviado contra '+(target.r.name||'outro jogador')+'!';
+};
 let live,lastPresenceUpdate=0;
 async function enterGame(session,emailFallback='') {
   if(!session?.user) throw new Error('Sessão não encontrada. Entre novamente com seu e-mail e senha.');
@@ -921,6 +952,7 @@ sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.po
    l.pivot.rotation.x=moving?Math.sin(phase)*.58:0;l.pivot.position.y=.68+(moving?Math.max(0,Math.cos(phase))*.035:0);
   }
  }
+ for(const animal of meshes.animals.values()){const u=animal.userData;u.phase+=dt*2.1;animal.position.y=Math.abs(Math.sin(u.phase*2))*.018;if(u.head)u.head.rotation.x=Math.sin(u.phase*.7)*.045;if(u.tail)u.tail.rotation.x=Math.sin(u.phase*1.8)*.22;u.legs?.forEach((leg,i)=>{leg.rotation.x=Math.sin(u.phase*2.4+i*Math.PI)*.035;});}
  for(const h of horses){if(h===mountedHorse)continue;h.timer-=dt;if(h.timer<=0){h.target.set(h.group.position.x+(Math.random()-.5)*12,0,h.group.position.z+(Math.random()-.5)*10);h.timer=2+Math.random()*4;}const vx=h.target.x-h.group.position.x,vz=h.target.z-h.group.position.z,dl=Math.hypot(vx,vz);if(dl>.5){h.group.position.x+=vx/dl*.8*dt;h.group.position.z+=vz/dl*.8*dt;h.group.rotation.y=Math.atan2(vx,vz);}h.legs.forEach((leg,i)=>{leg.rotation.x=dl>.5?Math.sin(t*.008+i*Math.PI)*.34:Math.sin(t*.0015+i)*.025;});}
  if(mountedHorse){mountedHorse.group.position.y=Math.abs(Math.sin(t*.012))*.045;mountedHorse.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.012+i*Math.PI)*.48;});}
  for(const remote of remotePlayers.values()){
