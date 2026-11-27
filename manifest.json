@@ -1,0 +1,10 @@
+{
+  "name": "Meu Reino Medieval",
+  "short_name": "Meu Reino",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#18251d",
+  "theme_color": "#18251d",
+  "description": "Explore e construa seu reino medieval online.",
+  "icons": []
+}
