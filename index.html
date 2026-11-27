@@ -1854,20 +1854,31 @@ db.auth.getSession().then(async ({data,error})=>{
   }
 });
 
-let last=0,walkPhase=0,shadowRefresh=0,motionBlend=0;function animate(t){requestAnimationFrame(animate);const dt=Math.min((t-last)/1000,.05);last=t;
+let last=0,walkPhase=0,shadowRefresh=0,motionBlend=0,playerMoveSpeed=0;function animate(t){requestAnimationFrame(animate);const dt=Math.min((t-last)/1000,.05);last=t;
  const worldLight=updateWorldClock();
  let sx=moveInput.x,sy=-moveInput.y;
  if(keys.w||keys.arrowup)sy=1;if(keys.s||keys.arrowdown)sy=-1;if(keys.a||keys.arrowleft)sx=-1;if(keys.d||keys.arrowright)sx=1;
- const len=Math.hypot(sx,sy);const moving=len>.08,running=moving&&!mountedHorse&&len>.86;if(moving&&!cannonActive){walkPhase+=dt*(mountedHorse?10:(running?11:8));const side=sx/Math.max(1,len),forward=sy/Math.max(1,len);
- const dx=(-Math.sin(yaw)*forward+Math.cos(yaw)*side),dz=(-Math.cos(yaw)*forward-Math.sin(yaw)*side);
- moveWithCollisions(dx*(mountedHorse?15:(running?8:6))*dt,dz*(mountedHorse?10:(running?8:6))*dt);const ta=Math.atan2(dx,dz),d=Math.atan2(Math.sin(ta-player.rotation.y),Math.cos(ta-player.rotation.y));player.rotation.y+=d*Math.min(1,dt*12);if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;}
+ const rawLen=Math.hypot(sx,sy),inputLen=Math.min(1,rawLen),moving=inputLen>.08,running=moving&&!mountedHorse&&inputLen>.86;
+ const targetSpeed=!moving||cannonActive?0:(mountedHorse?10.5:(running?7.4:4.25));
+ const acceleration=targetSpeed>playerMoveSpeed? (mountedHorse?17:running?13:10):(mountedHorse?22:15);
+ playerMoveSpeed+=(targetSpeed-playerMoveSpeed)*Math.min(1,dt*acceleration);
+ const activeMoving=playerMoveSpeed>.18;
+ if(activeMoving&&!cannonActive){
+  const norm=Math.max(.001,rawLen),side=sx/norm,forward=sy/norm;
+  const dx=-Math.sin(yaw)*forward+Math.cos(yaw)*side,dz=-Math.cos(yaw)*forward-Math.sin(yaw)*side;
+  walkPhase+=dt*(mountedHorse?11:playerMoveSpeed*(running?1.75:2.05));
+  moveWithCollisions(dx*playerMoveSpeed*dt,dz*playerMoveSpeed*dt);
+  const ta=Math.atan2(dx,dz),d=Math.atan2(Math.sin(ta-player.rotation.y),Math.cos(ta-player.rotation.y));
+  player.rotation.y+=d*(1-Math.exp(-dt*(mountedHorse?9:running?10:8)));
+  if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;
+ }
  if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);mountedHorse.group.rotation.y=player.rotation.y;player.position.y=1.48;}else player.position.y=getSpiralStairElevation(player.position.x,player.position.z,player.position.y);
  if(castleGate){gateAngle+=(gateTarget-gateAngle)*Math.min(1,dt*2.8);castleGate.rotation.y=gateAngle;}if(castleBridge){castleBridge.rotation.x+=(castleBridgeTarget-castleBridge.rotation.x)*Math.min(1,dt*1.8);}
 shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;const lightDirection=sun.position.clone().sub(sun.target.position).normalize();sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.position.z/2)*2);sun.position.copy(sun.target.position).add(lightDirection.multiplyScalar(90));renderer.shadowMap.needsUpdate=true;}
- const activeMotion=moving&&!mountedHorse?1:0;motionBlend+=(activeMotion-motionBlend)*Math.min(1,dt*5.5);
+ const activeMotion=activeMoving&&!mountedHorse?Math.min(1,playerMoveSpeed/4.25):0;motionBlend+=(activeMotion-motionBlend)*Math.min(1,dt*7);
  const gait=Math.sin(walkPhase),bob=Math.abs(Math.sin(walkPhase*2));
  if(avatarInstance){
-  avatarInstance.mixer.update(dt);setProfessionalGait(avatarInstance,moving&&!mountedHorse,running);
+  avatarInstance.mixer.update(dt);setProfessionalGait(avatarInstance,activeMoving&&!mountedHorse,playerMoveSpeed>5.6);
   const b=avatarInstance.gaitBones||{},blend=motionBlend,phase=walkPhase;
   const offset=(bone,x=0,y=0,z=0)=>{if(!bone)return;bone.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(x,y,z,'XYZ')))};
   // Pequenos movimentos aditivos preservam a animação original do modelo.
@@ -1884,14 +1895,14 @@ shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;const lightDirection=sun
   offset(b.neck,Math.sin(phase)*.012*blend);
  }
  else{
-  avatarModel.position.y=(moving?bob*.055:Math.sin(t*.0018)*.018);
-  avatarModel.rotation.x=moving?-.035+bob*.018:Math.sin(t*.0015)*.009;
-  avatarModel.rotation.y=moving?Math.sin(walkPhase)*.018:Math.sin(t*.0011)*.009;
-  avatarModel.rotation.z=moving?Math.sin(walkPhase)*.035:Math.sin(t*.0012)*.012;
-  for(const a of avatarMotion.arms){const phase=walkPhase+(a.side<0?Math.PI:0);a.pivot.rotation.x=moving?Math.sin(phase)*.34:Math.sin(t*.0012+a.side)*.012;a.pivot.rotation.z=moving?Math.sin(walkPhase)*.025*a.side:0;}
+  avatarModel.position.y=(activeMoving?bob*.055*motionBlend:Math.sin(t*.0018)*.018);
+  avatarModel.rotation.x=activeMoving?-.035+bob*.018:Math.sin(t*.0015)*.009;
+  avatarModel.rotation.y=activeMoving?Math.sin(walkPhase)*.018:Math.sin(t*.0011)*.009;
+  avatarModel.rotation.z=activeMoving?Math.sin(walkPhase)*.035:Math.sin(t*.0012)*.012;
+  for(const a of avatarMotion.arms){const phase=walkPhase+(a.side<0?Math.PI:0);a.pivot.rotation.x=activeMoving?Math.sin(phase)*.42*motionBlend:Math.sin(t*.0012+a.side)*.012;a.pivot.rotation.z=moving?Math.sin(walkPhase)*.025*a.side:0;}
   for(const l of avatarMotion.legs){
    const phase=walkPhase+(l.side<0?Math.PI:0);
-   l.pivot.rotation.x=moving?Math.sin(phase)*.48:Math.sin(t*.001)*.008;l.pivot.position.y=.68+(moving?Math.max(0,Math.cos(phase))*.055:0);
+   l.pivot.rotation.x=activeMoving?Math.sin(phase)*.52*motionBlend:Math.sin(t*.001)*.008;l.pivot.position.y=.68+(activeMoving?Math.max(0,Math.cos(phase))*.075*motionBlend:0);
   }
  }
  for(const bird of skyBirds){bird.phase+=dt*bird.speed;bird.group.position.x+=dt*bird.speed;if(bird.group.position.x>85)bird.group.position.x=-85;bird.group.position.y+=Math.sin(bird.phase*.7)*dt*.18;bird.group.position.z+=Math.sin(bird.phase*.32+bird.offset)*dt*.22;bird.group.rotation.y=Math.PI/2+Math.sin(bird.phase*.32+bird.offset)*.08;for(const wing of bird.wings)wing.pivot.rotation.z=Math.sin(bird.phase*5+(wing.side<0?Math.PI:0))*.62;}
