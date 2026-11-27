@@ -171,13 +171,15 @@ document.querySelector('#gate').onclick=toggleCastleGate;
 addRectObstacle(0,-8,8.5,.68);addRectObstacle(-4.85,8,3.15,.68);addRectObstacle(4.85,8,3.15,.68);addRectObstacle(-8,0,.68,8);addRectObstacle(8,0,.68,8);
 addCircleObstacle(-8,-8,1.85);addCircleObstacle(8,-8,1.85);addCircleObstacle(-8,8,1.85);addCircleObstacle(8,8,1.85);
 addRectObstacle(0,-2,3.05,2.55);
+const worldTreeLoader=new GLTFLoader(),worldTreeUrl='https://files.innerscene.com/library/oak-street-tree-detailed-leaves-a273fef9/4a26d0fea7474835bf61/oak-detailed.glb';let worldTreePromise=null;
 function tree(x,z,id=null){
- const group=new THREE.Group();
- const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.2,.34,1.8,7),new THREE.MeshStandardMaterial({color:0x68452b,roughness:1}));
- trunk.position.y=.9;trunk.castShadow=true;group.add(trunk);
- const greens=[0x285c36,0x356f3d,0x477c43];
- for(let j=0;j<3;j++){const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(1.15-j*.08,1),new THREE.MeshStandardMaterial({color:greens[j],roughness:1}));crown.position.set((j-1)*.32,2.05+j*.62,(j%2)*.22);crown.scale.set(1.15,.95,1.05);crown.castShadow=true;group.add(crown)}
- group.position.set(x,0,z);group.rotation.y=Math.random()*Math.PI;const s=.8+Math.random()*.65;group.scale.setScalar(s);scene.add(group);addCircleObstacle(x,z,.62*s);if(id)meshes.trees.set(id,group);return group;
+ const group=new THREE.Group();group.position.set(x,0,z);group.rotation.y=Math.random()*Math.PI;const scale=.82+Math.random()*.34;group.scale.setScalar(scale);scene.add(group);
+ const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.2,.34,1.8,7),new THREE.MeshStandardMaterial({color:0x68452b,roughness:1}));trunk.position.y=.9;group.add(trunk);
+ const greens=[0x285c36,0x356f3d,0x477c43];for(let j=0;j<3;j++){const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(1.15-j*.08,1),new THREE.MeshStandardMaterial({color:greens[j],roughness:1}));crown.position.set((j-1)*.32,2.05+j*.62,(j%2)*.22);crown.scale.set(1.15,.95,1.05);group.add(crown)}
+ addCircleObstacle(x,z,1.05*scale);if(id)meshes.trees.set(id,group);
+ if(!worldTreePromise)worldTreePromise=worldTreeLoader.loadAsync(worldTreeUrl);
+ worldTreePromise.then(gltf=>{if(!group.parent)return;const model=gltf.scene.clone(),bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),fit=8.1/Math.max(size.y,.01);model.scale.setScalar(fit);model.position.set(0,-bounds.min.y*fit,0);model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m.map){m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=8;}m.needsUpdate=true;});}});group.clear();group.add(model);}).catch(e=>console.warn('Modelo de árvore não carregou; mantendo árvore reserva:',e));
+ return group;
 }
 for(let i=0;i<95;i++){const x=(Math.random()-.5)*125,z=(Math.random()-.5)*125;if(Math.abs(x)>13||Math.abs(z)>15)tree(x,z)}
 // Pedras, arbustos e caminho até ao castelo
@@ -675,7 +677,7 @@ function renderBlock(b){
 }
 function renderTree(t){if(meshes.trees.has(t.id))return;tree(t.x,t.z,t.id)}
 
-function renderAnimal(a){
+function renderAnimalFallback(a){
  if(meshes.animals.has(a.id))return;
  const t=a.animal_type,c={cow:0xe8e2d4,pig:0xe6a0a0,chicken:0xf3e7c9,sheep:0xe9e7df}[t]||0xffffff;
  const coat=mat(c,0,.92),dark=mat(0x49372b),pink=mat(0xe9b4a4),white=mat(0xf3ead6),black=mat(0x211d19),gold=mat(0xd89a36);
@@ -701,6 +703,19 @@ function renderAnimal(a){
  const n=t==='chicken'?2:4;
  for(let i=0;i<n;i++){const x=t==='chicken'?(i?-.13:.13):(i%2?-.3:.3),z=t==='chicken'?0:(i<2?.38:-.38),leg=new THREE.Group();leg.position.set(x,.48,z);g.add(leg);const sh=new THREE.Mesh(new THREE.CylinderGeometry(.055,.07,.42,9),t==='chicken'?gold:coat);sh.position.y=-.2;leg.add(sh);ball(leg,0,-.4,.04,.09,.04,.12,dark);u.legs.push(leg)}
  g.position.set(a.x,0,a.z);g.userData=u;scene.add(g);meshes.animals.set(a.id,g);
+}
+const farmAnimalUrls={cow:'https://cdn.mint.gg/owned-artifacts/158d1a346a5b198c784514fe747f51f8ff7113e7789f402f532a9e32c138ea1c',chicken:'https://cdn.mint.gg/owned-artifacts/4b70685d7395397a9a9a4c813f28b95c7a01769929e6bf21a43057bb02ed8004',pig:'https://cdn.mint.gg/owned-artifacts/0151b3208e9413674e962a1360eca2446083e398bd8ceb4db22abc156a390d07',sheep:'https://cdn.mint.gg/owned-artifacts/6e6b7ec3d01e80df27c21538f0cffaa754f6f608d9dfb44135b8b6c2f0812dc3'};
+const farmAnimalHeights={cow:1.25,pig:.82,chicken:.62,sheep:.92},farmAnimalLoader=new GLTFLoader(),farmAnimalPromises=new Map(),farmAnimalPending=new Set();
+function renderAnimal(a){
+ if(meshes.animals.has(a.id)||farmAnimalPending.has(a.id))return;
+ const type=a.animal_type,url=farmAnimalUrls[type];if(!url){const fallback=renderAnimalFallback(a);meshes.animals.set(a.id,fallback);return}
+ farmAnimalPending.add(a.id);if(!farmAnimalPromises.has(type))farmAnimalPromises.set(type,farmAnimalLoader.loadAsync(url));
+ farmAnimalPromises.get(type).then(gltf=>{
+  if(meshes.animals.has(a.id))return;const model=gltf.scene.clone(),bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),scale=(farmAnimalHeights[type]||.9)/Math.max(size.y,.01);
+  model.scale.setScalar(scale);model.position.set(-((bounds.min.x+bounds.max.x)/2)*scale,-bounds.min.y*scale,-((bounds.min.z+bounds.max.z)/2)*scale);
+  model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m.map){m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=8;}m.needsUpdate=true;});}});
+  const group=new THREE.Group();group.position.set(a.x,0,a.z);group.rotation.y=Math.random()*Math.PI*2;group.add(model);group.userData={staticAsset:true};scene.add(group);meshes.animals.set(a.id,group);
+ }).catch(e=>{console.warn('Modelo GLB não carregou; usando reserva:',type,e);if(!meshes.animals.has(a.id)){const fallback=renderAnimalFallback(a);meshes.animals.set(a.id,fallback);}}).finally(()=>farmAnimalPending.delete(a.id));
 }
 document.querySelector('#plant').onclick=async()=>{if(!user)return;const x=player.position.x+Math.sin(player.rotation.y)*-3,z=player.position.z+Math.cos(player.rotation.y)*-3;const {data,error}=await db.from('world_trees').insert({owner_id:user.id,tree_type:'oak',x,y:0,z,growth_seconds:60,health:100}).select().single();if(error){document.querySelector('#hint').textContent=error.message;return}renderTree(data);document.querySelector('#hint').textContent='Muda plantada! Crescimento previsto: 60 segundos.'};
 
@@ -985,7 +1000,7 @@ sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.po
    l.pivot.rotation.x=moving?Math.sin(phase)*.58:0;l.pivot.position.y=.68+(moving?Math.max(0,Math.cos(phase))*.035:0);
   }
  }
- for(const animal of meshes.animals.values()){const u=animal.userData;u.phase+=dt*2.1;animal.position.y=Math.abs(Math.sin(u.phase*2))*.018;if(u.head)u.head.rotation.x=Math.sin(u.phase*.7)*.045;if(u.tail)u.tail.rotation.x=Math.sin(u.phase*1.8)*.22;u.legs?.forEach((leg,i)=>{leg.rotation.x=Math.sin(u.phase*2.4+i*Math.PI)*.035;});}
+ for(const animal of meshes.animals.values()){const u=animal.userData;if(u.staticAsset)continue;u.phase+=dt*2.1;animal.position.y=Math.abs(Math.sin(u.phase*2))*.018;if(u.head)u.head.rotation.x=Math.sin(u.phase*.7)*.045;if(u.tail)u.tail.rotation.x=Math.sin(u.phase*1.8)*.22;u.legs?.forEach((leg,i)=>{leg.rotation.x=Math.sin(u.phase*2.4+i*Math.PI)*.035;});}
  for(const h of horses){if(h===mountedHorse)continue;h.timer-=dt;if(h.timer<=0){h.target.set(h.group.position.x+(Math.random()-.5)*12,0,h.group.position.z+(Math.random()-.5)*10);h.timer=2+Math.random()*4;}const vx=h.target.x-h.group.position.x,vz=h.target.z-h.group.position.z,dl=Math.hypot(vx,vz);if(dl>.5){h.group.position.x+=vx/dl*.8*dt;h.group.position.z+=vz/dl*.8*dt;h.group.rotation.y=Math.atan2(vx,vz);}h.legs.forEach((leg,i)=>{leg.rotation.x=dl>.5?Math.sin(t*.008+i*Math.PI)*.34:Math.sin(t*.0015+i)*.025;});}
  if(mountedHorse){mountedHorse.group.position.y=Math.abs(Math.sin(t*.012))*.045;mountedHorse.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.012+i*Math.PI)*.48;});}
  for(const remote of remotePlayers.values()){
