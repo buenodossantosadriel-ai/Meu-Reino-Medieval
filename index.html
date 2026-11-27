@@ -1365,11 +1365,11 @@ function updateEnemies(dt,t){
   // Inimigos pertencem à floresta: só detectam jogadores dentro do perímetro.
   const playerInForest=insideEnemyForest(player.position.x,player.position.z,ENEMY_FOREST.aggroRadius);
   const enemyInTerritory=insideEnemyForest(e.group.position.x,e.group.position.z,ENEMY_FOREST.leashRadius);
-  const castleSafe=Math.hypot(player.position.x,z=player.position.z-13)<15;const canChase=playerInForest&&enemyInTerritory&&dist<30;
+  const castleSafe=Math.hypot(player.position.x,player.position.z-13)<15;if(playerInForest&&enemyInTerritory&&dist<30)e.hasAggro=true;if(castleSafe)e.hasAggro=false;const canChase=!!e.hasAggro&&!castleSafe&&dist<220;
   if(canChase){e.state=dist>e.range?'chase':'windup';if(dist>e.range){const speed=e.speed*(dist<5?1.12:1),moved=enemyMove(e,dx/Math.max(dist,.001)*speed*dt,dz/Math.max(dist,.001)*speed*dt);if(!moved&&Math.random()<dt*.8){e.target.set(e.x+(Math.random()-.5)*8,0,e.z+(Math.random()-.5)*8);e.timer=2}}else if(now>=e.nextAttack&&!e.attackAt&&now>enemyInvulnerableUntil){e.attackAt=now+420;e.nextAttack=now+(e.type==='ogre'?1900:1450);document.querySelector('#hint').textContent=(e.type==='ogre'?'👹 O ciclope prepara um golpe!':'⚔ Um bandido vai atacar!')}e.group.rotation.y=Math.atan2(dx,dz)}
   else{
-   e.state='patrol';e.attackAt=0;
-   // Se o jogador sair da floresta, o inimigo retorna ao seu ponto de patrulha.
+   e.state='patrol';e.attackAt=0;if(castleSafe)e.hasAggro=false;
+   // Inimigos perseguem até o jogador alcançar a área segura do castelo.
    const homeDistance=Math.hypot(e.x-e.group.position.x,e.z-e.group.position.z);
    if(!insideEnemyForest(e.group.position.x,e.group.position.z,ENEMY_FOREST.patrolRadius)||homeDistance>ENEMY_FOREST.patrolRadius){
     e.target.set(e.x,0,e.z);
