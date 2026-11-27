@@ -646,9 +646,47 @@ document.querySelector('#collect').onclick=async()=>{wood+=1;stone+=1;updateStat
 document.querySelector('#build').onclick=async()=>{if(!user)return;if(wood<3||stone<2){document.querySelector('#hint').textContent='Precisa de 3 madeiras e 2 pedras.';return}const x=Math.round(player.position.x/2)*2,z=Math.round((player.position.z-2)/2)*2;const {data,error}=await db.from('world_blocks').insert({owner_id:user.id,block_type:'stone',x,y:1,z,rotation:0}).select().single();if(error){document.querySelector('#hint').textContent='Falha ao salvar construção: '+error.message;return}wood-=3;stone-=2;updateStats();renderBlock(data);await saveResources()}; 
 function renderBlock(b){if(meshes.blocks.has(b.id))return;const m=box(b.x,b.y,b.z,2,2,2,b.block_type==='wood'?0x80542f:0x8e8b83);meshes.blocks.set(b.id,m);addRectObstacle(b.x,b.z,1.05,1.05)}
 function renderTree(t){if(meshes.trees.has(t.id))return;tree(t.x,t.z,t.id)}
-function renderAnimal(a){if(meshes.animals.has(a.id))return;const colors={cow:0xeee6d5,pig:0xe7a1a1,chicken:0xf4e8bb,sheep:0xe9e6dc};const g=new THREE.Group();const body=new THREE.Mesh(new THREE.BoxGeometry(.9,.65,1.2),new THREE.MeshStandardMaterial({color:colors[a.animal_type]||0xffffff}));body.position.y=.65;g.add(body);const head=new THREE.Mesh(new THREE.BoxGeometry(.45,.45,.45),new THREE.MeshStandardMaterial({color:colors[a.animal_type]||0xffffff}));head.position.set(0,.85,.65);g.add(head);g.position.set(a.x,0,a.z);scene.add(g);meshes.animals.set(a.id,g)}
+
+function renderAnimal(a){
+ if(meshes.animals.has(a.id))return;
+ const t=a.animal_type,c={cow:0xe8e2d4,pig:0xe6a0a0,chicken:0xf3e7c9,sheep:0xe9e7df}[t]||0xffffff;
+ const coat=mat(c,0,.92),dark=mat(0x49372b),pink=mat(0xe9b4a4),white=mat(0xf3ead6),black=mat(0x211d19),gold=mat(0xd89a36);
+ const g=new THREE.Group(),u={legs:[],phase:Math.random()*6,head:null,tail:null};
+ const ball=(p,x,y,z,sx,sy,sz,m)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(1,16,12),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;o.receiveShadow=true;p.add(o);return o};
+ if(t==='chicken'){
+  ball(g,0,.58,0,.34,.43,.48,coat);u.head=new THREE.Group();u.head.position.set(0,.91,.34);g.add(u.head);ball(u.head,0,0,0,.22,.24,.23,coat);ball(u.head,0,.23,0,.11,.12,.1,dark);
+  const beak=new THREE.Mesh(new THREE.ConeGeometry(.09,.2,5),gold);beak.position.set(0,-.04,.2);beak.rotation.x=Math.PI/2;u.head.add(beak);
+  for(const x of [-.09,.09])ball(u.head,x,.04,.2,.035,.04,.025,black);
+  for(const x of [-.18,.18])ball(g,x,.6,.02,.12,.25,.3,white);
+ }else{
+  const cow=t==='cow',pig=t==='pig',sheep=t==='sheep';
+  ball(g,0,.88,0,cow?.58:.48,sheep?.58:.48,cow?.83:.68,coat);
+  u.head=new THREE.Group();u.head.position.set(0,1.08,.62);g.add(u.head);ball(u.head,0,.1,.1,cow?.3:.28,cow?.34:.29,.34,coat);
+  ball(u.head,0,.02,.38,pig?.24:.2,.16,.13,pig?pink:coat);
+  for(const x of [-.13,.13]){ball(u.head,x,.2,.36,.045,.05,.035,white);ball(u.head,x,.2,.39,.022,.028,.018,black)}
+  if(cow)for(const x of [-.2,.2]){const h=new THREE.Mesh(new THREE.ConeGeometry(.075,.3,8),white);h.position.set(x,.48,.03);u.head.add(h)}
+  if(pig)for(const x of [-.2,.2]){const e=ball(u.head,x,.36,.08,.09,.2,.06,pink);e.rotation.z=x>0?-.35:.35}
+  if(sheep)for(let i=0;i<10;i++){const a=i*Math.PI/5;ball(g,Math.cos(a)*.32,1.1,Math.sin(a)*.4,.2,.22,.2,white)}
+  u.tail=new THREE.Group();u.tail.position.set(0,1,-.62);g.add(u.tail);ball(u.tail,0,-.2,-.08,.07,.25,.07,coat);
+  if(cow)for(let i=0;i<6;i++)ball(g,(i%2?1:-1)*.34,.88+(i%3)*.12,.15+(i-2)*.16,.12,.14,.12,black);
+ }
+ const n=t==='chicken'?2:4;
+ for(let i=0;i<n;i++){const x=t==='chicken'?(i?-.13:.13):(i%2?-.3:.3),z=t==='chicken'?0:(i<2?.38:-.38),leg=new THREE.Group();leg.position.set(x,.48,z);g.add(leg);const sh=new THREE.Mesh(new THREE.CylinderGeometry(.055,.07,.42,9),t==='chicken'?gold:coat);sh.position.y=-.2;leg.add(sh);ball(leg,0,-.4,.04,.09,.04,.12,dark);u.legs.push(leg)}
+ g.position.set(a.x,0,a.z);g.userData=u;scene.add(g);meshes.animals.set(a.id,g);
+}
 document.querySelector('#plant').onclick=async()=>{if(!user)return;const x=player.position.x+Math.sin(player.rotation.y)*-3,z=player.position.z+Math.cos(player.rotation.y)*-3;const {data,error}=await db.from('world_trees').insert({owner_id:user.id,tree_type:'oak',x,y:0,z,growth_seconds:60,health:100}).select().single();if(error){document.querySelector('#hint').textContent=error.message;return}renderTree(data);document.querySelector('#hint').textContent='Muda plantada! Crescimento previsto: 60 segundos.'};
-document.querySelector('#animal').onclick=async()=>{if(!user)return;const types=['cow','pig','chicken','sheep'];const animal_type=types[Math.floor(Math.random()*types.length)];const {data,error}=await db.from('world_animals').insert({owner_id:user.id,animal_type,x:player.position.x+2,y:0,z:player.position.z+2,state:{}}).select().single();if(error){document.querySelector('#hint').textContent=error.message;return}renderAnimal(data);document.querySelector('#hint').textContent='Animal criado: '+animal_type};
+
+document.querySelector('#animal').onclick=async()=>{
+ if(!user)return;
+ const choice=prompt('Escolha o animal: 1 Porco | 2 Galinha | 3 Vaca | 4 Ovelha','2');
+ const animal_type=({'1':'pig','2':'chicken','3':'cow','4':'sheep'})[String(choice||'').trim()];
+ if(!animal_type){document.querySelector('#hint').textContent='Escolha cancelada.';return}
+ const pen=[...meshes.fences.values()].find(f=>f.owner_id===user.id&&Math.abs(player.position.x-f.x)<=f.width/2&&Math.abs(player.position.z-f.z)<=f.depth/2);
+ if(!pen){document.querySelector('#hint').textContent='Construa um cercado e fique dentro dele antes de criar animais.';return}
+ const {data,error}=await db.from('world_animals').insert({owner_id:user.id,animal_type,x:player.position.x+(Math.random()-.5)*2,y:0,z:player.position.z+(Math.random()-.5)*2,state:{lastProductAt:new Date().toISOString()}}).select().single();
+ if(error){document.querySelector('#hint').textContent='Falha ao criar animal: '+error.message;return}
+ renderAnimal(data);document.querySelector('#hint').textContent='Animal criado no cercado!';
+};
 document.querySelector('#chatToggle').onclick=()=>document.querySelector('#chatbox').classList.toggle('hidden');
 async function loadWorld(){
   const jobs=[
