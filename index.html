@@ -804,7 +804,7 @@ renderer.domElement.addEventListener('pointerdown',e=>{
 renderer.domElement.addEventListener('pointermove',e=>{
  if(e.pointerType==='touch'&&cameraPointers.has(e.pointerId)){
   cameraPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(cameraPointers.size>=2){const next=pointerGap();if(pinchDistance>0&&next>0)cameraDistance=Math.max(3.8,Math.min(42,cameraDistance*pinchDistance/next));pinchDistance=next;e.preventDefault();return;}
+  if(cameraPointers.size>=2){const next=pointerGap();if(pinchDistance>0&&next>0)cameraDistance=Math.max(3.8,Math.min(68,cameraDistance*pinchDistance/next));pinchDistance=next;e.preventDefault();return;}
  }
  if(e.pointerId!==lookPointer)return;
  const dx=e.clientX-lastLookX,dy=e.clientY-lastLookY;lastLookX=e.clientX;lastLookY=e.clientY;
@@ -1282,41 +1282,149 @@ document.querySelector('#attack').onclick=async()=>{
 let kingdomMarkers=[],mapArmed=false,lastMapDraw=0,mapZoom=1,mapCenterX=0,mapCenterZ=0;
 const mapCanvas=document.querySelector('#kingdomMap'),mapCtx=mapCanvas.getContext('2d'),MAP_EXTENT=210;
 function drawKingdomMap(){
- const c=mapCtx,w=mapCanvas.width,h=mapCanvas.height;c.clearRect(0,0,w,h);
- c.fillStyle='#c3c995';c.fillRect(0,0,w,h);
+ const ctx=mapCtx,w=mapCanvas.width,h=mapCanvas.height;
+ ctx.clearRect(0,0,w,h);
  const span=MAP_EXTENT/mapZoom;
- const px=x=>((x-mapCenterX+span)/(span*2))*w,py=z=>((z-mapCenterZ+span)/(span*2))*h;
- const label=(name,x,z,color='#34452d',size=19)=>{c.save();c.font='bold '+size+'px system-ui';c.textAlign='center';c.lineWidth=4;c.strokeStyle='#f1e5c4';c.strokeText(name,px(x),py(z));c.fillStyle=color;c.fillText(name,px(x),py(z));c.restore()};
- // Textura suave do terreno e relevo
- for(let i=0;i<95;i++){const x=(i*173+71)%w,y=(i*293+39)%h;c.fillStyle=i%3?'rgba(106,139,75,.16)':'rgba(230,214,157,.22)';c.beginPath();c.ellipse(x,y,12+(i%5)*8,8+(i%4)*6,(i%7)*.3,0,Math.PI*2);c.fill()}
- // Campos abertos
- c.fillStyle='#d1c17e';c.globalAlpha=.42;c.beginPath();c.ellipse(px(92),py(18),w*38/(span*2),h*31/(span*2),-.2,0,Math.PI*2);c.fill();
- c.beginPath();c.ellipse(px(-112),py(-75),w*34/(span*2),h*27/(span*2),.3,0,Math.PI*2);c.fill();c.globalAlpha=1;
- // Bosque e grande floresta ao norte
- c.fillStyle='#557b43';c.globalAlpha=.72;c.beginPath();c.ellipse(px(-48),py(58),w*31/(span*2),h*39/(span*2),-.3,0,Math.PI*2);c.fill();
- c.fillStyle='#365f38';c.globalAlpha=.82;c.beginPath();c.ellipse(px(5),py(83),w*61/(span*2),h*55/(span*2),.08,0,Math.PI*2);c.fill();c.globalAlpha=1;
- // Copas estilizadas em grupos
- for(let i=0;i<58;i++){const x=-54+((i*37)%112),z=35+((i*53)%94),r=3+(i%4)*1.4;c.fillStyle=i%2?'#47713e':'#628849';c.beginPath();c.arc(px(x),py(z),Math.max(1,r*w/(span*2)),0,Math.PI*2);c.fill()}
- // Estradas e trilhas
- c.strokeStyle='#b99a63';c.lineWidth=Math.max(3,w*5/(span*2));c.lineCap='round';c.beginPath();c.moveTo(px(0),py(205));c.bezierCurveTo(px(12),py(125),px(-12),py(68),px(0),py(13));c.stroke();
- c.strokeStyle='#d8bd83';c.lineWidth=Math.max(2,w*2.5/(span*2));c.beginPath();c.moveTo(px(0),py(13));c.quadraticCurveTo(px(40),py(12),px(92),py(18));c.stroke();
- // Lago existente e pequenos lagos ilustrados
- c.fillStyle='#4b8294';c.beginPath();c.ellipse(px(-25),py(8),Math.max(3,w*8/(span*2)),Math.max(3,h*5/(span*2)),-.18,0,Math.PI*2);c.fill();
- c.strokeStyle='#d6c49a';c.lineWidth=3;c.beginPath();c.ellipse(px(-25),py(8),Math.max(4,w*9.2/(span*2)),Math.max(4,h*6.1/(span*2)),-.18,0,Math.PI*2);c.stroke();
- c.fillStyle='#5b91a0';c.beginPath();c.ellipse(px(116),py(-92),Math.max(2,w*7/(span*2)),Math.max(2,h*4/(span*2)),.3,0,Math.PI*2);c.fill();
- // Castelo e pontos de interesse
- c.fillStyle='#765532';c.fillRect(px(-5),py(-5),Math.max(4,w*10/(span*2)),Math.max(4,h*10/(span*2)));
- c.fillStyle='#f8e8bd';c.font='bold 25px system-ui';c.textAlign='center';c.fillText('🏰',px(0),py(0)+8);
- label('CASTELO',0,-13,'#4c3421',17);
- label('BOSQUE',-49,27,'#244a2a',18);
- label('FLORESTA',7,137,'#244a2a',20);
- label('CAMPOS',92,-22,'#69552a',18);
- label('LAGO AZUL',-25,19,'#244e68',15);
- label('LAGO DO NORTE',116,-102,'#244e68',14);
- // Marcações personalizadas
- for(const m of kingdomMarkers){const x=px(m.x),y=py(m.z);c.fillStyle='#8a2020';c.beginPath();c.arc(x,y,10,0,Math.PI*2);c.fill();c.strokeStyle='#fff1cc';c.lineWidth=3;c.stroke();c.fillStyle='#302819';c.font='bold 15px system-ui';c.textAlign='left';c.lineWidth=3;c.strokeStyle='#f1e5c4';c.strokeText(m.label.slice(0,22),x+13,y+5);c.fillText(m.label.slice(0,22),x+13,y+5)}
- if(player){const x=px(player.position.x),y=py(player.position.z);c.fillStyle='#175cbd';c.beginPath();c.arc(x,y,11,0,Math.PI*2);c.fill();c.strokeStyle='white';c.lineWidth=3;c.stroke();c.fillStyle='#17324a';c.font='bold 16px system-ui';c.textAlign='left';c.lineWidth=3;c.strokeStyle='#f1e5c4';c.strokeText('Você',x+14,y+5);c.fillText('Você',x+14,y+5)}
- c.fillStyle='#493b28';c.font='bold 22px system-ui';c.textAlign='right';c.fillText('N ↑',w-22,30);
+ const px=x=>(x-mapCenterX+span)/(span*2)*w;
+ const py=z=>(z-mapCenterZ+span)/(span*2)*h;
+ const sx=v=>v*w/(span*2),sy=v=>v*h/(span*2);
+ const path=(pts)=>{ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(px(p[0]),py(p[1])):ctx.moveTo(px(p[0]),py(p[1])))};
+ const label=(name,x,z,color='#34452d',size=17)=>{
+  ctx.save();ctx.font='800 '+size+'px system-ui';ctx.textAlign='center';ctx.lineJoin='round';
+  ctx.lineWidth=5;ctx.strokeStyle='#f4ebd1';ctx.strokeText(name,px(x),py(z));
+  ctx.fillStyle=color;ctx.fillText(name,px(x),py(z));ctx.restore();
+ };
+ const ellipse=(x,z,rx,rz,rot,color,alpha=1)=>{
+  ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle=color;ctx.beginPath();
+  ctx.ellipse(px(x),py(z),Math.max(1,sx(rx)),Math.max(1,sy(rz)),rot,0,Math.PI*2);ctx.fill();ctx.restore();
+ };
+ // Base de pergaminho envelhecido com variação de cor e bordas.
+ const bg=ctx.createLinearGradient(0,0,w,h);bg.addColorStop(0,'#d7d0a8');bg.addColorStop(.48,'#c5c394');bg.addColorStop(1,'#b7bd8b');
+ ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+ for(let i=0;i<650;i++){
+  const x=(i*197+31)%w,y=(i*317+71)%h;
+  ctx.fillStyle=i%2?'rgba(76,83,48,.055)':'rgba(255,247,208,.12)';
+  ctx.beginPath();ctx.arc(x,y,1+(i%4),0,Math.PI*2);ctx.fill();
+ }
+ // Curvas de nível e colinas: relevo cartográfico.
+ for(let k=0;k<7;k++){
+  ctx.save();ctx.strokeStyle=k%2?'rgba(101,112,72,.22)':'rgba(238,225,179,.34)';ctx.lineWidth=1.4;
+  ctx.beginPath();ctx.ellipse(px(-145+k*43),py(-126+k*22),sx(46+k*4),sy(28+k*3),-.34,0,Math.PI*2);ctx.stroke();ctx.restore();
+  ctx.save();ctx.strokeStyle='rgba(79,103,66,.20)';ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.ellipse(px(105-k*24),py(143-k*19),sx(35+k*3),sy(22+k*2),.42,0,Math.PI*2);ctx.stroke();ctx.restore();
+ }
+ // Pradarias e terrenos agrícolas.
+ ellipse(92,18,43,34,-.2,'#d5c17b',.54);
+ ellipse(-112,-75,39,31,.3,'#d5bb79',.45);
+ ellipse(65,-128,34,24,-.25,'#c9b879',.32);
+ // Campos cultivados: sulcos paralelos acompanhando o terreno.
+ ctx.save();ctx.strokeStyle='rgba(132,105,55,.34)';ctx.lineWidth=2;
+ for(const x0 of [72,84,96,108]){path([[x0-17,-2],[x0-10,12],[x0-13,31],[x0-4,42]]);ctx.stroke();}
+ for(const x0 of [-128,-117,-106,-95]){path([[x0-12,-92],[x0,-78],[x0+5,-61]]);ctx.stroke();}
+ ctx.restore();
+ // Bosques e floresta densa com copas irregulares.
+ ellipse(-48,58,36,43,-.3,'#68864a',.76);
+ ellipse(5,83,68,61,.08,'#315c38',.88);
+ ellipse(-88,112,28,34,.2,'#527746',.72);
+ const tree=(x,z,r=3,col='#416d3d')=>{
+  const X=px(x),Y=py(z),R=Math.max(1.8,sx(r));
+  ctx.fillStyle='rgba(34,49,30,.22)';ctx.beginPath();ctx.ellipse(X+R*.25,Y+R*.45,R*.9,R*.55,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=col;ctx.beginPath();ctx.arc(X,Y,R,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(183,194,119,.35)';ctx.beginPath();ctx.arc(X-R*.24,Y-R*.28,R*.42,0,Math.PI*2);ctx.fill();
+ };
+ for(let i=0;i<145;i++){
+  const x=-70+((i*37)%139),z=34+((i*53)%105),r=2.2+(i%5)*.75;
+  tree(x,z,r,i%3?'#426d3d':'#5c8148');
+ }
+ for(let i=0;i<36;i++){const x=-68+((i*19)%41),z=30+((i*29)%58);tree(x,z,2.5,'#739052');}
+ // Montanhas ao nordeste e maciço vulcânico distante.
+ for(let i=0;i<5;i++){
+  const x=105+i*17,z=154+(i%2)*15;
+  ctx.save();ctx.fillStyle='#85866b';ctx.beginPath();
+  ctx.moveTo(px(x-13),py(z+15));ctx.lineTo(px(x),py(z-16-(i%3)*5));ctx.lineTo(px(x+16),py(z+15));ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#e4dfc3';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px(x-4),py(z-8));ctx.lineTo(px(x),py(z-16-(i%3)*5));ctx.lineTo(px(x+5),py(z-7));ctx.stroke();ctx.restore();
+ }
+ ellipse(96,-232,48,42,.1,'#68665b',.85);
+ // Riacho sinuoso, afluentes e margens.
+ ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+ ctx.strokeStyle='#9caa85';ctx.lineWidth=Math.max(7,sx(5));path([[-165,165],[-130,122],[-111,92],[-92,60],[-70,42],[-49,18],[-20,-4],[5,-28],[30,-59],[47,-92],[72,-125],[102,-156]]);ctx.stroke();
+ ctx.strokeStyle='#6e9da0';ctx.lineWidth=Math.max(4,sx(3.1));path([[-165,165],[-130,122],[-111,92],[-92,60],[-70,42],[-49,18],[-20,-4],[5,-28],[30,-59],[47,-92],[72,-125],[102,-156]]);ctx.stroke();
+ ctx.strokeStyle='rgba(231,241,215,.72)';ctx.lineWidth=Math.max(1,sx(.8));path([[-165,163],[-130,120],[-111,90],[-92,58],[-70,40],[-49,16],[-20,-6],[5,-30],[30,-61],[47,-94],[72,-127],[102,-158]]);ctx.stroke();ctx.restore();
+ // Lagos com margens naturais e reflexo.
+ const lake=(x,z,rx,rz,rot)=>{
+  ellipse(x,z,rx+2,rz+2,rot,'#a89e75',.9);
+  ctx.save();ctx.fillStyle='#5b8994';ctx.beginPath();ctx.ellipse(px(x),py(z),sx(rx),sy(rz),rot,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(222,235,210,.7)';ctx.lineWidth=2;ctx.stroke();
+  ctx.strokeStyle='rgba(230,244,226,.38)';ctx.lineWidth=1.5;
+  for(let j=0;j<3;j++){ctx.beginPath();ctx.ellipse(px(x-rx*.12),py(z-rz*.08),sx(rx*(.42+j*.13)),sy(rz*(.38+j*.13)),rot,0,Math.PI*2);ctx.stroke();}
+  ctx.restore();
+ };
+ lake(-25,8,9,6,-.18);lake(116,-92,8,5,.3);lake(-142,-145,13,7,-.25);
+ // Estradas principais e trilhas secundárias, com bordas e sulcos.
+ const road=(pts,width=4)=>{
+  ctx.save();ctx.lineCap='round';ctx.lineJoin='round';path(pts);ctx.strokeStyle='#8d7852';ctx.lineWidth=sx(width+2);ctx.stroke();
+  path(pts);ctx.strokeStyle='#d6bd89';ctx.lineWidth=sx(width);ctx.stroke();
+  path(pts);ctx.strokeStyle='rgba(255,241,199,.42)';ctx.lineWidth=Math.max(1,sx(.7));ctx.stroke();ctx.restore();
+ };
+ road([[0,205],[7,166],[12,125],[-8,89],[-12,55],[-4,24],[0,13]],5.5);
+ road([[0,13],[28,17],[55,20],[92,18],[125,0]],4.5);
+ road([[-4,24],[-34,6],[-58,-22],[-89,-44],[-112,-75]],3.2);
+ road([[12,125],[35,145],[66,157],[105,169]],3);
+ road([[0,13],[-18,-24],[-45,-57],[-74,-93]],2.5);
+ // Ponte de madeira sobre o riacho.
+ ctx.save();ctx.translate(px(-20),py(-4));ctx.rotate(-.75);ctx.fillStyle='#795936';ctx.fillRect(-sx(7),-sy(1.5),sx(14),sy(3));ctx.strokeStyle='#ead2a0';ctx.lineWidth=2;for(let i=-5;i<=5;i+=2)ctx.beginPath(),ctx.moveTo(sx(i),-sy(1.5)),ctx.lineTo(sx(i),sy(1.5)),ctx.stroke();ctx.restore();
+ // Castelo com muralhas, torres, portão e pátio.
+ ctx.save();const cx=px(0),cz=py(0),unit=sx(10);
+ ctx.fillStyle='rgba(46,37,25,.24)';ctx.fillRect(cx-unit*.62,cz-unit*.52,unit*1.42,unit*1.25);
+ ctx.fillStyle='#9a8b70';ctx.fillRect(cx-unit*.5,cz-unit*.5,unit,unit);
+ ctx.strokeStyle='#514a3b';ctx.lineWidth=2;ctx.strokeRect(cx-unit*.5,cz-unit*.5,unit,unit);
+ ctx.fillStyle='#6f6a5a';for(const [dx,dz] of [[-.5,-.5],[.3,-.5],[-.5,.3],[.3,.3]]){ctx.fillRect(cx+unit*dx,cz+unit*dz,unit*.2,unit*.2);}
+ ctx.fillStyle='#493c2d';ctx.fillRect(cx-unit*.09,cz+unit*.12,unit*.18,unit*.38);
+ ctx.fillStyle='#d6c49b';ctx.font='bold 27px system-ui';ctx.textAlign='center';ctx.fillText('♜',cx,cz+8);ctx.restore();
+ // Pequena aldeia, casas e moinho.
+ const house=(x,z)=>{
+  ctx.save();const X=px(x),Y=py(z),u=Math.max(3,sx(3.8));
+  ctx.fillStyle='#b6a17a';ctx.fillRect(X-u/2,Y-u/2,u,u*.72);
+  ctx.fillStyle='#744b39';ctx.beginPath();ctx.moveTo(X-u*.65,Y-u*.42);ctx.lineTo(X,Y-u);ctx.lineTo(X+u*.65,Y-u*.42);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#49382b';ctx.fillRect(X-u*.09,Y-u*.05,u*.18,u*.3);ctx.restore();
+ };
+ [[34,-8],[42,-13],[51,-5],[58,-12],[48,-20]].forEach(p=>house(p[0],p[1]));
+ // Símbolo do moinho no campo leste.
+ ctx.save();ctx.fillStyle='#78583a';ctx.beginPath();ctx.arc(px(105),py(35),Math.max(3,sx(2.6)),0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle='#f0dfb5';ctx.lineWidth=2;for(let a=0;a<4;a++){const ang=a*Math.PI/2;ctx.beginPath();ctx.moveTo(px(105),py(35));ctx.lineTo(px(105)+Math.cos(ang)*sx(5),py(35)+Math.sin(ang)*sy(5));ctx.stroke();}ctx.restore();
+ // Nomes das regiões e pontos de interesse.
+ label('CASTELO REAL',0,-16,'#49331f',18);
+ label('BOSQUE DO VALE',-49,27,'#244a2a',16);
+ label('GRANDE FLORESTA',8,145,'#244a2a',18);
+ label('CAMPOS DOURADOS',92,-24,'#69552a',16);
+ label('ALDEIA DO MOINHO',48,-29,'#59432c',13);
+ label('LAGO AZUL',-25,20,'#244e68',13);
+ label('LAGO DO NORTE',116,-103,'#244e68',13);
+ label('LAGO DAS BRUMAS',-142,-157,'#244e68',12);
+ label('MONTES CINZENTOS',142,184,'#5d5b4b',13);
+ label('VULCÃO DISTANTE',96,-255,'#4d3932',12);
+ label('RIO DO VALE',-64,-2,'#315d68',11);
+ // Marcações pessoais.
+ for(const m of kingdomMarkers){
+  const x=px(m.x),y=py(m.z);ctx.save();ctx.fillStyle='#7e2924';ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#fff1cc';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#302819';ctx.font='bold 14px system-ui';ctx.textAlign='left';
+  ctx.lineWidth=4;ctx.strokeStyle='#f1e5c4';ctx.strokeText(m.label.slice(0,22),x+13,y+5);ctx.fillText(m.label.slice(0,22),x+13,y+5);ctx.restore();
+ }
+ // Posição e orientação do jogador.
+ if(player){
+  const x=px(player.position.x),y=py(player.position.z);
+  ctx.save();ctx.translate(x,y);ctx.rotate(-player.rotation.y);
+  ctx.fillStyle='#175cbd';ctx.beginPath();ctx.moveTo(0,-15);ctx.lineTo(10,11);ctx.lineTo(0,6);ctx.lineTo(-10,11);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();ctx.restore();
+  ctx.save();ctx.font='bold 15px system-ui';ctx.textAlign='left';ctx.lineWidth=4;ctx.strokeStyle='#f4ebd1';ctx.strokeText('Você',x+13,y+5);ctx.fillStyle='#17324a';ctx.fillText('Você',x+13,y+5);ctx.restore();
+ }
+ // Rosa dos ventos e escala aproximada.
+ ctx.save();ctx.textAlign='center';ctx.font='bold 20px Georgia';ctx.fillStyle='#493b28';ctx.fillText('N',w-34,27);
+ ctx.beginPath();ctx.moveTo(w-34,34);ctx.lineTo(w-42,53);ctx.lineTo(w-34,48);ctx.lineTo(w-26,53);ctx.closePath();ctx.fill();
+ const bar= sx(25);ctx.fillStyle='#493b28';ctx.fillRect(22,h-29,bar,4);ctx.fillRect(22,h-33,2,12);ctx.fillRect(22+bar,h-33,2,12);
+ ctx.font='bold 12px system-ui';ctx.textAlign='left';ctx.fillText('25 unidades',22,h-38);ctx.restore();
+ // Moldura de mapa antigo.
+ ctx.strokeStyle='rgba(91,67,39,.65)';ctx.lineWidth=5;ctx.strokeRect(3,3,w-6,h-6);
  document.querySelector('#mapCount').textContent=kingdomMarkers.length+' marcação(ões) · Zoom '+mapZoom.toFixed(1)+'×';
 }
 async function saveKingdomMarkers(){
@@ -1326,8 +1434,8 @@ async function saveKingdomMarkers(){
 }
 function openKingdomMap(){if(!user){document.querySelector('#hint').textContent='Entre na sua conta para usar o mapa.';return}document.querySelector('#mapPanel').classList.remove('hidden');document.querySelector('#mapPanel').style.display='flex';drawKingdomMap();}
 document.querySelector('#mapToggle').onclick=openKingdomMap;
-document.querySelector('#mapZoomIn').onclick=()=>{mapZoom=Math.min(3,mapZoom+.25);drawKingdomMap()};
-document.querySelector('#mapZoomOut').onclick=()=>{mapZoom=Math.max(.75,mapZoom-.25);drawKingdomMap()};
+document.querySelector('#mapZoomIn').onclick=()=>{mapZoom=Math.min(4,mapZoom+.25);drawKingdomMap()};
+document.querySelector('#mapZoomOut').onclick=()=>{mapZoom=Math.max(.55,mapZoom-.25);drawKingdomMap()};
 document.querySelector('#mapCenter').onclick=()=>{if(player){mapCenterX=player.position.x;mapCenterZ=player.position.z;mapZoom=Math.max(mapZoom,1.25);drawKingdomMap()}};
 
 document.querySelector('#mapClose').onclick=()=>{document.querySelector('#mapPanel').classList.add('hidden');document.querySelector('#mapPanel').style.display='none';mapArmed=false;};
