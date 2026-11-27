@@ -82,7 +82,8 @@ export function createImmersive4D(THREE, scene) {
     out.gain.setTargetAtTime(1,now,.008);out.gain.setTargetAtTime(.0001,now+(name==='thunder' ? 0.85 : 0.3),.08);
     setTimeout(()=>{try{out.disconnect();panner.disconnect();}catch(_){}},1400);
   }
-  const maxParticles = Math.min(1100, Math.max(260, Math.floor((innerWidth*innerHeight)/1500)));
+  const mobile=innerWidth<=700;
+  const maxParticles = Math.min(mobile?360:760, Math.max(mobile?140:260, Math.floor((innerWidth*innerHeight)/(mobile?3200:2100))));
   const positions = new Float32Array(maxParticles*3), velocities = new Float32Array(maxParticles*3);
   const particleGeo = new THREE.BufferGeometry(); particleGeo.setAttribute('position',new THREE.BufferAttribute(positions,3));
   const particleMat = new THREE.PointsMaterial({color:0xb9d7e8,size:.13,transparent:true,opacity:0,depthWrite:false,sizeAttenuation:true});
@@ -96,7 +97,7 @@ export function createImmersive4D(THREE, scene) {
   }
   const waterTargets=[];
   const foliage=[];
-  let scanTimer=0;
+  let scanTimer=0,sceneEffectsTimer=0;
   function scanScene() {
     waterTargets.length=0; foliage.length=0;
     scene.traverse(obj=>{
@@ -143,15 +144,19 @@ export function createImmersive4D(THREE, scene) {
     }
     const gust=(Math.sin(state.elapsed*.47)+Math.sin(state.elapsed*.19+1.7)*.55)*.5;
     state.wind=.35+Math.abs(gust)*.8+(storm?1.25:0)+(rain ? 0.25 : 0);
-    for(let i=0;i<foliage.length;i++){
-      const obj=foliage[i], base=obj.userData.windBase??(obj.userData.windBase=obj.rotation.z);
-      obj.rotation.z=base+Math.sin(state.elapsed*1.6+i*.73)*.025*state.wind;
-      obj.rotation.x=Math.sin(state.elapsed*1.1+i*.41)*.012*state.wind;
-    }
-    for(let i=0;i<waterTargets.length;i++){
-      const obj=waterTargets[i];
-      if(obj.geometry?.type==='RingGeometry') obj.rotation.z=Math.sin(state.elapsed*1.3+i)*.012;
-      else if(obj.material && !Array.isArray(obj.material) && obj.material.transparent) obj.material.opacity=.78+Math.sin(state.elapsed*2+i)*.08;
+    sceneEffectsTimer-=dt;
+    if(sceneEffectsTimer<=0){
+      sceneEffectsTimer=mobile?.12:.08;
+      for(let i=0;i<foliage.length;i++){
+        const obj=foliage[i], base=obj.userData.windBase??(obj.userData.windBase=obj.rotation.z);
+        obj.rotation.z=base+Math.sin(state.elapsed*1.6+i*.73)*.025*state.wind;
+        obj.rotation.x=Math.sin(state.elapsed*1.1+i*.41)*.012*state.wind;
+      }
+      for(let i=0;i<waterTargets.length;i++){
+        const obj=waterTargets[i];
+        if(obj.geometry?.type==='RingGeometry') obj.rotation.z=Math.sin(state.elapsed*1.3+i)*.012;
+        else if(obj.material && !Array.isArray(obj.material) && obj.material.transparent) obj.material.opacity=.78+Math.sin(state.elapsed*2+i)*.08;
+      }
     }
     if(storm && Math.random()<dt*.16){state.lightning=.18+Math.random()*.28;play('thunder',playerPosition);}
     state.lightning=Math.max(0,state.lightning-dt);
