@@ -426,10 +426,10 @@ async function loadProfessionalAvatar(type){
  const gaitBones={leftLeg:null,rightLeg:null,leftArm:null,rightArm:null};
  model.traverse(o=>{if(!o.isBone)return;const n=o.name.toLowerCase().replace(/[^a-z]/g,'');if(n.includes('leftupleg')||n==='leftleg')gaitBones.leftLeg=gaitBones.leftLeg||o;else if(n.includes('rightupleg')||n==='rightleg')gaitBones.rightLeg=gaitBones.rightLeg||o;else if(n.includes('leftarm')&&!n.includes('fore'))gaitBones.leftArm=gaitBones.leftArm||o;else if(n.includes('rightarm')&&!n.includes('fore'))gaitBones.rightArm=gaitBones.rightArm||o;});
  const mixer=new THREE.AnimationMixer(model),findClip=pattern=>gltf.animations.find(c=>pattern.test(c.name));
- const idleClip=findClip(/idle|stand/i)||gltf.animations[0],walkClip=findClip(/walk/i)||idleClip,runClip=findClip(/run/i)||walkClip;
- const idleAction=idleClip?mixer.clipAction(idleClip):null,walkAction=walkClip?mixer.clipAction(walkClip):idleAction,runAction=runClip?mixer.clipAction(runClip):walkAction;
+ const idleClip=findClip(/idle|stand/i)||gltf.animations[0],walkClip=findClip(/walk/i)||idleClip,runClip=findClip(/run/i)||walkClip,attackClip=findClip(/attack|slash|swing|stomp/i);
+ const idleAction=idleClip?mixer.clipAction(idleClip):null,walkAction=walkClip?mixer.clipAction(walkClip):idleAction,runAction=runClip?mixer.clipAction(runClip):walkAction,attackAction=attackClip?mixer.clipAction(attackClip):null;
  if(idleAction)idleAction.play();
- return {model,mixer,idleAction,walkAction,runAction,current:'idle',type,gaitBones};
+ return {model,mixer,idleAction,walkAction,runAction,attackAction,current:'idle',type,gaitBones};
 }
 function setProfessionalGait(instance,moving,running=false){
  if(!instance)return;
@@ -825,7 +825,7 @@ function subscribeWorld(){
 }
 
 
-let lastAttackAt=0;
+let lastAttackAt=0,attackUntil=0;
 async function handleCombatEvent(ev){
  if(!user||ev.target_id!==user.id||ev.attacker_id===user.id)return;
  health=Math.max(0,health-Number(ev.damage||5));updateStats();await saveResources();
@@ -846,6 +846,8 @@ document.querySelector('#attack').onclick=async()=>{
  if(!user)return;const now=Date.now();if(now-lastAttackAt<900){document.querySelector('#hint').textContent='Aguarde para atacar novamente.';return}lastAttackAt=now;
  const target=[...remotePlayers.values()].map(r=>({r,d:Math.hypot(r.group.position.x-player.position.x,r.group.position.z-player.position.z)})).filter(v=>v.d<3.4).sort((a,b)=>a.d-b.d)[0];
  if(!target){document.querySelector('#hint').textContent='Nenhum jogador ao alcance. Aproxime-se de outro jogador.';return}
+ attackUntil=Date.now()+650;
+ if(avatarInstance?.attackAction){avatarInstance.attackAction.reset().fadeIn(.08).play();avatarInstance.attackAction.clampWhenFinished=true;avatarInstance.attackAction.setLoop(THREE.LoopOnce,1)}
  const {error}=await db.from('world_combat').insert({attacker_id:user.id,target_id:target.r.id,damage:Math.min(25,4+power*2)});
  document.querySelector('#hint').textContent=error?'Falha ao atacar: '+error.message:'Golpe enviado contra '+(target.r.name||'outro jogador')+'!';
 };
@@ -968,7 +970,7 @@ sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.po
   if(b.leftLeg)b.leftLeg.rotation.x=swing;
   if(b.rightLeg)b.rightLeg.rotation.x=-swing;
   if(b.leftArm)b.leftArm.rotation.x=-swing*.72;
-  if(b.rightArm)b.rightArm.rotation.x=swing*.72;
+  if(b.rightArm)b.rightArm.rotation.x=(swing*.72)+(Date.now()<attackUntil?-.95:0);
  }
  else{
   avatarModel.position.y=(moving?Math.abs(Math.sin(walkPhase*2))*.045:Math.sin(t*.0018)*.018);
