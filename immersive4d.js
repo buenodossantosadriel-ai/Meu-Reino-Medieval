@@ -39,6 +39,7 @@ export function createImmersive4D(THREE, scene) {
   const particleGeo = new THREE.BufferGeometry(); particleGeo.setAttribute('position',new THREE.BufferAttribute(positions,3));
   const particleMat = new THREE.PointsMaterial({color:0xb9d7e8,size:.13,transparent:true,opacity:0,depthWrite:false,sizeAttenuation:true});
   const particles = new THREE.Points(particleGeo,particleMat); particles.frustumCulled=false; scene.add(particles);
+  const lightningLight=new THREE.PointLight(0xdceaff,0,125,1.5); lightningLight.position.set(0,28,0); scene.add(lightningLight);
   for(let i=0;i<maxParticles;i++) respawn(i,true);
   function respawn(i,initial=false) {
     const p=particleGeo.attributes.position.array, v=velocities, k=i*3;
@@ -70,8 +71,10 @@ export function createImmersive4D(THREE, scene) {
     particleMat.size=snow?.22:.12;
     particleMat.opacity=rain?.68:snow?.9;
     particleMat.sizeAttenuation=!rain;
-    scene.fog.density= value==='fog'?.012 : value==='storm'?.0035 : value==='cloudy'?.0022 : 0;
+    for(let i=0;i<maxParticles;i++) velocities[i*3+1]=snow?-(.7+Math.random()*1.3):-(10+Math.random()*13);
     if(value==='fog'){scene.fog.near=8;scene.fog.far=105;}
+    else if(value==='storm'){scene.fog.near=28;scene.fog.far=185;}
+    else if(value==='cloudy'){scene.fog.near=85;scene.fog.far=245;}
     else {scene.fog.near=145;scene.fog.far=340;}
     panel.querySelector('#weatherStatus4d').textContent=({clear:'Céu aberto e ciclo solar',cloudy:'Nuvens e luz difusa',rain:'Chuva sobre o reino',storm:'Tempestade: cuidado com raios',snow:'Neve caindo no reino',fog:'Neblina reduzindo a visibilidade'})[value];
     if(state.audio) state.audio.filter.frequency.setTargetAtTime(rain?1100:420,state.audio.ctx.currentTime,.5);
@@ -104,10 +107,11 @@ export function createImmersive4D(THREE, scene) {
     }
     if(storm && Math.random()<dt*.16) state.lightning=.18+Math.random()*.28;
     state.lightning=Math.max(0,state.lightning-dt);
-    if(state.lightning>0){ scene.traverse(o=>{if(o.isLight&&o!==undefined&&o.userData?.weatherFlash) o.intensity=state.lightning*9;}); }
+    lightningLight.position.set(playerPosition.x+8,28,playerPosition.z-12);
+    lightningLight.intensity=state.lightning>0?state.lightning*38:0;
     if(state.audio && state.sound) {
       state.audio.windGain.gain.setTargetAtTime(rain?.12:.22,state.audio.ctx.currentTime,.4);
-      state.audio.birdGain.gain.setTargetAtTime(worldLight?.day>.45 && !rain?.014:0,state.audio.ctx.currentTime,1);
+      state.audio.birdGain.gain.setTargetAtTime((worldLight?.day>.45 && !rain)? .014 : 0,state.audio.ctx.currentTime,1);
       state.audio.osc.frequency.setTargetAtTime(520+Math.sin(state.elapsed*.7)*90,state.audio.ctx.currentTime,1);
     }
   }
