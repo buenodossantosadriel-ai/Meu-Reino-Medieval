@@ -700,16 +700,17 @@ async function advanceQuest(id,amount=1){
  if(!questLoaded||amount<=0)return;const q=QUESTS.find(v=>v.id===id);if(!q||(questData.completed_quests||[]).includes(id))return;
  questData.progress[id]=Math.min(q.target,Number(questData.progress[id]||0)+amount);
  if(questData.progress[id]>=q.target){
+  const previousLevel=questLevelFor(questData.xp||0).level;
   questData.completed_quests.push(id);questData.xp=(questData.xp||0)+q.xp;
   const lv=questLevelFor(questData.xp);questData.level=lv.level;
-  document.querySelector('#hint').textContent='🏆 Missão concluída: '+q.title+'! +'+q.xp+' XP'+(lv.level>(questData.level||1)?' · Subiu de nível!':'');
-  document.querySelector('#hint').textContent='🏆 Missão concluída: '+q.title+'! +'+q.xp+' XP · Nível '+lv.level;
+  document.querySelector('#hint').textContent='🏆 Missão concluída: '+q.title+'! +'+q.xp+' XP · Nível '+lv.level+(lv.level>previousLevel?' · SUBIU DE NÍVEL!':'');
  }else document.querySelector('#hint').textContent='📜 Missão: '+q.title+' ('+questData.progress[id]+'/'+q.target+')';
  renderQuests();await saveQuestProgress();
 }
 document.querySelector('#questsToggle').onclick=()=>{document.querySelector('#questsPanel').classList.toggle('hidden');renderQuests()};
 document.querySelector('#questsClose').onclick=()=>document.querySelector('#questsPanel').classList.add('hidden');
-\nfunction updateStats(){document.querySelector('#stats').textContent='❤️ '+health+' · 🪙 '+coins+' · ⚔ Poder '+power+' · Madeira: '+wood+' · Pedra: '+stone}
+
+function updateStats(){document.querySelector('#stats').textContent='❤️ '+health+' · 🪙 '+coins+' · ⚔ Poder '+power+' · Madeira: '+wood+' · Pedra: '+stone}
 async function saveResources(){
   if(!user)return {error:null};
   try {
