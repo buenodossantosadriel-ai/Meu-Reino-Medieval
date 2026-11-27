@@ -506,7 +506,7 @@ async function setRemoteProfessionalAvatar(remote,type){
  const token=(remote.avatarLoadToken||0)+1;remote.avatarLoadToken=token;
  try{
   const instance=await loadProfessionalAvatar(type);
-  if(remotePlayers.get(remote.id)!==remote||remote.avatarLoadToken!==token)return;
+  if(remotePlayers.get(remote.sessionId)!==remote||remote.avatarLoadToken!==token)return;
   if(remote.model)remote.group.remove(remote.model);
   if(remote.motion)disposeProceduralModel(remote.model);
   remote.model=instance.model;remote.instance=instance;remote.motion=null;remote.avatar=type;remote.group.add(instance.model);
@@ -515,23 +515,27 @@ async function setRemoteProfessionalAvatar(remote,type){
 function syncRemotePlayers(){
  if(!live)return;
  const state=live.presenceState(),seen=new Set();
- for(const entries of Object.values(state)){
-  const meta=entries[entries.length-1];if(!meta?.user_id||meta.user_id===user?.id)continue;
-  const id=meta.user_id;seen.add(id);
-  let remote=remotePlayers.get(id);
+ for(const [presenceKey,entries] of Object.entries(state)){
+  const meta=entries[entries.length-1];if(!meta?.user_id)continue;
+  // Cada aba/dispositivo tem uma identidade de presença própria. Não filtrar por user_id:
+  // duas pessoas (ou duas sessões) podem entrar usando a mesma conta.
+  const sessionKey=String(meta.client_id||presenceKey);if(sessionKey===clientId)continue;
+  seen.add(sessionKey);
+  let remote=remotePlayers.get(sessionKey);
   if(!remote){
    const group=new THREE.Group(),avatarType=avatarBuilders[meta.avatar]?meta.avatar:'knight',model=avatarBuilders[avatarType]();
    const motion=prepareAvatarMotion(model,avatarType);
    group.add(model);const tag=makeNameTag(meta.name||'Aventureiro');group.add(tag);scene.add(group);
-   remote={id,group,target:new THREE.Vector3(),rotation:0,tag,model,motion,instance:null,phase:Math.random()*Math.PI*2,avatar:null};remotePlayers.set(id,remote);
+   remote={id:meta.user_id,sessionId:sessionKey,group,target:new THREE.Vector3(),rotation:0,tag,model,motion,instance:null,phase:Math.random()*Math.PI*2,avatar:null};remotePlayers.set(sessionKey,remote);
   }
-  remote.target.set(Number(meta.x)||0,0,Number(meta.z)||0);
+  remote.id=meta.user_id;remote.target.set(Number(meta.x)||0,0,Number(meta.z)||0);
+  if(remote.group.position.lengthSq()===0)remote.group.position.copy(remote.target);
   remote.rotation=Number(meta.rotation)||0;
   if(meta.name)updateNameTag(remote.tag,meta.name);
   const remoteType=avatarBuilders[meta.avatar]?meta.avatar:'knight';
   if(remote.avatar!==remoteType)setRemoteProfessionalAvatar(remote,remoteType);
  }
- for(const [id,remote] of remotePlayers){if(!seen.has(id)){scene.remove(remote.group);if(remote.motion)disposeProceduralModel(remote.model);remote.tag.material.map?.dispose();remote.tag.material.dispose();remotePlayers.delete(id);}}
+ for(const [sessionKey,remote] of remotePlayers){if(!seen.has(sessionKey)){scene.remove(remote.group);if(remote.motion)disposeProceduralModel(remote.model);remote.tag.material.map?.dispose();remote.tag.material.dispose();remotePlayers.delete(sessionKey);}}
 }
 function chooseAvatar(type){
  if(!avatarBuilders[type]||type===selectedAvatar)return;
@@ -1099,6 +1103,7 @@ mapCanvas.addEventListener('click',async ev=>{
  mapArmed=false;if(await saveKingdomMarkers()){drawKingdomMap();document.querySelector('#hint').textContent='📍 Marcação salva no mapa!';}
 });
 document.querySelector('#mapDelete').onclick=async()=>{if(!kingdomMarkers.length){document.querySelector('#hint').textContent='Não há marcações para apagar.';return}kingdomMarkers.pop();if(await saveKingdomMarkers()){drawKingdomMap();document.querySelector('#hint').textContent='Última marcação apagada.';}};
+const clientId=globalThis.crypto?.randomUUID?.()||('client-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));
 let live,lastPresenceUpdate=0;
 async function enterGame(session,emailFallback='') {
   spawnEnemies();
@@ -1117,16 +1122,24 @@ async function enterGame(session,emailFallback='') {
   try {
     subscribeWorld();
     if(!live) {
-      live=db.channel('world-live');
+      live=db.channel('world-live',{config:{presence:{key:clientId}}});
       live.on('presence',{event:'sync'},()=>{
-        players.textContent='Online: '+Object.keys(live.presenceState()).length;
+        const state=live.presenceState();
+        players.textContent='Online: '+Object.values(state).reduce((n,entries)=>n+entries.length,0);
         syncRemotePlayers();
-      }).subscribe(async status=>{
-        if(status==='SUBSCRIBED'&&user) {
-          try { await live.track({user_id:user.id,name:playerName,avatar:selectedAvatar,x:player.position.x,z:player.position.z,rotation:player.rotation.y}); }
-          catch(e) { console.warn('Presence:',e); }
-        }
-      });
+      }).on('presence',{event:'join'},syncRemotePlayers)
+        .on('presence',{event:'leave'},syncRemotePlayers)
+        .subscribe(async status=>{
+          if(status==='SUBSCRIBED'&&user) {
+            players.textContent='Online: '+Math.max(1,Object.values(live.presenceState()).reduce((n,entries)=>n+entries.length,0));
+            try {
+              await live.track({client_id:clientId,user_id:user.id,name:playerName,avatar:selectedAvatar,x:player.position.x,z:player.position.z,rotation:player.rotation.y});
+              syncRemotePlayers();
+            } catch(e) { console.error('Falha ao entrar no multiplayer:',e);players.textContent='Conexão multiplayer falhou';hint.textContent='Não foi possível entrar no mundo online: '+(e.message||e); }
+          } else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED') {
+            console.error('Presence multiplayer:',status);players.textContent='Offline';hint.textContent='Conexão multiplayer interrompida ('+status+'). Atualize a página.';
+          }
+        });
     }
     try {
       const failedTables=await timeout(loadWorld(),12000,'Carregamento do mundo');
@@ -1281,7 +1294,7 @@ shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;sun.target.position.set(
    for(const l of remote.motion.legs)l.pivot.rotation.x=remoteMoving?Math.sin(remote.phase+(l.side<0?Math.PI:0))*.58:0;
   }
 }
- if(user&&live&&t-lastPresenceUpdate>350){lastPresenceUpdate=t;live.track({user_id:user.id,name:playerName,avatar:selectedAvatar,x:player.position.x,z:player.position.z,rotation:player.rotation.y}).catch(e=>console.warn('Presença:',e));}
+ if(user&&live&&t-lastPresenceUpdate>350){lastPresenceUpdate=t;live.track({client_id:clientId,user_id:user.id,name:playerName,avatar:selectedAvatar,x:player.position.x,z:player.position.z,rotation:player.rotation.y}).catch(e=>console.warn('Presença:',e));}
  cameraDistanceCurrent+=(cameraDistance-cameraDistanceCurrent)*Math.min(1,dt*10);
  const horiz=Math.cos(cameraPitch)*cameraDistanceCurrent;
  const target=new THREE.Vector3(player.position.x+Math.sin(yaw)*horiz,player.position.y+Math.sin(cameraPitch)*cameraDistanceCurrent+1.2,player.position.z+Math.cos(yaw)*horiz);
