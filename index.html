@@ -22,6 +22,7 @@ window.addEventListener('unhandledrejection',e=>{
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { createImmersive4D } from './immersive4d.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/environments/RoomEnvironment.js';
 import { clone as cloneSkeleton } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/SkeletonUtils.js';
@@ -1868,6 +1869,7 @@ db.auth.getSession().then(async ({data,error})=>{
 });
 
 let last=0,walkPhase=0,shadowRefresh=0,motionBlend=0,playerMoveSpeed=0;function animate(t){requestAnimationFrame(animate);const dt=Math.min((t-last)/1000,.05);last=t;
+ if(!window.__medieval4D) window.__medieval4D=createImmersive4D(THREE,scene);
  const worldLight=updateWorldClock();
  let sx=moveInput.x,sy=-moveInput.y;
  if(keys.w||keys.arrowup)sy=1;if(keys.s||keys.arrowdown)sy=-1;if(keys.a||keys.arrowleft)sx=-1;if(keys.d||keys.arrowright)sx=1;
@@ -2013,7 +2015,7 @@ shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;const lightDirection=sun
  const dragonNear=dragonFlight.ready&&dragonFlight.group&&Math.hypot(dragonFlight.group.position.x-player.position.x,dragonFlight.group.position.z-player.position.z)<7.5;if(dragonNear&&Date.now()>lastDragonDamage&&Date.now()<dragonBurnUntil){lastDragonDamage=Date.now()+620;health=Math.max(0,health-5);updateStats();saveResources();document.querySelector('#hint').textContent='🐉 Você está exposto às chamas do dragão! -5 de vida. Afaste-se!';if(health<=0){health=35;player.position.set(0,0,13);dragonBurnUntil=0;enemyInvulnerableUntil=Date.now()+2500;updateStats();saveResources();}}
  for(const smoke of volcanoSmoke){smoke.phase+=dt*.22;smoke.mesh.position.y+=dt*.55;if(smoke.mesh.position.y>125)smoke.mesh.position.y=74;smoke.mesh.position.x=Math.sin(smoke.phase)*5;smoke.mesh.material.opacity=.12+Math.sin(smoke.phase*2)*.06;}
  lavaGlow.intensity=(worldLight.night>0.5?6.5:3.4)+Math.sin(t*.003)*.65;lavaGlow.distance=worldLight.night>0.5?95:58;
- clouds.forEach((c,i)=>{c.position.x+=dt*(.45+(i%3)*.12);if(c.position.x>165)c.position.x=-165;});renderer.render(scene,camera);if(user&&t-lastSave>4000){lastSave=t;saveResources()}}
+ clouds.forEach((c,i)=>{c.position.x+=dt*(.45+(i%3)*.12);if(c.position.x>165)c.position.x=-165;});window.__medieval4D?.update(dt,t,player.position,worldLight);renderer.render(scene,camera);if(user&&t-lastSave>4000){lastSave=t;saveResources()}}
 requestAnimationFrame(animate);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 if('serviceWorker'in navigator) navigator.serviceWorker.register('/sw.js').catch(e=>console.warn('Service worker:',e));
