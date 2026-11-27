@@ -1751,7 +1751,7 @@ let last=0,walkPhase=0,shadowRefresh=0,motionBlend=0;function animate(t){request
  moveWithCollisions(dx*(mountedHorse?15:(running?8:6))*dt,dz*(mountedHorse?10:(running?8:6))*dt);const ta=Math.atan2(dx,dz),d=Math.atan2(Math.sin(ta-player.rotation.y),Math.cos(ta-player.rotation.y));player.rotation.y+=d*Math.min(1,dt*12);if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;}
  if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);mountedHorse.group.rotation.y=player.rotation.y;player.position.y=1.48;}else player.position.y=0;
  if(castleGate){gateAngle+=(gateTarget-gateAngle)*Math.min(1,dt*2.8);castleGate.rotation.y=gateAngle;}if(castleBridge){castleBridge.rotation.x+=(castleBridgeTarget-castleBridge.rotation.x)*Math.min(1,dt*1.8);}
-shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.position.z/2)*2);sun.position.set(sun.target.position.x-35,55,sun.target.position.z+28);renderer.shadowMap.needsUpdate=true;}
+shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;const lightDirection=sun.position.clone().sub(sun.target.position).normalize();sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.position.z/2)*2);sun.position.copy(sun.target.position).add(lightDirection.multiplyScalar(90));renderer.shadowMap.needsUpdate=true;}
  const activeMotion=moving&&!mountedHorse?1:0;motionBlend+=(activeMotion-motionBlend)*Math.min(1,dt*5.5);
  const gait=Math.sin(walkPhase),bob=Math.abs(Math.sin(walkPhase*2));
  if(avatarInstance){
