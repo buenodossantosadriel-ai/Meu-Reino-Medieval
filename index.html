@@ -594,7 +594,7 @@ for(let i=0;i<5;i++){
  const h=makeHorse([0x8a5633,0x3e3029,0xb7a18a,0x65412d,0xd0c6b5][i]);
  h.group.position.set(-19+i*9,0,25+(i%2)*8);h.group.rotation.y=Math.random()*Math.PI;
  scene.add(h.group);h.wild=true;h.timer=1+i*.7;h.target=new THREE.Vector3(h.group.position.x,h.group.position.y,h.group.position.z);h.phase=Math.random()*6;h.horseType=horseTypes[i];horses.push(h);
- loadRealHorse(h,h.horseType).catch(error=>console.warn('Modelo real de cavalo indisponível; mantendo o modelo reserva:',h.horseType,error));
+ if(i===2){h.loading=true;loadRealHorse(h,h.horseType).catch(error=>{h.loadFailed=true;console.warn('Modelo real de cavalo indisponível; mantendo o modelo reserva:',h.horseType,error);}).finally(()=>h.loading=false);}
 }
 let mountedHorse=null;
 function mountNearestHorse(){
@@ -1074,6 +1074,8 @@ shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;sun.target.position.set(
  }
  for(const animal of meshes.animals.values()){const u=animal.userData;u.phase=(u.phase||0)+dt*2.1;if(u.staticAsset){if(u.type==='chicken'){u.roam=(u.roam||0)+dt*.22;animal.position.x=u.baseX+Math.sin(u.roam)*.8;animal.position.z=u.baseZ+Math.cos(u.roam*.73)*.65;animal.rotation.y=Math.sin(u.roam*.73+1)*.45;animal.position.y=Math.abs(Math.sin(u.phase*2))*.025;}continue}animal.position.y=Math.abs(Math.sin(u.phase*2))*.018;if(u.head)u.head.rotation.x=Math.sin(u.phase*.7)*.045;if(u.tail)u.tail.rotation.x=Math.sin(u.phase*1.8)*.22;u.legs?.forEach((leg,i)=>{leg.rotation.x=Math.sin(u.phase*2.4+i*Math.PI)*.08;});}
  for(const h of horses){
+  const horseDistance=Math.hypot(h.group.position.x-player.position.x,h.group.position.z-player.position.z);
+  if(!h.model&&!h.loading&&!h.loadFailed&&horseDistance<18){h.loading=true;loadRealHorse(h,h.horseType).catch(error=>{h.loadFailed=true;console.warn('Modelo de cavalo não carregou:',h.horseType,error);}).finally(()=>h.loading=false);}
   if(h.mixer)h.mixer.update(dt);
   if(h===mountedHorse)continue;
   h.timer-=dt;if(h.timer<=0){h.target.set(h.group.position.x+(Math.random()-.5)*12,0,h.group.position.z+(Math.random()-.5)*10);h.timer=3+Math.random()*5;}
