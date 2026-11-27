@@ -687,6 +687,66 @@ document.querySelector('#animal').onclick=async()=>{
  if(error){document.querySelector('#hint').textContent='Falha ao criar animal: '+error.message;return}
  renderAnimal(data);document.querySelector('#hint').textContent='Animal criado no cercado!';
 };
+
+function renderFence(f){
+ if(meshes.fences.has(f.id))return;
+ const g=new THREE.Group(),w=Number(f.width)||9,d=Number(f.depth)||9,post=mat(0x694329),rail=mat(0x8c6037);
+ for(const side of [{x:0,z:-d/2,len:w,h:true},{x:0,z:d/2,len:w,h:true},{x:-w/2,z:0,len:d,h:false},{x:w/2,z:0,len:d,h:false}]){
+  const n=Math.max(2,Math.floor(side.len/1.6));
+  for(let i=0;i<=n;i++){const p=new THREE.Mesh(new THREE.BoxGeometry(.16,1.15,.16),post);p.position.set(side.h?-side.len/2+i*side.len/n:side.x,.57,side.h?side.z:-side.len/2+i*side.len/n);p.castShadow=true;g.add(p)}
+  for(const y of [.4,.86]){const r=new THREE.Mesh(new THREE.BoxGeometry(side.h?side.len:.14,.13,side.h?.14:side.len),rail);r.position.set(side.x,y,side.z);g.add(r)}
+ }
+ g.position.set(f.x,0,f.z);scene.add(g);meshes.fences.set(f.id,{...f,group:g});
+}
+document.querySelector('#fence').onclick=async()=>{
+ if(!user)return;if(wood<8){document.querySelector('#hint').textContent='Cercado custa 8 madeiras.';return}
+ const {data,error}=await db.from('world_fences').insert({owner_id:user.id,x:player.position.x,z:player.position.z,width:9,depth:9}).select().single();
+ if(error){document.querySelector('#hint').textContent='Erro no cercado: '+error.message;return}
+ wood-=8;renderFence(data);updateStats();await saveResources();document.querySelector('#hint').textContent='Cercado pronto! Escolha porco, galinha, vaca ou ovelha.';
+};
+function renderWell(w){
+ if(meshes.wells.has(w.id))return;
+ const g=new THREE.Group(),stone=mat(0x89877b),woodM=mat(0x60432b),water=mat(w.well_type==='life'?0x42c6d9:0x397f91,.15,.22);
+ const ring=new THREE.Mesh(new THREE.CylinderGeometry(1,1.12,.7,12),stone);ring.position.y=.35;g.add(ring);
+ const pool=new THREE.Mesh(new THREE.CircleGeometry(.82,24),water);pool.rotation.x=-Math.PI/2;pool.position.y=.72;g.add(pool);
+ for(const x of [-.9,.9]){const p=new THREE.Mesh(new THREE.BoxGeometry(.14,2.2,.14),woodM);p.position.set(x,1.45,0);g.add(p)}
+ const roof=new THREE.Mesh(new THREE.ConeGeometry(1.25,.8,4),woodM);roof.position.y=2.75;roof.rotation.y=Math.PI/4;g.add(roof);
+ g.position.set(w.x,0,w.z);scene.add(g);meshes.wells.set(w.id,{...w,group:g});
+}
+document.querySelector('#well').onclick=async()=>{
+ if(!user)return;
+ const life=confirm('Criar Água da Vida? OK = poço especial (cura 50); Cancelar = poço normal.');
+ if(wood<5||stone<5){document.querySelector('#hint').textContent='Poço custa 5 madeiras e 5 pedras.';return}
+ if(life&&coins<30){document.querySelector('#hint').textContent='Água da Vida também custa 30 moedas.';return}
+ const {data,error}=await db.from('world_wells').insert({owner_id:user.id,x:player.position.x,z:player.position.z,well_type:life?'life':'normal'}).select().single();
+ if(error){document.querySelector('#hint').textContent='Erro ao construir poço: '+error.message;return}
+ wood-=5;stone-=5;if(life)coins-=30;renderWell(data);updateStats();await saveResources();document.querySelector('#hint').textContent='Poço construído! Aproxime-se e use Recolher.';
+};
+document.querySelector('#products').onclick=async()=>{
+ if(!user)return;
+ const nearby=[...meshes.animals.entries()].map(([id,g])=>({id,g,d:Math.hypot(g.position.x-player.position.x,g.position.z-player.position.z)})).filter(v=>v.d<5).sort((a,b)=>a.d-b.d)[0];
+ if(nearby){
+  const {data,error}=await db.from('world_animals').select('*').eq('id',nearby.id).maybeSingle();
+  if(error||!data){document.querySelector('#hint').textContent='Não foi possível consultar o animal.';return}
+  const type=data.animal_type;if(type!=='chicken'&&type!=='cow'){document.querySelector('#hint').textContent='Este animal não produz ovos ou leite.';return}
+  const state=data.state||{},last=Date.parse(state.lastProductAt||data.created_at),interval=type==='chicken'?60000:120000,qty=Math.min(5,Math.floor((Date.now()-last)/interval));
+  if(qty<1){document.querySelector('#hint').textContent=type==='chicken'?'A galinha ainda não pôs ovo.':'A vaca ainda não produziu leite.';return}
+  const {error:saveError}=await db.from('world_animals').update({state:{...state,lastProductAt:new Date(last+qty*interval).toISOString()}}).eq('id',nearby.id).eq('owner_id',user.id);
+  if(saveError){document.querySelector('#hint').textContent='Falha ao recolher: '+saveError.message;return}
+  const earned=qty*(type==='chicken'?5:10);coins+=earned;updateStats();await saveResources();document.querySelector('#hint').textContent=(type==='chicken'?'🥚 Ovos recolhidos: ':'🥛 Leite recolhido: ')+qty+'. Venda: +'+earned+' moedas.';return;
+ }
+ const well=[...meshes.wells.values()].find(w=>Math.hypot(w.x-player.position.x,w.z-player.position.z)<4);
+ if(well){health=Math.min(100,health+(well.well_type==='life'?50:15));updateStats();await saveResources();document.querySelector('#hint').textContent=well.well_type==='life'?'Água da Vida: +50 de vida!':'Água do poço: +15 de vida!';return}
+ document.querySelector('#hint').textContent='Aproxime-se de uma galinha, vaca ou poço.';
+};
+document.querySelector('#shop').onclick=async()=>{
+ if(!user)return;
+ const c=prompt('LOJA DO REINO\n1 Espada de ferro: 25 moedas (+2 poder)\n2 Machado de guerra: 60 moedas (+4 poder)\n3 Armadura reforçada: 40 moedas (+3 poder)','1');
+ const item=({'1':{cost:25,name:'Espada de ferro',p:2},'2':{cost:60,name:'Machado de guerra',p:4},'3':{cost:40,name:'Armadura reforçada',p:3}})[String(c||'').trim()];
+ if(!item)return;if(coins<item.cost){document.querySelector('#hint').textContent='Moedas insuficientes. Venda ovos e leite.';return}
+ coins-=item.cost;power=Math.min(20,power+item.p);weapon=item.name;updateStats();await saveResources();document.querySelector('#hint').textContent='Equipado: '+weapon+'. Poder '+power+'.';
+};
+
 document.querySelector('#chatToggle').onclick=()=>document.querySelector('#chatbox').classList.toggle('hidden');
 async function loadWorld(){
   const jobs=[
