@@ -1,38 +1,78 @@
 // Camada 4D: clima vivo, vento, água, relâmpagos e áudio ambiente.
 // Mantém o ciclo solar original do jogo e acrescenta efeitos locais de baixo custo.
 export function createImmersive4D(THREE, scene) {
-  const state = { weather: 'clear', sound: false, audio: null, elapsed: 0, lightning: 0, wind: 0.35 };
-  const weatherOptions = [
-    ['clear','☀️ Limpo'], ['cloudy','☁️ Nublado'], ['rain','🌧️ Chuva'], ['storm','⛈️ Tempestade'], ['snow','❄️ Neve'], ['fog','🌫️ Neblina']
-  ];
-  const panel = document.createElement('div');
-  panel.id = 'immersive4dPanel';
-  panel.style.cssText = 'position:fixed;right:12px;top:150px;z-index:6;pointer-events:auto;background:#142019e8;border:1px solid #d3b775;border-radius:12px;padding:9px;color:#fff2d0;font:12px system-ui;box-shadow:0 4px 16px #0008;max-width:155px';
-  panel.innerHTML = '<div style="font-weight:800;color:#f0cc78;margin-bottom:6px">🌍 MUNDO 4D</div><label for="weather4d">Clima</label><select id="weather4d" style="display:block;width:100%;margin:4px 0 7px;padding:7px;border-radius:7px;background:#293b2d;color:#fff;border:1px solid #c5a96b"></select><button id="sound4d" type="button" style="width:100%;padding:8px;font-size:11px">🔇 Som ambiente</button><div id="weatherStatus4d" style="margin-top:6px;opacity:.8">Ciclo solar ativo</div>';
+  const state={weather:'clear',sound:false,audio:null,elapsed:0,lightning:0,wind:.35,stepClock:0,birdClock:0,lastPosition:null,lastMoving:false,lastMounted:false,lastRunning:false};
+  const weatherOptions=[['clear','☀️ Limpo'],['cloudy','☁️ Nublado'],['rain','🌧️ Chuva'],['storm','⛈️ Tempestade'],['snow','❄️ Neve'],['fog','🌫️ Neblina']];
+  const panel=document.createElement('div');panel.id='immersive4dPanel';
+  panel.style.cssText='position:fixed;right:12px;top:150px;z-index:6;pointer-events:auto;background:#142019ee;border:1px solid #d3b775;border-radius:12px;padding:9px;color:#fff2d0;font:12px system-ui;box-shadow:0 4px 16px #0008;width:164px;max-width:45vw';
+  panel.innerHTML='<div style="font-weight:800;color:#f0cc78;margin-bottom:6px">🌍 MUNDO 4D</div><label for="weather4d">Clima</label><select id="weather4d" style="display:block;width:100%;margin:4px 0 7px;padding:7px;border-radius:7px;background:#293b2d;color:#fff;border:1px solid #c5a96b"></select><button id="sound4d" type="button" style="width:100%;padding:8px;font-size:11px">🔇 Ativar sons</button><div id="audioControls4d" style="display:none;margin-top:8px"><label>Música <input data-audio="music" type="range" min="0" max="100" value="24" style="width:100%"></label><label>Ambiente <input data-audio="ambient" type="range" min="0" max="100" value="55" style="width:100%"></label><label>Efeitos <input data-audio="effects" type="range" min="0" max="100" value="70" style="width:100%"></label></div><div id="weatherStatus4d" style="margin-top:6px;opacity:.8">Ciclo solar ativo</div>';
   document.body.appendChild(panel);
-  const select = panel.querySelector('#weather4d');
-  for (const [value,label] of weatherOptions) { const option=document.createElement('option'); option.value=value; option.textContent=label; select.appendChild(option); }
-  select.addEventListener('change', () => setWeather(select.value));
-  panel.querySelector('#sound4d').addEventListener('click', async () => {
-    try {
-      if (!state.audio) state.audio = makeAudio();
-      if (state.audio.ctx.state === 'suspended') await state.audio.ctx.resume();
-      state.sound = !state.sound;
-      state.audio.master.gain.setTargetAtTime(state.sound ? 0.16 : 0, state.audio.ctx.currentTime, 0.25);
-      panel.querySelector('#sound4d').textContent = state.sound ? '🔊 Som ligado' : '🔇 Som ambiente';
-    } catch (e) { panel.querySelector('#weatherStatus4d').textContent='Áudio indisponível neste aparelho'; }
+  const select=panel.querySelector('#weather4d');
+  for(const [value,label] of weatherOptions){const option=document.createElement('option');option.value=value;option.textContent=label;select.appendChild(option);}
+  select.addEventListener('change',()=>setWeather(select.value));
+  panel.querySelector('#sound4d').addEventListener('click',async()=>{
+    try{
+      if(!state.audio)state.audio=makeAudio();
+      if(state.audio.ctx.state==='suspended')await state.audio.ctx.resume();
+      state.sound=!state.sound;const a=state.audio;
+      a.master.gain.setTargetAtTime(state.sound?1:0,a.ctx.currentTime,.25);
+      panel.querySelector('#sound4d').textContent=state.sound?'🔊 Sons ligados':'🔇 Ativar sons';
+      panel.querySelector('#audioControls4d').style.display=state.sound?'block':'none';
+      panel.querySelector('#weatherStatus4d').textContent=state.sound?'Ambiente sonoro imersivo ativo':'Som desativado';
+      if(state.sound)play('birds');
+    }catch(e){panel.querySelector('#weatherStatus4d').textContent='Áudio indisponível neste aparelho';}
   });
-  function makeAudio() {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) throw new Error('Web Audio não disponível');
-    const ctx = new Ctx(), master = ctx.createGain(); master.gain.value=0; master.connect(ctx.destination);
-    const buffer=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate), data=buffer.getChannelData(0);
-    for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*0.22;
-    const noise=ctx.createBufferSource(); noise.buffer=buffer; noise.loop=true;
-    const filter=ctx.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value=520;
-    const windGain=ctx.createGain(); windGain.gain.value=.22; noise.connect(filter); filter.connect(windGain); windGain.connect(master); noise.start();
-    const osc=ctx.createOscillator(), birdGain=ctx.createGain(); osc.type='sine'; osc.frequency.value=660; birdGain.gain.value=.012; osc.connect(birdGain); birdGain.connect(master); osc.start();
-    return {ctx,master,windGain,filter,birdGain,osc};
+  panel.querySelectorAll('[data-audio]').forEach(input=>input.addEventListener('input',()=>{
+    if(!state.audio)return;const a=state.audio,v=Number(input.value)/100;
+    const target=input.dataset.audio==='music'?a.musicGain:input.dataset.audio==='ambient'?a.ambientGain:a.effectsGain;
+    target.gain.setTargetAtTime(v,a.ctx.currentTime,.08);
+  }));
+  function makeAudio(){
+    const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)throw new Error('Web Audio não disponível');
+    const ctx=new Ctx(),master=ctx.createGain(),musicGain=ctx.createGain(),ambientGain=ctx.createGain(),effectsGain=ctx.createGain();
+    master.gain.value=0;musicGain.gain.value=.24;ambientGain.gain.value=.55;effectsGain.gain.value=.7;
+    musicGain.connect(master);ambientGain.connect(master);effectsGain.connect(master);master.connect(ctx.destination);
+    const makeNoise=(type,freq,volume)=>{
+      const buffer=ctx.createBuffer(1,ctx.sampleRate*3,ctx.sampleRate),d=buffer.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+      const src=ctx.createBufferSource();src.buffer=buffer;src.loop=true;const filter=ctx.createBiquadFilter();filter.type=type;filter.frequency.value=freq;
+      const gain=ctx.createGain();gain.gain.value=volume;src.connect(filter);filter.connect(gain);gain.connect(ambientGain);src.start();return {src,filter,gain};
+    };
+    const wind=makeNoise('lowpass',360,.20),rain=makeNoise('lowpass',1800,0),fire=makeNoise('bandpass',950,.018);
+    const drone=ctx.createOscillator(),drone2=ctx.createOscillator(),mg=ctx.createGain();
+    drone.type='triangle';drone.frequency.value=110;drone2.type='sine';drone2.frequency.value=164.81;mg.gain.value=.035;
+    drone.connect(mg);drone2.connect(mg);mg.connect(musicGain);drone.start();drone2.start();
+    return {ctx,master,musicGain,ambientGain,effectsGain,wind,rain,fire,drone,drone2};
+  }
+  function play(name,position){
+    if(!state.audio||!state.sound)return;const a=state.audio,ctx=a.ctx,now=ctx.currentTime;
+    const panner=ctx.createPanner();panner.panningModel='HRTF';panner.distanceModel='inverse';panner.refDistance=2;panner.maxDistance=42;panner.rolloffFactor=1.25;
+    const pos=position||{x:0,y:1,z:0};panner.positionX.setValueAtTime(pos.x||0,now);panner.positionY.setValueAtTime((pos.y||0)+.8,now);panner.positionZ.setValueAtTime(pos.z||0,now);
+    const out=ctx.createGain();out.gain.value=.0001;out.connect(panner);panner.connect(a.effectsGain);
+    const tone=(freq,type,duration,volume,endFreq)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,now);if(endFreq)o.frequency.exponentialRampToValueAtTime(Math.max(25,endFreq),now+duration);
+      g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(volume,now+.012);g.gain.exponentialRampToValueAtTime(.0001,now+duration);
+      o.connect(g);g.connect(out);o.start(now);o.stop(now+duration+.03);
+    };
+    const noise=(duration,volume,filterFreq)=>{
+      const n=ctx.createBufferSource(),buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*duration),ctx.sampleRate),d=buf.getChannelData(0);
+      for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length*.45);
+      n.buffer=buf;const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=filterFreq;const g=ctx.createGain();
+      g.gain.setValueAtTime(volume,now);g.gain.exponentialRampToValueAtTime(.0001,now+duration);n.connect(f);f.connect(g);g.connect(out);n.start(now);n.stop(now+duration);
+    };
+    if(name==='sword'){noise(.28,.22,1500);tone(520,'sawtooth',.19,.08,105);}
+    else if(name==='hit'){tone(115,'triangle',.22,.34,48);noise(.12,.12,650);}
+    else if(name==='jump')tone(180,'sine',.22,.14,390);
+    else if(name==='dodge')noise(.24,.16,1250);
+    else if(name==='footstep'){tone(72,'sine',.09,.19,42);noise(.055,.08,320);}
+    else if(name==='hoof'){tone(105,'triangle',.11,.22,58);noise(.07,.1,500);}
+    else if(name==='wood'){tone(185,'triangle',.18,.24,95);noise(.08,.09,900);}
+    else if(name==='stone'){tone(260,'square',.13,.13,120);tone(95,'sine',.2,.16,55);}
+    else if(name==='mount'){tone(240,'sine',.32,.13,360);tone(360,'sine',.28,.09,260);}
+    else if(name==='birds'){tone(1500,'sine',.12,.055,2100);setTimeout(()=>{if(state.sound)tone(1900,'sine',.16,.045,1250)},125);}
+    else if(name==='thunder'){noise(.95,.26,240);tone(58,'sine',.9,.22,32);}
+    else if(name==='fire')noise(.16,.1,2400);else return;
+    out.gain.setTargetAtTime(1,now,.008);out.gain.setTargetAtTime(.0001,now+(name==='thunder'?.85:.3),.08);
+    setTimeout(()=>{try{out.disconnect();panner.disconnect();}catch(_){}},1400);
   }
   const maxParticles = Math.min(1100, Math.max(260, Math.floor((innerWidth*innerHeight)/1500)));
   const positions = new Float32Array(maxParticles*3), velocities = new Float32Array(maxParticles*3);
@@ -77,9 +117,9 @@ export function createImmersive4D(THREE, scene) {
     else if(value==='cloudy'){scene.fog.near=85;scene.fog.far=245;}
     else {scene.fog.near=145;scene.fog.far=340;}
     panel.querySelector('#weatherStatus4d').textContent=({clear:'Céu aberto e ciclo solar',cloudy:'Nuvens e luz difusa',rain:'Chuva sobre o reino',storm:'Tempestade: cuidado com raios',snow:'Neve caindo no reino',fog:'Neblina reduzindo a visibilidade'})[value];
-    if(state.audio) state.audio.filter.frequency.setTargetAtTime(rain?1100:420,state.audio.ctx.currentTime,.5);
+    if(state.audio){const a=state.audio,now=a.ctx.currentTime;a.rain.gain.gain.setTargetAtTime(rain?.20:0,now,.7);a.wind.gain.gain.setTargetAtTime(value==='storm'?.32:value==='fog'?.24:.16,now,.8);a.fire.gain.gain.setTargetAtTime(value==='clear'?.025:.012,now,1);}
   }
-  function update(dt,time,playerPosition,worldLight) {
+  function update(dt,time,playerPosition,worldLight,camera) {
     state.elapsed+=dt; scanTimer-=dt;
     if(scanTimer<=0){scanTimer=5;scanScene();}
     const storm=state.weather==='storm', rain=state.weather==='rain'||storm, snow=state.weather==='snow';
@@ -109,12 +149,17 @@ export function createImmersive4D(THREE, scene) {
     state.lightning=Math.max(0,state.lightning-dt);
     lightningLight.position.set(playerPosition.x+8,28,playerPosition.z-12);
     lightningLight.intensity=state.lightning>0?state.lightning*38:0;
+    state.lastMoving=!!(state.sound && state.audio && playerPosition && state.lastPosition && playerPosition.distanceTo && playerPosition.distanceTo(state.lastPosition)>.025);
+    state.lastMounted=!!state.mountedHorse;state.lastRunning=!!state.running;
     if(state.audio && state.sound) {
-      state.audio.windGain.gain.setTargetAtTime(rain?.12:.22,state.audio.ctx.currentTime,.4);
-      state.audio.birdGain.gain.setTargetAtTime((worldLight?.day>.45 && !rain)? .014 : 0,state.audio.ctx.currentTime,1);
-      state.audio.osc.frequency.setTargetAtTime(520+Math.sin(state.elapsed*.7)*90,state.audio.ctx.currentTime,1);
+      const a=state.audio,now=a.ctx.currentTime;
+      if(camera && a.ctx.listener.positionX){const l=a.ctx.listener,dir=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);l.positionX.setTargetAtTime(camera.position.x,now,.08);l.positionY.setTargetAtTime(camera.position.y,now,.08);l.positionZ.setTargetAtTime(camera.position.z,now,.08);l.forwardX.setTargetAtTime(dir.x,now,.08);l.forwardY.setTargetAtTime(dir.y,now,.08);l.forwardZ.setTargetAtTime(dir.z,now,.08);}
+      a.drone.frequency.setTargetAtTime(worldLight?.night>.5?82:110,now,2);a.drone2.frequency.setTargetAtTime(worldLight?.night>.5?123:164.81,now,2);
+      state.birdClock-=dt;if(state.birdClock<=0 && worldLight?.day>.35 && !rain){play('birds',{x:playerPosition.x+(Math.random()-.5)*18,y:5,z:playerPosition.z-8-Math.random()*12});state.birdClock=7+Math.random()*11;}
+      state.stepClock-=dt;if(state.stepClock<=0 && state.lastMoving){play(state.lastMounted?'hoof':'footstep',playerPosition);state.stepClock=state.lastMounted?.31:state.lastRunning?.27:.43;}
+      state.lastPosition=playerPosition.clone();
     }
   }
   setWeather('clear');
-  return {update,setWeather};
+  return {update,setWeather,play};
 }
