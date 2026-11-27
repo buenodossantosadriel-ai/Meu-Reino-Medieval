@@ -60,7 +60,7 @@ const moonLight=new THREE.DirectionalLight(0x9eafd9,.18);scene.add(moonLight);sc
 const starPositions=[];let starSeed=91827;const starRand=()=>{starSeed=(starSeed*1664525+1013904223)>>>0;return starSeed/4294967296};
 for(let i=0;i<850;i++){const y=starRand()*2-1,a=starRand()*Math.PI*2,r=Math.sqrt(1-y*y);starPositions.push(r*Math.cos(a)*430,y*430,r*Math.sin(a)*430)}
 const starGeo=new THREE.BufferGeometry();starGeo.setAttribute('position',new THREE.Float32BufferAttribute(starPositions,3));
-const stars=new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xf4f2df,size:1.55,sizeAttenuation:false,transparent:true,opacity:0,depthWrite:false}));scene.add(stars);
+const stars=new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xf4f2df,size:1.55,sizeAttenuation:false,transparent:true,opacity:0,depthWrite:false}));stars.renderOrder=2;scene.add(stars);
 function updateWorldClock(){
  const now=new Date(),hour=now.getHours()+now.getMinutes()/60+now.getSeconds()/3600,angle=(hour-6)/12*Math.PI,elevation=Math.sin(angle),day=Math.max(0,Math.min(1,(elevation+.12)/.32)),night=1-day;
  const sx=Math.cos(angle)*75,sy=Math.max(-18,elevation*82),sz=25;
