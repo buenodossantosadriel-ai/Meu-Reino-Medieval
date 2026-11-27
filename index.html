@@ -597,15 +597,21 @@ for(let i=0;i<5;i++){
  if(i===2){h.loading=true;loadRealHorse(h,h.horseType).catch(error=>{h.loadFailed=true;console.warn('Modelo real de cavalo indisponível; mantendo o modelo reserva:',h.horseType,error);}).finally(()=>h.loading=false);}
 }
 let mountedHorse=null;
+function showHorseHint(message){
+ const hint=document.querySelector('#hint');
+ hint.textContent=message;
+ clearTimeout(hint._horseHintTimer);
+ hint._horseHintTimer=setTimeout(()=>{if(hint.textContent===message)hint.textContent='';},2000);
+}
 function mountNearestHorse(){
  if(mountedHorse){
   mountedHorse.wild=true;mountedHorse.group.position.set(player.position.x+1.8,0,player.position.z+1.5);playHorseAnimation(mountedHorse,'Idle');mountedHorse=null;player.position.y=0;
-  document.querySelector('#mount').textContent='🐎 Montar';document.querySelector('#hint').textContent='Você desmontou. O cavalo ficou livre.';return;
+  document.querySelector('#mount').textContent='🐎 Montar';showHorseHint('Você desmontou. O cavalo ficou livre.');return;
  }
  let best=null,dist=4.5;
  for(const h of horses){if(!h.wild)continue;const d=Math.hypot(h.group.position.x-player.position.x,h.group.position.z-player.position.z);if(d<dist){dist=d;best=h}}
  if(!best){document.querySelector('#hint').textContent='Chegue mais perto de um cavalo para montar.';return}
- mountedHorse=best;best.wild=false;playHorseAnimation(best,'Idle');player.position.y=1.48;document.querySelector('#mount').textContent='↘ Desmontar';document.querySelector('#hint').textContent='Você montou a cavalo! Use o joystick para cavalgar.';
+ mountedHorse=best;best.wild=false;playHorseAnimation(best,'Idle');player.position.y=1.48;document.querySelector('#mount').textContent='↘ Desmontar';showHorseHint('Você montou a cavalo! Use o joystick para cavalgar.');
 }
 document.querySelector('#mount').onclick=mountNearestHorse;
 let yaw=0,cameraPitch=.42,cameraDistance=11,cameraDistanceCurrent=11;
