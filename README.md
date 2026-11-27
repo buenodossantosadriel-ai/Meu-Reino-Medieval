@@ -26,3 +26,10 @@ Este é um MVP inicial: terreno 3D, castelo simples, árvores, movimentação, c
 - Painel móvel `🌍 MUNDO 4D` dentro do jogo; controles de clima e áudio.
 
 Os efeitos são executados localmente no navegador, sem chamadas adicionais ao Supabase. Crescimento persistente de plantações e simulação climática sincronizada entre jogadores continuam como etapas futuras.
+
+## Áudio imersivo
+- Painel com ativação explícita do áudio (compatível com a política de autoplay dos navegadores) e controles separados de música, ambiente e efeitos.
+- Camadas de vento, chuva e crepitar de fogo; pássaros ocasionais durante o dia.
+- Efeitos ligados às ações do jogador: passos, cascos do cavalo, salto, esquiva, espada, impacto de combate e coleta de madeira/pedra.
+- Sons posicionais com atenuação espacial, usando a posição da câmera e do evento no mundo 3D.
+- Áudio gerado localmente com Web Audio API; não depende de arquivos externos ou chamadas ao Supabase.
