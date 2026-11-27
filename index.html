@@ -3,7 +3,7 @@
 *{box-sizing:border-box}body{margin:0;background:#18251d;color:#f7f1df;font:15px system-ui;overflow:hidden;overscroll-behavior:none}#game{position:fixed;inset:0}#game canvas{display:block;touch-action:none}#hud{position:fixed;inset:0;pointer-events:none}.top{display:flex;justify-content:space-between;padding:12px;gap:8px}.panel{background:#142019d9;border:1px solid #b99b59;border-radius:12px;padding:9px 12px;box-shadow:0 3px 14px #0005}.brand{font-weight:800;color:#f0cc78}.bottom{position:absolute;bottom:14px;left:150px;right:8px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;padding:8px;pointer-events:auto}.bottom button{padding:10px 11px;font-size:13px}button{border:1px solid #c5a96b;background:#293b2d;color:#fff2d0;border-radius:10px;padding:11px 14px;font-weight:700;touch-action:manipulation}button:active{transform:scale(.96)}#joystick{position:fixed;left:20px;bottom:24px;width:124px;height:124px;border:2px solid #e2c68188;border-radius:50%;background:#17251dcc;box-shadow:0 4px 18px #0008;pointer-events:auto;touch-action:none;z-index:4}#joystick:before{content:'360°';position:absolute;inset:0;display:grid;place-items:center;color:#f5e5bd66;font-size:13px;font-weight:800;pointer-events:none}#stick{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px;border-radius:50%;background:linear-gradient(145deg,#d8bd79,#78603a);border:2px solid #f4dda5;box-shadow:0 3px 10px #0009;pointer-events:none}#lookTip{position:fixed;right:12px;bottom:158px;color:#fff;background:#14201999;border-radius:8px;padding:6px 9px;font-size:11px;pointer-events:none}
 #cameraControls{position:fixed;right:12px;top:92px;display:flex;flex-direction:column;gap:7px;pointer-events:auto;z-index:4}#cameraControls button{width:42px;height:42px;padding:0;font-size:20px;background:#142019dc;border-color:#d5bb7b;box-shadow:0 2px 9px #0007}#cameraControls .small{font-size:11px}
 #avatarSelect{position:fixed;left:50%;top:68px;transform:translateX(-50%);display:flex;gap:5px;padding:6px;background:#142019dc;border:1px solid #b99b59;border-radius:12px;pointer-events:auto;z-index:4;white-space:nowrap}#avatarSelect button{padding:7px 9px;font-size:11px}#avatarSelect button.active{background:#94743d;border-color:#ffe2a0;box-shadow:0 0 0 1px #ffe2a0}#mount{background:#62482a}@media(max-width:520px){#avatarSelect{top:64px;gap:3px;padding:4px}#avatarSelect button{padding:7px 6px;font-size:10px}}#login{position:fixed;inset:0;background:#101a15eF;display:grid;place-items:center;z-index:5}#login.hidden{display:none}#login form{width:min(90vw,360px);background:#26382b;border:1px solid #b99b59;border-radius:16px;padding:22px}input{width:100%;padding:12px;margin:7px 0 12px;border-radius:8px;border:1px solid #b99b59;background:#101a15;color:white}#chatbox input{margin:4px 0}#hint{position:absolute;bottom:160px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#142019cc;padding:8px 12px;border-radius:9px;max-width:90vw;overflow:hidden;text-overflow:ellipsis}.hidden{display:none}@media(max-width:520px){.top{padding:7px;gap:5px}.panel{padding:7px 9px;font-size:12px}.bottom{left:145px;right:4px;bottom:8px;gap:5px}.bottom button{padding:9px 8px;font-size:12px}#joystick{left:12px;bottom:18px;width:116px;height:116px}#stick{width:50px;height:50px;margin:-25px}#hint{bottom:145px;font-size:11px}#lookTip{bottom:135px}}@media(min-width:700px){.bottom{left:auto;right:16px;bottom:20px;width:300px;justify-content:flex-end}#joystick{left:28px;bottom:28px}}
-</style></head><body><div id="game"></div><div id="hud"><div class="top"><div class="panel"><div class="brand">⚔ MEU REINO MEDIEVAL</div><div id="stats">Madeira: 0 · Pedra: 0</div></div><div class="panel" id="players">Entrando no reino…</div></div><div id="hint">WASD ou controles para caminhar · Explore o reino!</div><div id="avatarSelect" aria-label="Escolha seu personagem"><button data-avatar="knight" class="active">⚔ Cavaleiro</button><button data-avatar="princess">👸 Princesa</button><button data-avatar="ogre">👹 Ogro</button></div><div class="bottom"><button id="collect">🌲 Coletar</button><button id="build">🧱 Construir</button><button id="attack">⚔ Atacar</button><button id="plant">🌱 Plantar</button><button id="animal">🐑 Animal</button><button id="mount">🐎 Montar</button><button id="chatToggle">💬 Chat</button></div><div id="joystick" aria-label="Controle de movimento"><div id="stick"></div></div><div id="lookTip">Arraste a tela para girar a câmera</div><div id="cameraControls" aria-label="Controles da câmera"><button id="zoomIn" aria-label="Aproximar" title="Aproximar">＋</button><button id="zoomOut" aria-label="Afastar" title="Afastar">−</button><button id="viewUp" class="small" aria-label="Ver mais de cima" title="Ver mais de cima">⬆</button><button id="viewDown" class="small" aria-label="Ver mais no horizonte" title="Ver mais no horizonte">⬇</button></div></div><div id="chatbox" class="panel hidden" style="position:fixed;right:12px;bottom:82px;width:min(92vw,320px);pointer-events:auto;z-index:3"><b>Chat do reino</b><div id="chatlog" style="height:150px;overflow:auto;margin:8px 0;font-size:13px"></div><form id="chatform"><input id="chatinput" maxlength="500" placeholder="Mensagem..." required><button>Enviar</button></form></div>
+</style></head><body><div id="game"></div><div id="hud"><div class="top"><div class="panel"><div class="brand">⚔ MEU REINO MEDIEVAL</div><div id="stats">Madeira: 0 · Pedra: 0</div></div><div class="panel" id="players">Entrando no reino…</div></div><div id="hint">WASD ou controles para caminhar · Explore o reino!</div><div id="avatarSelect" aria-label="Escolha seu personagem"><button data-avatar="knight" class="active">⚔ Cavaleiro</button><button data-avatar="princess">👸 Princesa</button><button data-avatar="ogre">👹 Ogro</button></div><div class="bottom"><button id="collect">🌲 Coletar</button><button id="build">🧱 Construir</button><button id="attack">⚔ Atacar</button><button id="plant">🌱 Plantar</button><button id="animal">🐑 Animal</button><button id="mount">🐎 Montar</button><button id="chatToggle">💬 Chat</button></div><div id="joystick" aria-label="Controle de movimento"><div id="stick"></div></div><div id="lookTip">Arraste a tela para girar a câmera</div><div id="assetCredits" style="position:fixed;right:8px;bottom:4px;color:#fff9;font-size:9px;pointer-events:none;text-shadow:0 1px 3px #000">Modelos 3D: Vinish.Dev · CC BY 4.0</div><div id="cameraControls" aria-label="Controles da câmera"><button id="zoomIn" aria-label="Aproximar" title="Aproximar">＋</button><button id="zoomOut" aria-label="Afastar" title="Afastar">−</button><button id="viewUp" class="small" aria-label="Ver mais de cima" title="Ver mais de cima">⬆</button><button id="viewDown" class="small" aria-label="Ver mais no horizonte" title="Ver mais no horizonte">⬇</button></div></div><div id="chatbox" class="panel hidden" style="position:fixed;right:12px;bottom:82px;width:min(92vw,320px);pointer-events:auto;z-index:3"><b>Chat do reino</b><div id="chatlog" style="height:150px;overflow:auto;margin:8px 0;font-size:13px"></div><form id="chatform"><input id="chatinput" maxlength="500" placeholder="Mensagem..." required><button>Enviar</button></form></div>
 <div id="login"><form id="auth"><h2>Entre no seu reino</h2><p>Use seu e-mail para salvar seu progresso.</p><input id="email" type="email" placeholder="E-mail" required><input id="password" type="password" placeholder="Senha (mín. 6 caracteres)" minlength="6" required><button style="width:100%">Entrar / Criar conta</button><p id="authmsg"></p></form></div>
 <script>
 window.addEventListener('error',e=>{
@@ -17,6 +17,8 @@ window.addEventListener('unhandledrejection',e=>{
 </script>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+import { clone as cloneSkeleton } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/SkeletonUtils.js';
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const SUPABASE_URL='https://vuvjxrxljlhvoldugmpz.supabase.co';
 const SUPABASE_KEY='sb_publishable_Rr0gZu8e2g7uLLSBugM2aA_93T5xOVY';
@@ -303,6 +305,65 @@ function prepareAvatarMotion(model,type){
  return motion;
 }
 let avatarModel=makeKnight();let avatarMotion=prepareAvatarMotion(avatarModel,'knight');player.add(avatarModel);
+const professionalAvatarUrls={
+ knight:'https://vinish-models.pages.dev/knights/plate-armour-knight.glb',
+ princess:'https://vinish-models.pages.dev/knights/knight-commander.glb',
+ ogre:'https://vinish-models.pages.dev/monsters/cyclops.glb'
+};
+const professionalAvatarNames={knight:'Cavaleiro de armadura',princess:'Princesa guerreira',ogre:'Ogro ciclope'};
+const avatarLoader=new GLTFLoader(),avatarAssetPromises=new Map();
+let avatarInstance=null,avatarLoadToken=0;
+function disposeProceduralModel(model){
+ if(!model)return;
+ model.traverse(o=>{if(o.isMesh){o.geometry?.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose();}});
+}
+async function loadProfessionalAvatar(type){
+ if(!avatarAssetPromises.has(type)){
+  const promise=avatarLoader.loadAsync(professionalAvatarUrls[type]);
+  avatarAssetPromises.set(type,promise);promise.catch(()=>avatarAssetPromises.delete(type));
+ }
+ const gltf=await avatarAssetPromises.get(type),model=cloneSkeleton(gltf.scene);
+ const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+ const targetHeight=type==='ogre'?2.42:2.12,scale=targetHeight/Math.max(size.y,.01);
+ model.scale.setScalar(scale);model.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
+ model.traverse(o=>{
+  if(o.isMesh){o.castShadow=true;o.receiveShadow=true;
+   const materials=Array.isArray(o.material)?o.material:(o.material?[o.material]:[]);
+   materials.forEach(m=>{if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;m.needsUpdate=true;});
+  }
+ });
+ const mixer=new THREE.AnimationMixer(model),findClip=pattern=>gltf.animations.find(c=>pattern.test(c.name));
+ const idleClip=findClip(/idle|stand/i)||gltf.animations[0],walkClip=findClip(/walk/i)||findClip(/run/i)||idleClip;
+ const idleAction=idleClip?mixer.clipAction(idleClip):null,walkAction=walkClip?mixer.clipAction(walkClip):idleAction;
+ if(idleAction)idleAction.play();
+ return {model,mixer,idleAction,walkAction,current:'idle',type};
+}
+function setProfessionalGait(instance,moving){
+ if(!instance)return;
+ const next=moving?'walk':'idle',action=next==='walk'?instance.walkAction:instance.idleAction;
+ if(!action||instance.current===next)return;
+ const previous=instance.current==='walk'?instance.walkAction:instance.idleAction;
+ action.reset().fadeIn(.18).play();if(previous&&previous!==action)previous.fadeOut(.18);
+ instance.current=next;
+}
+function removeCurrentLocalAvatar(){
+ player.remove(avatarModel);
+ if(!avatarInstance)disposeProceduralModel(avatarModel);
+ avatarInstance=null;avatarMotion=null;
+}
+async function loadLocalProfessionalAvatar(type,token){
+ try{
+  const instance=await loadProfessionalAvatar(type);
+  if(token!==avatarLoadToken||selectedAvatar!==type)return;
+  removeCurrentLocalAvatar();avatarModel=instance.model;avatarInstance=instance;player.add(avatarModel);
+  document.querySelector('#hint').textContent='Modelo 3D profissional carregado: '+professionalAvatarNames[type]+'.';
+ }catch(error){
+  if(token!==avatarLoadToken)return;
+  console.warn('Modelo 3D '+type+' indisponível; usando modelo reserva:',error);
+  document.querySelector('#hint').textContent='Não foi possível baixar o modelo 3D agora. O personagem reserva continua disponível.';
+ }
+}
+loadLocalProfessionalAvatar('knight',++avatarLoadToken);
 function makeNameTag(name){
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;
  const ctx=canvas.getContext('2d');
@@ -330,6 +391,16 @@ const remotePlayers=new Map();
 function getPlayerName(){
  return String(user?.user_metadata?.full_name||user?.user_metadata?.name||(user?.email||'Aventureiro').split('@')[0]).slice(0,22);
 }
+async function setRemoteProfessionalAvatar(remote,type){
+ const token=(remote.avatarLoadToken||0)+1;remote.avatarLoadToken=token;
+ try{
+  const instance=await loadProfessionalAvatar(type);
+  if(remotePlayers.get(remote.id)!==remote||remote.avatarLoadToken!==token)return;
+  if(remote.model)remote.group.remove(remote.model);
+  if(remote.motion)disposeProceduralModel(remote.model);
+  remote.model=instance.model;remote.instance=instance;remote.motion=null;remote.avatar=type;remote.group.add(instance.model);
+ }catch(error){console.warn('Modelo remoto indisponível:',type,error);remote.avatar=type;}
+}
 function syncRemotePlayers(){
  if(!live)return;
  const state=live.presenceState(),seen=new Set();
@@ -341,24 +412,22 @@ function syncRemotePlayers(){
    const group=new THREE.Group(),avatarType=avatarBuilders[meta.avatar]?meta.avatar:'knight',model=avatarBuilders[avatarType]();
    const motion=prepareAvatarMotion(model,avatarType);
    group.add(model);const tag=makeNameTag(meta.name||'Aventureiro');group.add(tag);scene.add(group);
-   remote={group,target:new THREE.Vector3(),rotation:0,tag,model,motion,phase:Math.random()*Math.PI*2};remotePlayers.set(id,remote);
+   remote={id,group,target:new THREE.Vector3(),rotation:0,tag,model,motion,instance:null,phase:Math.random()*Math.PI*2,avatar:null};remotePlayers.set(id,remote);
   }
   remote.target.set(Number(meta.x)||0,0,Number(meta.z)||0);
   remote.rotation=Number(meta.rotation)||0;
   if(meta.name)updateNameTag(remote.tag,meta.name);
-  if(meta.avatar&&remote.avatar!==meta.avatar){
-   remote.group.remove(remote.model);remote.model.traverse(o=>{if(o.isMesh){o.geometry.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});
-   remote.model=avatarBuilders[meta.avatar]?.()||makeKnight();remote.motion=prepareAvatarMotion(remote.model,meta.avatar);remote.group.add(remote.model);remote.avatar=meta.avatar;
-  }
+  const remoteType=avatarBuilders[meta.avatar]?meta.avatar:'knight';
+  if(remote.avatar!==remoteType)setRemoteProfessionalAvatar(remote,remoteType);
  }
- for(const [id,remote] of remotePlayers){if(!seen.has(id)){scene.remove(remote.group);remote.group.traverse(o=>{if(o.isMesh){o.geometry.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else if(o.material)o.material.dispose();}});remotePlayers.delete(id);}}
+ for(const [id,remote] of remotePlayers){if(!seen.has(id)){scene.remove(remote.group);if(remote.motion)disposeProceduralModel(remote.model);remote.tag.material.map?.dispose();remote.tag.material.dispose();remotePlayers.delete(id);}}
 }
 function chooseAvatar(type){
  if(!avatarBuilders[type]||type===selectedAvatar)return;
- player.remove(avatarModel);avatarModel.traverse(o=>{if(o.isMesh){o.geometry.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});
- selectedAvatar=type;avatarModel=avatarBuilders[type]();avatarMotion=prepareAvatarMotion(avatarModel,type);player.add(avatarModel);
+ selectedAvatar=type;const token=++avatarLoadToken;
  document.querySelectorAll('#avatarSelect button').forEach(b=>b.classList.toggle('active',b.dataset.avatar===type));
- document.querySelector('#hint').textContent='Personagem escolhido: '+({knight:'Cavaleiro',princess:'Princesa',ogre:'Ogro'}[type])+'.';
+ document.querySelector('#hint').textContent='Carregando modelo 3D: '+professionalAvatarNames[type]+'…';
+ loadLocalProfessionalAvatar(type,token);
 }
 document.querySelectorAll('#avatarSelect button').forEach(b=>b.addEventListener('click',()=>chooseAvatar(b.dataset.avatar)));
 
@@ -636,25 +705,29 @@ let last=0,walkPhase=0;function animate(t){requestAnimationFrame(animate);const 
  player.position.x+=dx*(mountedHorse?10:6)*dt;player.position.z+=dz*(mountedHorse?10:6)*dt;player.rotation.y=Math.atan2(dx,dz);if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;}
  if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);player.position.y=1.22;}else player.position.y=0;
  const gait=moving?Math.sin(walkPhase):0;
- avatarModel.position.y=(moving?Math.abs(Math.sin(walkPhase*2))*.045:Math.sin(t*.0018)*.018);
- avatarModel.rotation.x=moving?Math.sin(walkPhase*2)*.045:Math.sin(t*.0015)*.012;
- avatarModel.rotation.y=moving?Math.sin(walkPhase)*.025:Math.sin(t*.0011)*.012;
- avatarModel.rotation.z=selectedAvatar==='princess'?(moving?Math.sin(walkPhase)*.065:Math.sin(t*.0012)*.018):0;
- // Braços balançam para a frente e para trás, em oposição às pernas.
- for(const a of avatarMotion.arms)a.pivot.rotation.x=moving?Math.sin(walkPhase+(a.side<0?Math.PI:0))*.48:Math.sin(t*.0015+a.side)*.018;
- for(const l of avatarMotion.legs){
-  const phase=walkPhase+(l.side<0?Math.PI:0);
-  l.pivot.rotation.x=moving?Math.sin(phase)*.58:0;
-  l.pivot.position.y=(l.side<0? .68:.68)+(moving?Math.max(0,Math.cos(phase))*.035:0);
+ if(avatarInstance){avatarInstance.mixer.update(dt);setProfessionalGait(avatarInstance,moving);}
+ else{
+  avatarModel.position.y=(moving?Math.abs(Math.sin(walkPhase*2))*.045:Math.sin(t*.0018)*.018);
+  avatarModel.rotation.x=moving?Math.sin(walkPhase*2)*.045:Math.sin(t*.0015)*.012;
+  avatarModel.rotation.y=moving?Math.sin(walkPhase)*.025:Math.sin(t*.0011)*.012;
+  avatarModel.rotation.z=selectedAvatar==='princess'?(moving?Math.sin(walkPhase)*.065:Math.sin(t*.0012)*.018):0;
+  for(const a of avatarMotion.arms)a.pivot.rotation.x=moving?Math.sin(walkPhase+(a.side<0?Math.PI:0))*.48:Math.sin(t*.0015+a.side)*.018;
+  for(const l of avatarMotion.legs){
+   const phase=walkPhase+(l.side<0?Math.PI:0);
+   l.pivot.rotation.x=moving?Math.sin(phase)*.58:0;l.pivot.position.y=.68+(moving?Math.max(0,Math.cos(phase))*.035:0);
+  }
  }
  for(const h of horses){if(h===mountedHorse)continue;h.timer-=dt;if(h.timer<=0){h.target.set(h.group.position.x+(Math.random()-.5)*12,0,h.group.position.z+(Math.random()-.5)*10);h.timer=2+Math.random()*4;}const vx=h.target.x-h.group.position.x,vz=h.target.z-h.group.position.z,dl=Math.hypot(vx,vz);if(dl>.5){h.group.position.x+=vx/dl*.8*dt;h.group.position.z+=vz/dl*.8*dt;h.group.rotation.y=Math.atan2(vx,vz);}h.legs.forEach((leg,i)=>{leg.rotation.x=dl>.5?Math.sin(t*.008+i*Math.PI)*.34:Math.sin(t*.0015+i)*.025;});}
  if(mountedHorse){mountedHorse.group.position.y=Math.abs(Math.sin(t*.012))*.045;mountedHorse.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(t*.012+i*Math.PI)*.48;});}
  for(const remote of remotePlayers.values()){
   const delta=remote.target.clone().sub(remote.group.position),remoteMoving=delta.length()>.025;
   remote.group.position.lerp(remote.target,Math.min(1,dt*8));remote.group.rotation.y=remote.rotation;
-  remote.phase+=dt*(remoteMoving?8:1.5);remote.model.position.y=remoteMoving?Math.abs(Math.sin(remote.phase*2))*.04:Math.sin(t*.0015)*.015;
-  for(const a of remote.motion.arms)a.pivot.rotation.x=remoteMoving?Math.sin(remote.phase+(a.side<0?Math.PI:0))*.46:0;
-  for(const l of remote.motion.legs)l.pivot.rotation.x=remoteMoving?Math.sin(remote.phase+(l.side<0?Math.PI:0))*.58:0;
+  if(remote.instance){remote.instance.mixer.update(dt);setProfessionalGait(remote.instance,remoteMoving);}
+  else{
+   remote.phase+=dt*(remoteMoving?8:1.5);remote.model.position.y=remoteMoving?Math.abs(Math.sin(remote.phase*2))*.04:Math.sin(t*.0015)*.015;
+   for(const a of remote.motion.arms)a.pivot.rotation.x=remoteMoving?Math.sin(remote.phase+(a.side<0?Math.PI:0))*.46:0;
+   for(const l of remote.motion.legs)l.pivot.rotation.x=remoteMoving?Math.sin(remote.phase+(l.side<0?Math.PI:0))*.58:0;
+  }
 }
  if(user&&live&&t-lastPresenceUpdate>350){lastPresenceUpdate=t;live.track({user_id:user.id,name:playerName,avatar:selectedAvatar,x:player.position.x,z:player.position.z,rotation:player.rotation.y}).catch(e=>console.warn('Presença:',e));}
  cameraDistanceCurrent+=(cameraDistance-cameraDistanceCurrent)*Math.min(1,dt*10);
