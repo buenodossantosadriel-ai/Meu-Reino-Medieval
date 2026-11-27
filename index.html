@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#18251d"><link rel="manifest" href="/manifest.json"><title>Meu Reino Medieval</title><style>
-*{box-sizing:border-box}body{margin:0;background:#18251d;color:#f7f1df;font:15px system-ui;overflow:hidden}#game{position:fixed;inset:0}canvas{display:block}#hud{position:fixed;inset:0;pointer-events:none}.top{display:flex;justify-content:space-between;padding:12px;gap:8px}.panel{background:#142019d9;border:1px solid #b99b59;border-radius:12px;padding:9px 12px;box-shadow:0 3px 14px #0005}.brand{font-weight:800;color:#f0cc78}.bottom{position:absolute;bottom:14px;left:0;right:0;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:8px;pointer-events:auto}button{border:1px solid #c5a96b;background:#293b2d;color:#fff2d0;border-radius:10px;padding:11px 14px;font-weight:700}button:active{transform:scale(.96)}#login{position:fixed;inset:0;background:#101a15eF;display:grid;place-items:center;z-index:5}#login.hidden{display:none}#login form{width:min(90vw,360px);background:#26382b;border:1px solid #c5a96b;border-radius:16px;padding:22px}input{width:100%;padding:12px;margin:7px 0 12px;border-radius:8px;border:1px solid #b99b59;background:#101a15;color:white}#chatbox input{margin:4px 0}#hint{position:absolute;bottom:90px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#142019cc;padding:8px 12px;border-radius:9px}.hidden{display:none}@media(min-width:700px){.bottom{left:auto;right:16px;bottom:20px;width:260px;justify-content:flex-end}}
-</style></head><body><div id="game"></div><div id="hud"><div class="top"><div class="panel"><div class="brand">⚔ MEU REINO MEDIEVAL</div><div id="stats">Madeira: 0 · Pedra: 0</div></div><div class="panel" id="players">Entrando no reino…</div></div><div id="hint">WASD ou controles para caminhar · Explore o reino!</div><div class="bottom"><button id="forward">▲</button><button id="left">◀</button><button id="back">▼</button><button id="right">▶</button><button id="collect">🌲 Coletar</button><button id="build">🧱 Construir</button><button id="attack">⚔ Atacar</button><button id="plant">🌱 Plantar</button><button id="animal">🐑 Animal</button><button id="chatToggle">💬 Chat</button></div></div><div id="chatbox" class="panel hidden" style="position:fixed;right:12px;bottom:82px;width:min(92vw,320px);pointer-events:auto;z-index:3"><b>Chat do reino</b><div id="chatlog" style="height:150px;overflow:auto;margin:8px 0;font-size:13px"></div><form id="chatform"><input id="chatinput" maxlength="500" placeholder="Mensagem..." required><button>Enviar</button></form></div>
+*{box-sizing:border-box}body{margin:0;background:#18251d;color:#f7f1df;font:15px system-ui;overflow:hidden;overscroll-behavior:none}#game{position:fixed;inset:0}#game canvas{display:block;touch-action:none}#hud{position:fixed;inset:0;pointer-events:none}.top{display:flex;justify-content:space-between;padding:12px;gap:8px}.panel{background:#142019d9;border:1px solid #b99b59;border-radius:12px;padding:9px 12px;box-shadow:0 3px 14px #0005}.brand{font-weight:800;color:#f0cc78}.bottom{position:absolute;bottom:14px;left:150px;right:8px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;padding:8px;pointer-events:auto}.bottom button{padding:10px 11px;font-size:13px}button{border:1px solid #c5a96b;background:#293b2d;color:#fff2d0;border-radius:10px;padding:11px 14px;font-weight:700;touch-action:manipulation}button:active{transform:scale(.96)}#joystick{position:fixed;left:20px;bottom:24px;width:124px;height:124px;border:2px solid #e2c68188;border-radius:50%;background:#17251dcc;box-shadow:0 4px 18px #0008;pointer-events:auto;touch-action:none;z-index:4}#joystick:before{content:'360°';position:absolute;inset:0;display:grid;place-items:center;color:#f5e5bd66;font-size:13px;font-weight:800;pointer-events:none}#stick{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px;border-radius:50%;background:linear-gradient(145deg,#d8bd79,#78603a);border:2px solid #f4dda5;box-shadow:0 3px 10px #0009;pointer-events:none}#lookTip{position:fixed;right:12px;bottom:158px;color:#fff;background:#14201999;border-radius:8px;padding:6px 9px;font-size:11px;pointer-events:none}#login{position:fixed;inset:0;background:#101a15eF;display:grid;place-items:center;z-index:5}#login.hidden{display:none}#login form{width:min(90vw,360px);background:#26382b;border:1px solid #b99b59;border-radius:16px;padding:22px}input{width:100%;padding:12px;margin:7px 0 12px;border-radius:8px;border:1px solid #b99b59;background:#101a15;color:white}#chatbox input{margin:4px 0}#hint{position:absolute;bottom:160px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#142019cc;padding:8px 12px;border-radius:9px;max-width:90vw;overflow:hidden;text-overflow:ellipsis}.hidden{display:none}@media(max-width:520px){.top{padding:7px;gap:5px}.panel{padding:7px 9px;font-size:12px}.bottom{left:145px;right:4px;bottom:8px;gap:5px}.bottom button{padding:9px 8px;font-size:12px}#joystick{left:12px;bottom:18px;width:116px;height:116px}#stick{width:50px;height:50px;margin:-25px}#hint{bottom:145px;font-size:11px}#lookTip{bottom:135px}}@media(min-width:700px){.bottom{left:auto;right:16px;bottom:20px;width:300px;justify-content:flex-end}#joystick{left:28px;bottom:28px}}
+</style></head><body><div id="game"></div><div id="hud"><div class="top"><div class="panel"><div class="brand">⚔ MEU REINO MEDIEVAL</div><div id="stats">Madeira: 0 · Pedra: 0</div></div><div class="panel" id="players">Entrando no reino…</div></div><div id="hint">WASD ou controles para caminhar · Explore o reino!</div><div class="bottom"><button id="collect">🌲 Coletar</button><button id="build">🧱 Construir</button><button id="attack">⚔ Atacar</button><button id="plant">🌱 Plantar</button><button id="animal">🐑 Animal</button><button id="chatToggle">💬 Chat</button></div><div id="joystick" aria-label="Controle de movimento"><div id="stick"></div></div><div id="lookTip">Arraste a tela para girar a câmera</div></div><div id="chatbox" class="panel hidden" style="position:fixed;right:12px;bottom:82px;width:min(92vw,320px);pointer-events:auto;z-index:3"><b>Chat do reino</b><div id="chatlog" style="height:150px;overflow:auto;margin:8px 0;font-size:13px"></div><form id="chatform"><input id="chatinput" maxlength="500" placeholder="Mensagem..." required><button>Enviar</button></form></div>
 <div id="login"><form id="auth"><h2>Entre no seu reino</h2><p>Use seu e-mail para salvar seu progresso.</p><input id="email" type="email" placeholder="E-mail" required><input id="password" type="password" placeholder="Senha (mín. 6 caracteres)" minlength="6" required><button style="width:100%">Entrar / Criar conta</button><p id="authmsg"></p></form></div>
 <script>
 window.addEventListener('error',e=>{
@@ -113,8 +113,33 @@ for(const x of [-.48,.48]){const shoulder=new THREE.Mesh(new THREE.SphereGeometr
 for(const x of [-.19,.19]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.23,.58,.27),armor);leg.position.set(x,.34,0);player.add(leg)}
 const sword=new THREE.Group();const blade=new THREE.Mesh(new THREE.BoxGeometry(.09,.85,.12),new THREE.MeshStandardMaterial({color:0xd9e1e4,metalness:.8,roughness:.22}));blade.position.y=.48;sword.add(blade);const grip=new THREE.Mesh(new THREE.BoxGeometry(.34,.09,.16),trim);grip.position.y=.08;sword.add(grip);sword.position.set(.55,.9,.12);sword.rotation.z=-.18;player.add(sword);
 scene.add(player);
-let yaw=0;const keys={};addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-const held={};for(const [id,key] of [['forward','w'],['back','s'],['left','a'],['right','d']]){const b=document.getElementById(id);b.onpointerdown=()=>held[key]=true;b.onpointerup=b.onpointerleave=()=>held[key]=false}
+let yaw=0,cameraPitch=.42,cameraDistance=11;
+const keys={};addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+const moveInput={x:0,y:0},joystick=document.querySelector('#joystick'),stick=document.querySelector('#stick');
+let joyPointer=null;
+function updateJoystick(e){
+ const r=joystick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,limit=r.width*.36,len=Math.hypot(dx,dy)||1,k=Math.min(1,limit/len);
+ moveInput.x=dx*k/limit;moveInput.y=dy*k/limit;
+ stick.style.transform='translate('+dx*k+'px,'+dy*k+'px)';
+}
+joystick.addEventListener('pointerdown',e=>{e.preventDefault();joyPointer=e.pointerId;joystick.setPointerCapture(e.pointerId);updateJoystick(e)});
+joystick.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer){e.preventDefault();updateJoystick(e)}});
+function releaseJoystick(e){if(e.pointerId!==joyPointer)return;joyPointer=null;moveInput.x=0;moveInput.y=0;stick.style.transform='translate(0,0)'}
+joystick.addEventListener('pointerup',releaseJoystick);joystick.addEventListener('pointercancel',releaseJoystick);joystick.addEventListener('lostpointercapture',releaseJoystick);
+let lookPointer=null,lastLookX=0,lastLookY=0;
+renderer.domElement.addEventListener('pointerdown',e=>{
+ if(e.pointerType==='mouse'&&e.button!==0)return;
+ if(e.clientX<innerWidth*.32)return;
+ lookPointer=e.pointerId;lastLookX=e.clientX;lastLookY=e.clientY;
+ renderer.domElement.setPointerCapture(e.pointerId);e.preventDefault();
+});
+renderer.domElement.addEventListener('pointermove',e=>{
+ if(e.pointerId!==lookPointer)return;
+ const dx=e.clientX-lastLookX,dy=e.clientY-lastLookY;lastLookX=e.clientX;lastLookY=e.clientY;
+ yaw-=dx*.006;cameraPitch=Math.max(.12,Math.min(1.05,cameraPitch+dy*.004));e.preventDefault();
+});
+function releaseLook(e){if(e.pointerId===lookPointer)lookPointer=null}
+renderer.domElement.addEventListener('pointerup',releaseLook);renderer.domElement.addEventListener('pointercancel',releaseLook);
 function updateStats(){document.querySelector('#stats').textContent='❤️ '+health+' · Madeira: '+wood+' · Pedra: '+stone}
 async function saveResources(){
   if(!user)return {error:null};
@@ -290,7 +315,16 @@ db.auth.getSession().then(async ({data,error})=>{
   }
 });
 
-let last=0;function animate(t){requestAnimationFrame(animate);const dt=Math.min((t-last)/1000,.05);last=t;let dx=0,dz=0;if(keys.w||keys.arrowup||held.w)dz-=1;if(keys.s||keys.arrowdown||held.s)dz+=1;if(keys.a||keys.arrowleft||held.a)dx-=1;if(keys.d||keys.arrowright||held.d)dx+=1;const len=Math.hypot(dx,dz)||1;player.position.x+=dx/len*6*dt;player.position.z+=dz/len*6*dt;if(dx||dz)player.rotation.y=Math.atan2(dx,dz);camera.position.lerp(new THREE.Vector3(player.position.x,player.position.y+5,player.position.z+9),.08);camera.lookAt(player.position.x,1,player.position.z);renderer.render(scene,camera);if(user&&t-lastSave>4000){lastSave=t;saveResources()}}
+let last=0;function animate(t){requestAnimationFrame(animate);const dt=Math.min((t-last)/1000,.05);last=t;
+ let sx=moveInput.x,sy=-moveInput.y;
+ if(keys.w||keys.arrowup)sy=1;if(keys.s||keys.arrowdown)sy=-1;if(keys.a||keys.arrowleft)sx=-1;if(keys.d||keys.arrowright)sx=1;
+ const len=Math.hypot(sx,sy);if(len>.08){const side=sx/Math.max(1,len),forward=sy/Math.max(1,len);
+ const dx=(Math.sin(yaw)*forward+Math.cos(yaw)*side),dz=(-Math.cos(yaw)*forward+Math.sin(yaw)*side);
+ player.position.x+=dx*6*dt;player.position.z+=dz*6*dt;player.rotation.y=Math.atan2(dx,dz);}
+ const horiz=Math.cos(cameraPitch)*cameraDistance;
+ const target=new THREE.Vector3(player.position.x+Math.sin(yaw)*horiz,player.position.y+Math.sin(cameraPitch)*cameraDistance+1.2,player.position.z+Math.cos(yaw)*horiz);
+ camera.position.lerp(target,.14);camera.lookAt(player.position.x,1.1,player.position.z);
+ renderer.render(scene,camera);if(user&&t-lastSave>4000){lastSave=t;saveResources()}}
 requestAnimationFrame(animate);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 if('serviceWorker'in navigator) navigator.serviceWorker.register('/sw.js').catch(e=>console.warn('Service worker:',e));
