@@ -153,6 +153,11 @@ const lake=new THREE.Mesh(new THREE.CircleGeometry(1,48),new THREE.MeshStandardM
 lake.rotation.x=-Math.PI/2;lake.position.set(-25,.045,8);lake.scale.set(8,5,1);scene.add(lake);
 const shore=new THREE.Mesh(new THREE.RingGeometry(7.7,8.8,48),new THREE.MeshStandardMaterial({color:0x9a8968,roughness:1}));
 shore.rotation.x=-Math.PI/2;shore.position.set(-25,.035,8);shore.scale.set(1,0.64,1);scene.add(shore);
+// Lago do Norte, próximo aos campos orientais.
+const northLake=new THREE.Mesh(new THREE.CircleGeometry(1,48),new THREE.MeshStandardMaterial({color:0x397f91,roughness:.22,metalness:.18,transparent:true,opacity:.9}));
+northLake.rotation.x=-Math.PI/2;northLake.position.set(116,.045,-92);northLake.scale.set(7,4,1);scene.add(northLake);
+const northShore=new THREE.Mesh(new THREE.RingGeometry(6.8,7.8,48),new THREE.MeshStandardMaterial({color:0x9a8968,roughness:1}));
+northShore.rotation.x=-Math.PI/2;northShore.position.set(116,.035,-92);northShore.scale.set(1,.62,1);scene.add(northShore);
 // Grama em instâncias: muitos detalhes com poucas chamadas de desenho
 const grassGeo=new THREE.ConeGeometry(.055,.42,3);
 grassGeo.translate(0,.2,0);
