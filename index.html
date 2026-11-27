@@ -47,7 +47,57 @@ function makeGroundTexture(){
  const tex=new THREE.CanvasTexture(canvas);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(9,9);tex.colorSpace=THREE.SRGBColorSpace;return tex;
 }
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(220,220),new THREE.MeshStandardMaterial({map:makeGroundTexture(),color:0xffffff,roughness:1}));
+
 ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+// Céu em degradê e horizonte com colinas distantes
+const sky=new THREE.Mesh(new THREE.SphereGeometry(210,32,20),new THREE.ShaderMaterial({
+ side:THREE.BackSide,depthWrite:false,
+ vertexShader:`varying float h;void main(){h=normalize(position).y;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+ fragmentShader:`varying float h;void main(){vec3 horizon=vec3(0.88,0.72,0.52);vec3 zenith=vec3(0.12,0.29,0.43);float k=smoothstep(-0.08,0.78,h);gl_FragColor=vec4(mix(horizon,zenith,k),1.0);}`
+}));scene.add(sky);
+const hillMat=new THREE.MeshStandardMaterial({color:0x526f4b,roughness:1});
+for(let i=0;i<13;i++){
+ const a=i/13*Math.PI*2,r=88+(i%3)*9;
+ const hill=new THREE.Mesh(new THREE.SphereGeometry(1,18,12),hillMat);
+ hill.position.set(Math.cos(a)*r,-4,Math.sin(a)*r);
+ hill.scale.set(20+(i%4)*5,9+(i%3)*3,16+(i%5)*3);
+ hill.receiveShadow=true;scene.add(hill);
+}
+// Nuvens volumétricas leves
+const clouds=[];
+const cloudMat=new THREE.MeshStandardMaterial({color:0xf5f1e7,roughness:1,transparent:true,opacity:.88});
+for(let i=0;i<9;i++){
+ const g=new THREE.Group();
+ const count=4+(i%3);
+ for(let j=0;j<count;j++){
+  const puff=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),cloudMat);
+  puff.position.set((j-(count-1)/2)*1.65,(j%2)*.45,Math.sin(j*2)*.35);
+  puff.scale.set(2.2+(j%2)*.45,1.0+(j%3)*.2,1.15);
+  g.add(puff);
+ }
+ g.position.set((i-4)*31,23+(i%3)*5,-58-(i%4)*17);
+ g.scale.setScalar(.8+(i%3)*.18);scene.add(g);clouds.push(g);
+}
+// Pequeno lago com margem de pedras
+const lake=new THREE.Mesh(new THREE.CircleGeometry(1,48),new THREE.MeshStandardMaterial({color:0x397f91,roughness:.22,metalness:.18,transparent:true,opacity:.9}));
+lake.rotation.x=-Math.PI/2;lake.position.set(-25,.045,8);lake.scale.set(8,5,1);scene.add(lake);
+const shore=new THREE.Mesh(new THREE.RingGeometry(7.7,8.8,48),new THREE.MeshStandardMaterial({color:0x9a8968,roughness:1}));
+shore.rotation.x=-Math.PI/2;shore.position.set(-25,.035,8);shore.scale.set(1,0.64,1);scene.add(shore);
+// Grama em instâncias: muitos detalhes com poucas chamadas de desenho
+const grassGeo=new THREE.ConeGeometry(.055,.42,3);
+grassGeo.translate(0,.2,0);
+const grassMat=new THREE.MeshStandardMaterial({color:0x6d984c,roughness:1});
+const grass=new THREE.InstancedMesh(grassGeo,grassMat,1250);
+const dummy=new THREE.Object3D(),grassColors=[new THREE.Color(0x527d3d),new THREE.Color(0x789c50),new THREE.Color(0x9aa75b)];
+let grassCount=0;
+for(let i=0;i<1250;i++){
+ const x=(Math.random()-.5)*145,z=(Math.random()-.5)*145;
+ if((Math.abs(x)<11&&Math.abs(z)<15)||(Math.abs(x)<3.5&&z> -8&&z<43)||((x+25)**2/100+(z-8)**2/45<1))continue;
+ dummy.position.set(x,.05,z);dummy.rotation.set(0,Math.random()*Math.PI,Math.random()*.18);const s=.65+Math.random()*.8;dummy.scale.set(s,s,s);dummy.updateMatrix();
+ grass.setMatrixAt(grassCount,dummy.matrix);grass.setColorAt(grassCount,grassColors[Math.floor(Math.random()*grassColors.length)]);grassCount++;
+}
+grass.count=grassCount;grass.instanceMatrix.needsUpdate=true;scene.add(grass);
+
 function box(x,y,z,sx,sy,sz,color,material=null){
  const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material||new THREE.MeshStandardMaterial({color,roughness:.88}));
  m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;scene.add(m);return m;
@@ -324,7 +374,7 @@ let last=0;function animate(t){requestAnimationFrame(animate);const dt=Math.min(
  const horiz=Math.cos(cameraPitch)*cameraDistance;
  const target=new THREE.Vector3(player.position.x+Math.sin(yaw)*horiz,player.position.y+Math.sin(cameraPitch)*cameraDistance+1.2,player.position.z+Math.cos(yaw)*horiz);
  camera.position.lerp(target,.14);camera.lookAt(player.position.x,1.1,player.position.z);
- renderer.render(scene,camera);if(user&&t-lastSave>4000){lastSave=t;saveResources()}}
+ clouds.forEach((c,i)=>{c.position.x+=dt*(.45+(i%3)*.12);if(c.position.x>165)c.position.x=-165;});renderer.render(scene,camera);if(user&&t-lastSave>4000){lastSave=t;saveResources()}}
 requestAnimationFrame(animate);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 if('serviceWorker'in navigator) navigator.serviceWorker.register('/sw.js').catch(e=>console.warn('Service worker:',e));
