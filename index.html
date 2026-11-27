@@ -515,7 +515,7 @@ async function setRemoteProfessionalAvatar(remote,type){
 function upsertRemoteAvatar(meta,sessionKey,source='presence'){
  if(!meta?.user_id||meta.user_id===user?.id)return;
  let remote=remotePlayers.get(sessionKey);
- if(!remote&&source==='database'){
+ if(!remote){
   for(const [key,value] of remotePlayers){if(value.id===meta.user_id){sessionKey=key;remote=value;break;}}
  }
  if(!remote){
