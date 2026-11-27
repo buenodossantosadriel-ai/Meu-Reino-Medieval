@@ -1903,7 +1903,8 @@ shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;const lightDirection=sun
   const offset=(bone,x=0,y=0,z=0)=>{if(!bone)return;bone.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(x,y,z,'XYZ')))};
   // Pequenos movimentos aditivos preservam a animação original do modelo.
   avatarInstance.model.position.y=.018*Math.sin(t*.0021)+bob*.025*blend+jumpOffset*.025;
-  avatarInstance.model.rotation.x=-.025*blend+Math.sin(t*.0017)*.006-jumpBlend*.12+hitBlend*.16;\n  avatarInstance.model.rotation.z=Math.sin(phase)*.018*blend-dodgeBlend*.12+hitBlend*.09;
+  avatarInstance.model.rotation.x=-.025*blend+Math.sin(t*.0017)*.006-jumpBlend*.12+hitBlend*.16;
+  avatarInstance.model.rotation.z=Math.sin(phase)*.018*blend-dodgeBlend*.12+hitBlend*.09;
   offset(b.leftLeg,Math.sin(phase)*.34*blend);
   offset(b.rightLeg,-Math.sin(phase)*.34*blend);
   offset(b.leftArm,-Math.sin(phase)*.19*blend);
