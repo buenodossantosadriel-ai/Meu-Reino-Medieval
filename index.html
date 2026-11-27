@@ -3,7 +3,7 @@
 *{box-sizing:border-box}body{margin:0;background:#18251d;color:#f7f1df;font:15px system-ui;overflow:hidden;overscroll-behavior:none}#game{position:fixed;inset:0}#game canvas{display:block;touch-action:none}#hud{position:fixed;inset:0;pointer-events:none}.top{display:flex;justify-content:space-between;padding:12px;gap:8px}.panel{background:#142019d9;border:1px solid #b99b59;border-radius:12px;padding:9px 12px;box-shadow:0 3px 14px #0005}.brand{font-weight:800;color:#f0cc78}.bottom{position:absolute;bottom:14px;left:150px;right:8px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;padding:8px;pointer-events:auto}.bottom button{padding:10px 11px;font-size:13px}button{border:1px solid #c5a96b;background:#293b2d;color:#fff2d0;border-radius:10px;padding:11px 14px;font-weight:700;touch-action:manipulation}button:active{transform:scale(.96)}#joystick{position:fixed;left:20px;bottom:24px;width:124px;height:124px;border:2px solid #e2c68188;border-radius:50%;background:#17251dcc;box-shadow:0 4px 18px #0008;pointer-events:auto;touch-action:none;z-index:4}#joystick:before{content:'360°';position:absolute;inset:0;display:grid;place-items:center;color:#f5e5bd66;font-size:13px;font-weight:800;pointer-events:none}#stick{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px;border-radius:50%;background:linear-gradient(145deg,#d8bd79,#78603a);border:2px solid #f4dda5;box-shadow:0 3px 10px #0009;pointer-events:none}#lookTip{position:fixed;right:12px;bottom:158px;color:#fff;background:#14201999;border-radius:8px;padding:6px 9px;font-size:11px;pointer-events:none}
 #cameraControls{position:fixed;right:12px;top:92px;display:flex;flex-direction:column;gap:7px;pointer-events:auto;z-index:4}#cameraControls button{width:42px;height:42px;padding:0;font-size:20px;background:#142019dc;border-color:#d5bb7b;box-shadow:0 2px 9px #0007}#cameraControls .small{font-size:11px}
 #avatarSelect{position:fixed;left:50%;top:68px;transform:translateX(-50%);display:flex;gap:5px;padding:6px;background:#142019dc;border:1px solid #b99b59;border-radius:12px;pointer-events:auto;z-index:4;white-space:nowrap}#avatarSelect button{padding:7px 9px;font-size:11px}#avatarSelect button.active{background:#94743d;border-color:#ffe2a0;box-shadow:0 0 0 1px #ffe2a0}#mount{background:#62482a}@media(max-width:520px){#avatarSelect{top:64px;gap:3px;padding:4px}#avatarSelect button{padding:7px 6px;font-size:10px}}#login{position:fixed;inset:0;background:#101a15eF;display:grid;place-items:center;z-index:5}#login.hidden{display:none}#login form{width:min(90vw,360px);background:#26382b;border:1px solid #b99b59;border-radius:16px;padding:22px}input{width:100%;padding:12px;margin:7px 0 12px;border-radius:8px;border:1px solid #b99b59;background:#101a15;color:white}#chatbox input{margin:4px 0}#hint{position:absolute;bottom:160px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#142019cc;padding:8px 12px;border-radius:9px;max-width:90vw;overflow:hidden;text-overflow:ellipsis}.hidden{display:none}@media(max-width:520px){.top{padding:7px;gap:5px}.panel{padding:7px 9px;font-size:12px}.bottom{left:145px;right:4px;bottom:8px;gap:5px}.bottom button{padding:9px 8px;font-size:12px}#joystick{left:12px;bottom:18px;width:116px;height:116px}#stick{width:50px;height:50px;margin:-25px}#hint{bottom:145px;font-size:11px}#lookTip{bottom:135px}}@media(min-width:700px){.bottom{left:auto;right:16px;bottom:20px;width:300px;justify-content:flex-end}#joystick{left:28px;bottom:28px}}
-</style></head><body><div id="game"></div><div id="hud"><div class="top"><div class="panel"><div class="brand">⚔ MEU REINO MEDIEVAL</div><div id="stats">Madeira: 0 · Pedra: 0</div></div><div class="panel" id="players">Entrando no reino…</div></div><div id="hint">WASD ou controles para caminhar · Explore o reino!</div><div id="avatarSelect" aria-label="Escolha seu personagem"><button data-avatar="knight" class="active">⚔ Cavaleiro</button><button data-avatar="princess">👸 Princesa</button><button data-avatar="ogre">👹 Ogro</button></div><div class="bottom"><button id="collect">🌲 Coletar</button><button id="build">🧱 Construir</button><button id="attack">⚔ Atacar</button><button id="plant">🌱 Plantar</button><button id="animal">🐑 Animal</button><button id="mount">🐎 Montar</button><button id="chatToggle">💬 Chat</button></div><div id="joystick" aria-label="Controle de movimento"><div id="stick"></div></div><div id="lookTip">Arraste a tela para girar a câmera</div><div id="assetCredits" style="position:fixed;right:8px;bottom:4px;color:#fff9;font-size:9px;pointer-events:none;text-shadow:0 1px 3px #000">Modelos 3D: Vinish.Dev · CC BY 4.0</div><div id="cameraControls" aria-label="Controles da câmera"><button id="zoomIn" aria-label="Aproximar" title="Aproximar">＋</button><button id="zoomOut" aria-label="Afastar" title="Afastar">−</button><button id="viewUp" class="small" aria-label="Ver mais de cima" title="Ver mais de cima">⬆</button><button id="viewDown" class="small" aria-label="Ver mais no horizonte" title="Ver mais no horizonte">⬇</button></div></div><div id="chatbox" class="panel hidden" style="position:fixed;right:12px;bottom:82px;width:min(92vw,320px);pointer-events:auto;z-index:3"><b>Chat do reino</b><div id="chatlog" style="height:150px;overflow:auto;margin:8px 0;font-size:13px"></div><form id="chatform"><input id="chatinput" maxlength="500" placeholder="Mensagem..." required><button>Enviar</button></form></div>
+</style></head><body><div id="game"></div><div id="hud"><div class="top"><div class="panel"><div class="brand">⚔ MEU REINO MEDIEVAL</div><div id="stats">Madeira: 0 · Pedra: 0</div></div><div class="panel" id="players">Entrando no reino…</div></div><div id="hint">WASD ou controles para caminhar · Explore o reino!</div><div id="avatarSelect" aria-label="Escolha seu personagem"><button data-avatar="knight" class="active">⚔ Cavaleiro</button><button data-avatar="princess">👸 Princesa</button><button data-avatar="ogre">👹 Ogro</button></div><div class="bottom"><button id="collect">🌲 Coletar</button><button id="build">🧱 Construir</button><button id="gate">🚪 Abrir portão</button><button id="attack">⚔ Atacar</button><button id="plant">🌱 Plantar</button><button id="animal">🐑 Animal</button><button id="mount">🐎 Montar</button><button id="chatToggle">💬 Chat</button></div><div id="joystick" aria-label="Controle de movimento"><div id="stick"></div></div><div id="lookTip">Arraste a tela para girar a câmera</div><div id="assetCredits" style="position:fixed;right:8px;bottom:4px;color:#fff9;font-size:9px;pointer-events:none;text-shadow:0 1px 3px #000">Modelos 3D: Vinish.Dev · CC BY 4.0</div><div id="cameraControls" aria-label="Controles da câmera"><button id="zoomIn" aria-label="Aproximar" title="Aproximar">＋</button><button id="zoomOut" aria-label="Afastar" title="Afastar">−</button><button id="viewUp" class="small" aria-label="Ver mais de cima" title="Ver mais de cima">⬆</button><button id="viewDown" class="small" aria-label="Ver mais no horizonte" title="Ver mais no horizonte">⬇</button></div></div><div id="chatbox" class="panel hidden" style="position:fixed;right:12px;bottom:82px;width:min(92vw,320px);pointer-events:auto;z-index:3"><b>Chat do reino</b><div id="chatlog" style="height:150px;overflow:auto;margin:8px 0;font-size:13px"></div><form id="chatform"><input id="chatinput" maxlength="500" placeholder="Mensagem..." required><button>Enviar</button></form></div>
 <div id="login"><form id="auth"><h2>Entre no seu reino</h2><p>Use seu e-mail para salvar seu progresso.</p><input id="email" type="email" placeholder="E-mail" required><input id="password" type="password" placeholder="Senha (mín. 6 caracteres)" minlength="6" required><button style="width:100%">Entrar / Criar conta</button><p id="authmsg"></p></form></div>
 <script>
 window.addEventListener('error',e=>{
@@ -25,7 +25,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL='https://vuvjxrxljlhvoldugmpz.supabase.co';
 const SUPABASE_KEY='sb_publishable_Rr0gZu8e2g7uLLSBugM2aA_93T5xOVY';
 const db=createClient(SUPABASE_URL,SUPABASE_KEY);
-let user=null,wood=0,stone=0,health=100,night=false,lastSave=0;const meshes={blocks:new Map(),trees:new Map(),animals:new Map()};
+let user=null,wood=0,stone=0,health=100,night=false,lastSave=0;const meshes={blocks:new Map(),trees:new Map(),animals:new Map()};\nconst worldObstacles=[];\nfunction addCircleObstacle(x,z,r){worldObstacles.push({type:'circle',x,z,r})}\nfunction addRectObstacle(x,z,hx,hz){worldObstacles.push({type:'rect',x,z,hx,hz})}\nfunction collidesAt(x,z,r=.52){for(const o of worldObstacles){if(o.type==='circle'){if(Math.hypot(x-o.x,z-o.z)<r+o.r)return true}else if(Math.abs(x-o.x)<o.hx+r&&Math.abs(z-o.z)<o.hz+r)return true}return false}\nfunction moveWithCollisions(dx,dz){const r=.52,nx=player.position.x+dx,nz=player.position.z+dz;if(!collidesAt(nx,nz,r)){player.position.x=nx;player.position.z=nz;return}if(!collidesAt(nx,player.position.z,r))player.position.x=nx;if(!collidesAt(player.position.x,nz,r))player.position.z=nz}
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x9fc8df);
 scene.fog=new THREE.Fog(0x9fc8df,75,175);
@@ -119,34 +119,56 @@ function tower(x,z){
  for(let a=0;a<8;a++){const ang=a*Math.PI/4;const mer=box(x+Math.cos(ang)*1.35,5.9,z+Math.sin(ang)*1.35,.42,1,.42,0x8b8d82);mer.material=stoneMat}
  const slit=box(x,3.7,z+1.76,.28,1.1,.08,0x303b38);slit.material=darkStone;
 }
+let castleGate,gateAngle=0,gateTarget=0;
 function castle(){
- // Muralhas com ameias e quatro torres
- box(0,2,-8,17,4,1.25,0xaaa99b,stoneMat);box(0,2,8,17,4,1.25,0xaaa99b,stoneMat);
+ // Muralhas de pedra com entrada frontal aberta, ameias e quatro torres.
+ box(0,2,-8,17,4,1.25,0xaaa99b,stoneMat);
+ box(-4.85,2,8,6.3,4,1.25,0xaaa99b,stoneMat);box(4.85,2,8,6.3,4,1.25,0xaaa99b,stoneMat);
  box(-8,2,0,1.25,4,16,0xaaa99b,stoneMat);box(8,2,0,1.25,4,16,0xaaa99b,stoneMat);
- for(let x=-7.5;x<=7.5;x+=2){box(x,4.35,-8,.8,.65,1.35,0xaaa99b,stoneMat);box(x,4.35,8,.8,.65,1.35,0xaaa99b,stoneMat)}
+ for(let x=-7.5;x<=7.5;x+=2){box(x,4.35,-8,.8,.65,1.35,0xaaa99b,stoneMat);if(Math.abs(x)>2)box(x,4.35,8,.8,.65,1.35,0xaaa99b,stoneMat)}
  for(let z=-6;z<=6;z+=2){box(-8,4.35,z,1.35,.65,.8,0xaaa99b,stoneMat);box(8,4.35,z,1.35,.65,.8,0xaaa99b,stoneMat)}
  tower(-8,-8);tower(8,-8);tower(-8,8);tower(8,8);
- // Portão, arco e ponte
- box(0,2,-8,3.1,4.2,.5,0x493b2e,woodMat);
- const arch=new THREE.Mesh(new THREE.TorusGeometry(1.55,.24,8,16,Math.PI),stoneMat);arch.rotation.z=Math.PI;arch.position.set(0,3.9,-7.68);scene.add(arch);
- for(let x=-1.2;x<=1.2;x+=.4)box(x,2,-7.68,.08,3.7,.12,0x8a633c,woodMat);
- box(0,.18,-12,4,.25,7,0x795b3a,woodMat);
- // Torre de menagem no pátio
+ // Portal em arco com moldura de blocos e portão de madeira articulado.
+ const arch=new THREE.Mesh(new THREE.TorusGeometry(1.62,.24,10,24,Math.PI),stoneMat);arch.rotation.z=Math.PI;arch.position.set(0,3.85,8.02);arch.castShadow=true;scene.add(arch);
+ for(let y=.35;y<3.6;y+=.62){box(-1.72,y,8,.38,.55,1.48,0x96978e,stoneMat);box(1.72,y,8,.38,.55,1.48,0x96978e,stoneMat)}
+ for(let x=-1.5;x<=1.5;x+=.5){if(Math.abs(x)>.01)box(x,4.05,8,.42,.5,1.35,0x96978e,stoneMat)}
+ castleGate=new THREE.Group();castleGate.position.set(-1.52,0,8.04);scene.add(castleGate);
+ const leaf=new THREE.Group();castleGate.add(leaf);
+ const plankMat=new THREE.MeshStandardMaterial({color:0x54351f,roughness:.86});
+ const ironMat=new THREE.MeshStandardMaterial({color:0x333a3b,metalness:.72,roughness:.34});
+ for(let i=0;i<7;i++){const p=box(0,0,0,0,0,0,0);scene.remove(p);leaf.add(p);p.geometry.dispose();p.geometry=new THREE.BoxGeometry(.43,3.35,.2);p.material=plankMat;p.position.set(.22+i*.43,1.72,0);p.castShadow=true;p.receiveShadow=true}
+ for(const y of [.55,2.85]){const beam=new THREE.Mesh(new THREE.BoxGeometry(3.05,.2,.28),ironMat);beam.position.set(1.5,y,.03);beam.castShadow=true;leaf.add(beam)}
+ const brace=new THREE.Mesh(new THREE.BoxGeometry(2.65,.14,.25),woodMat);brace.position.set(1.5,1.7,.04);brace.rotation.z=-.58;leaf.add(brace);
+ for(let x=.28;x<3;x+=.42)for(const y of [.55,2.85]){const rivet=new THREE.Mesh(new THREE.SphereGeometry(.055,8,8),ironMat);rivet.position.set(x,y,.19);leaf.add(rivet)}
+ const handle=new THREE.Mesh(new THREE.TorusGeometry(.13,.035,8,12),ironMat);handle.position.set(2.75,1.75,.19);leaf.add(handle);
+ // Ponte de acesso, caminho de pedra e iluminação junto à entrada.
+ box(0,.18,12,4,.25,7,0x795b3a,woodMat);
+ for(const x of [-2.35,2.35]){const post=box(x,1.2,9.2,.18,2.4,.18,0x60432c,woodMat);const flame=new THREE.PointLight(0xffa34b,1.4,8);flame.position.set(x,2.55,9.2);scene.add(flame)}
+ // Torre de menagem, telhado, janelas e reforços de pedra.
  box(0,2.5,-2,6,5,5,0xb8b5a7,stoneMat);
+ for(const x of [-3.08,3.08])for(const z of [-3.7,-2,-.3])box(x,2.2,z,.35,4.4,.42,0x777c72,darkStone);
  box(0,5.3,-2,6.3,.35,5.3,0x777c72,darkStone);
  for(let x=-2.4;x<=2.4;x+=1.6){box(x,5.8,-4.25,.75,.9,.75,0xb8b5a7,stoneMat)}
  for(let z=-3.5;z<=-.5;z+=1.5){box(-3.1,5.8,z,.75,.9,.75,0xb8b5a7,stoneMat);box(3.1,5.8,z,.75,.9,.75,0xb8b5a7,stoneMat)}
  const keepRoof=new THREE.Mesh(new THREE.ConeGeometry(3.9,3.2,4),roofMat);keepRoof.position.set(0,7.1,-2);keepRoof.rotation.y=Math.PI/4;keepRoof.castShadow=true;scene.add(keepRoof);
  for(const x of [-1.5,1.5]){const win=box(x,3.4,.56,.45,1.1,.08,0x293b45);win.material=new THREE.MeshStandardMaterial({color:0x293b45,emissive:0x182c35})}
+ // Janelas altas, bandeira real e detalhes de fachada.
+ for(const x of [-2.1,0,2.1]){const slit=box(x,3.25,.57,.28,.95,.1,0x18252c);slit.material=new THREE.MeshStandardMaterial({color:0x18252c,emissive:0x263d48,emissiveIntensity:.28});box(x,2.72,.64,.62,.12,.18,0x777c72,darkStone)}
+ const pole=new THREE.Mesh(new THREE.CylinderGeometry(.045,.06,4.2,8),ironMat);pole.position.set(0,8.9,-2);scene.add(pole);
+ const banner=new THREE.Mesh(new THREE.PlaneGeometry(1.5,2.1),new THREE.MeshStandardMaterial({color:0x7d2028,roughness:.85,side:THREE.DoubleSide}));banner.position.set(.72,9.1,-2);banner.rotation.y=.12;scene.add(banner);
+ const crest=new THREE.Mesh(new THREE.BoxGeometry(.32,.62,.04),goldMatForCastle);crest.position.set(.72,9.12,-1.96);scene.add(crest);
 }
+const goldMatForCastle=new THREE.MeshStandardMaterial({color:0xd5ad55,metalness:.45,roughness:.42});
 castle();
+function toggleCastleGate(){gateTarget=gateTarget===0?-Math.PI/2:0;document.querySelector('#gate').textContent=gateTarget===0?'🚪 Abrir portão':'🚪 Fechar portão';document.querySelector('#hint').textContent=gateTarget===0?'O portão está fechando.':'O portão está abrindo.'}
+document.querySelector('#gate').onclick=toggleCastleGate;\n// Colisões físicas das muralhas e da torre central; a abertura do portão permanece livre.\naddRectObstacle(0,-8,8.5,.68);addRectObstacle(-4.85,8,3.15,.68);addRectObstacle(4.85,8,3.15,.68);addRectObstacle(-8,0,.68,8);addRectObstacle(8,0,.68,8);\naddCircleObstacle(-8,-8,1.85);addCircleObstacle(8,-8,1.85);addCircleObstacle(-8,8,1.85);addCircleObstacle(8,8,1.85);\naddRectObstacle(0,-2,3.05,2.55);
 function tree(x,z,id=null){
  const group=new THREE.Group();
  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.2,.34,1.8,7),new THREE.MeshStandardMaterial({color:0x68452b,roughness:1}));
  trunk.position.y=.9;trunk.castShadow=true;group.add(trunk);
  const greens=[0x285c36,0x356f3d,0x477c43];
  for(let j=0;j<3;j++){const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(1.15-j*.08,1),new THREE.MeshStandardMaterial({color:greens[j],roughness:1}));crown.position.set((j-1)*.32,2.05+j*.62,(j%2)*.22);crown.scale.set(1.15,.95,1.05);crown.castShadow=true;group.add(crown)}
- group.position.set(x,0,z);group.rotation.y=Math.random()*Math.PI;const s=.8+Math.random()*.65;group.scale.setScalar(s);scene.add(group);if(id)meshes.trees.set(id,group);return group;
+ group.position.set(x,0,z);group.rotation.y=Math.random()*Math.PI;const s=.8+Math.random()*.65;group.scale.setScalar(s);scene.add(group);addCircleObstacle(x,z,.62*s);if(id)meshes.trees.set(id,group);return group;
 }
 for(let i=0;i<95;i++){const x=(Math.random()-.5)*125,z=(Math.random()-.5)*125;if(Math.abs(x)>13||Math.abs(z)>15)tree(x,z)}
 // Pedras, arbustos e caminho até ao castelo
@@ -553,7 +575,7 @@ async function saveResources(){
 document.querySelector('#collect').onclick=async()=>{wood+=1;stone+=1;updateStats();await saveResources();document.querySelector('#hint').textContent='Recursos coletados (ação demonstrativa).'}
 
 document.querySelector('#build').onclick=async()=>{if(!user)return;if(wood<3||stone<2){document.querySelector('#hint').textContent='Precisa de 3 madeiras e 2 pedras.';return}const x=Math.round(player.position.x/2)*2,z=Math.round((player.position.z-2)/2)*2;const {data,error}=await db.from('world_blocks').insert({owner_id:user.id,block_type:'stone',x,y:1,z,rotation:0}).select().single();if(error){document.querySelector('#hint').textContent='Falha ao salvar construção: '+error.message;return}wood-=3;stone-=2;updateStats();renderBlock(data);await saveResources()}; 
-function renderBlock(b){if(meshes.blocks.has(b.id))return;const m=box(b.x,b.y,b.z,2,2,2,b.block_type==='wood'?0x80542f:0x8e8b83);meshes.blocks.set(b.id,m)}
+function renderBlock(b){if(meshes.blocks.has(b.id))return;const m=box(b.x,b.y,b.z,2,2,2,b.block_type==='wood'?0x80542f:0x8e8b83);meshes.blocks.set(b.id,m);addRectObstacle(b.x,b.z,1.05,1.05)}
 function renderTree(t){if(meshes.trees.has(t.id))return;tree(t.x,t.z,t.id)}
 function renderAnimal(a){if(meshes.animals.has(a.id))return;const colors={cow:0xeee6d5,pig:0xe7a1a1,chicken:0xf4e8bb,sheep:0xe9e6dc};const g=new THREE.Group();const body=new THREE.Mesh(new THREE.BoxGeometry(.9,.65,1.2),new THREE.MeshStandardMaterial({color:colors[a.animal_type]||0xffffff}));body.position.y=.65;g.add(body);const head=new THREE.Mesh(new THREE.BoxGeometry(.45,.45,.45),new THREE.MeshStandardMaterial({color:colors[a.animal_type]||0xffffff}));head.position.set(0,.85,.65);g.add(head);g.position.set(a.x,0,a.z);scene.add(g);meshes.animals.set(a.id,g)}
 document.querySelector('#plant').onclick=async()=>{if(!user)return;const x=player.position.x+Math.sin(player.rotation.y)*-3,z=player.position.z+Math.cos(player.rotation.y)*-3;const {data,error}=await db.from('world_trees').insert({owner_id:user.id,tree_type:'oak',x,y:0,z,growth_seconds:60,health:100}).select().single();if(error){document.querySelector('#hint').textContent=error.message;return}renderTree(data);document.querySelector('#hint').textContent='Muda plantada! Crescimento previsto: 60 segundos.'};
@@ -705,8 +727,8 @@ let last=0,walkPhase=0;function animate(t){requestAnimationFrame(animate);const 
  if(keys.w||keys.arrowup)sy=1;if(keys.s||keys.arrowdown)sy=-1;if(keys.a||keys.arrowleft)sx=-1;if(keys.d||keys.arrowright)sx=1;
  const len=Math.hypot(sx,sy);const moving=len>.08;if(moving){walkPhase+=dt*(mountedHorse?10:8);const side=sx/Math.max(1,len),forward=sy/Math.max(1,len);
  const dx=(Math.sin(yaw)*forward+Math.cos(yaw)*side),dz=(-Math.cos(yaw)*forward+Math.sin(yaw)*side);
- player.position.x+=dx*(mountedHorse?10:6)*dt;player.position.z+=dz*(mountedHorse?10:6)*dt;const ta=Math.atan2(dx,dz),d=Math.atan2(Math.sin(ta-player.rotation.y),Math.cos(ta-player.rotation.y));player.rotation.y+=d*Math.min(1,dt*12);if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;}
- if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);player.position.y=1.22;}else player.position.y=0;
+ moveWithCollisions(dx*(mountedHorse?10:6)*dt,dz*(mountedHorse?10:6)*dt);const ta=Math.atan2(dx,dz),d=Math.atan2(Math.sin(ta-player.rotation.y),Math.cos(ta-player.rotation.y));player.rotation.y+=d*Math.min(1,dt*12);if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;}
+ if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);player.position.y=1.22;}else player.position.y=0;\n if(castleGate){gateAngle+=(gateTarget-gateAngle)*Math.min(1,dt*2.8);castleGate.rotation.y=gateAngle;}
 sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.position.z/2)*2);sun.position.set(sun.target.position.x-35,55,sun.target.position.z+28);
  const gait=moving?Math.sin(walkPhase):0;
  if(avatarInstance){avatarInstance.mixer.update(dt);setProfessionalGait(avatarInstance,moving&&!mountedHorse);}
