@@ -1099,7 +1099,7 @@ mapCanvas.addEventListener('click',async ev=>{
  mapArmed=false;if(await saveKingdomMarkers()){drawKingdomMap();document.querySelector('#hint').textContent='📍 Marcação salva no mapa!';}
 });
 document.querySelector('#mapDelete').onclick=async()=>{if(!kingdomMarkers.length){document.querySelector('#hint').textContent='Não há marcações para apagar.';return}kingdomMarkers.pop();if(await saveKingdomMarkers()){drawKingdomMap();document.querySelector('#hint').textContent='Última marcação apagada.';}};
-\nlet live,lastPresenceUpdate=0;
+let live,lastPresenceUpdate=0;
 async function enterGame(session,emailFallback='') {
   spawnEnemies();
   if(!session?.user) throw new Error('Sessão não encontrada. Entre novamente com seu e-mail e senha.');
