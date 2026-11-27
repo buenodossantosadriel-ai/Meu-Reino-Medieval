@@ -966,12 +966,13 @@ sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.po
  const gait=moving?Math.sin(walkPhase):0;
  if(avatarInstance){
   avatarInstance.mixer.update(dt);setProfessionalGait(avatarInstance,moving&&!mountedHorse,false);
-  const swing=moving&&!mountedHorse?Math.sin(walkPhase)*.42:0;
+  // Preserva a pose-base do rig: o mixer atualiza a animação primeiro,
+  // depois acrescentamos apenas um movimento suave, sem zerar os ossos.
+  const swing=moving&&!mountedHorse?Math.sin(walkPhase)*.20:0;
   const b=avatarInstance.gaitBones||{};
-  if(b.leftLeg)b.leftLeg.rotation.x=swing;
-  if(b.rightLeg)b.rightLeg.rotation.x=-swing;
-  if(b.leftArm)b.leftArm.rotation.x=-swing*.72;
-  if(b.rightArm)b.rightArm.rotation.x=(swing*.72)+(Date.now()<attackUntil?-.95:0);
+  const offset=(bone,angle)=>{if(!bone||Math.abs(angle)<.0001)return;bone.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),angle))};
+  offset(b.leftLeg,swing);offset(b.rightLeg,-swing);
+  offset(b.leftArm,-swing*.4);offset(b.rightArm,swing*.4+(Date.now()<attackUntil?-.3:0));
  }
  else{
   avatarModel.position.y=(moving?Math.abs(Math.sin(walkPhase*2))*.045:Math.sin(t*.0018)*.018);
@@ -990,7 +991,10 @@ sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.po
  for(const remote of remotePlayers.values()){
   const delta=remote.target.clone().sub(remote.group.position),remoteMoving=delta.length()>.025;
   remote.group.position.lerp(remote.target,Math.min(1,dt*8));remote.group.rotation.y=remote.rotation;
-  if(remote.instance){remote.instance.mixer.update(dt);setProfessionalGait(remote.instance,remoteMoving,delta.length()>0.12);}
+  if(remote.instance){
+   remote.instance.mixer.update(dt);setProfessionalGait(remote.instance,remoteMoving,delta.length()>0.12);
+   if(remoteMoving){const swing=Math.sin(t*.009)*.16,b=remote.instance.gaitBones||{},off=(bone,a)=>{if(bone)bone.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),a))};off(b.leftLeg,swing);off(b.rightLeg,-swing);off(b.leftArm,-swing*.4);off(b.rightArm,swing*.4)}
+  }
   else{
    remote.phase+=dt*(remoteMoving?8:1.5);remote.model.position.y=remoteMoving?Math.abs(Math.sin(remote.phase*2))*.04:Math.sin(t*.0015)*.015;
    for(const a of remote.motion.arms)a.pivot.rotation.x=remoteMoving?Math.sin(remote.phase+(a.side<0?Math.PI:0))*.46:0;
