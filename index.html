@@ -3,6 +3,16 @@
 *{box-sizing:border-box}body{margin:0;background:#18251d;color:#f7f1df;font:15px system-ui;overflow:hidden}#game{position:fixed;inset:0}canvas{display:block}#hud{position:fixed;inset:0;pointer-events:none}.top{display:flex;justify-content:space-between;padding:12px;gap:8px}.panel{background:#142019d9;border:1px solid #b99b59;border-radius:12px;padding:9px 12px;box-shadow:0 3px 14px #0005}.brand{font-weight:800;color:#f0cc78}.bottom{position:absolute;bottom:14px;left:0;right:0;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:8px;pointer-events:auto}button{border:1px solid #c5a96b;background:#293b2d;color:#fff2d0;border-radius:10px;padding:11px 14px;font-weight:700}button:active{transform:scale(.96)}#login{position:fixed;inset:0;background:#101a15eF;display:grid;place-items:center;z-index:5}#login form{width:min(90vw,360px);background:#26382b;border:1px solid #c5a96b;border-radius:16px;padding:22px}input{width:100%;padding:12px;margin:7px 0 12px;border-radius:8px;border:1px solid #b99b59;background:#101a15;color:white}#chatbox input{margin:4px 0}#hint{position:absolute;bottom:90px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#142019cc;padding:8px 12px;border-radius:9px}.hidden{display:none}@media(min-width:700px){.bottom{left:auto;right:16px;bottom:20px;width:260px;justify-content:flex-end}}
 </style></head><body><div id="game"></div><div id="hud"><div class="top"><div class="panel"><div class="brand">⚔ MEU REINO MEDIEVAL</div><div id="stats">Madeira: 0 · Pedra: 0</div></div><div class="panel" id="players">Entrando no reino…</div></div><div id="hint">WASD ou controles para caminhar · Explore o reino!</div><div class="bottom"><button id="forward">▲</button><button id="left">◀</button><button id="back">▼</button><button id="right">▶</button><button id="collect">🌲 Coletar</button><button id="build">🧱 Construir</button><button id="attack">⚔ Atacar</button><button id="plant">🌱 Plantar</button><button id="animal">🐑 Animal</button><button id="chatToggle">💬 Chat</button></div></div><div id="chatbox" class="panel hidden" style="position:fixed;right:12px;bottom:82px;width:min(92vw,320px);pointer-events:auto;z-index:3"><b>Chat do reino</b><div id="chatlog" style="height:150px;overflow:auto;margin:8px 0;font-size:13px"></div><form id="chatform"><input id="chatinput" maxlength="500" placeholder="Mensagem..." required><button>Enviar</button></form></div>
 <div id="login"><form id="auth"><h2>Entre no seu reino</h2><p>Use seu e-mail para salvar seu progresso.</p><input id="email" type="email" placeholder="E-mail" required><input id="password" type="password" placeholder="Senha (mín. 6 caracteres)" minlength="6" required><button style="width:100%">Entrar / Criar conta</button><p id="authmsg"></p></form></div>
+<script>
+window.addEventListener('error',e=>{
+ const m=document.querySelector('#authmsg');
+ if(m) m.textContent='Erro ao abrir o jogo: '+(e.message||'falha no JavaScript')+'. Atualize a página e tente novamente.';
+});
+window.addEventListener('unhandledrejection',e=>{
+ const m=document.querySelector('#authmsg');
+ if(m) m.textContent='Falha inesperada do jogo: '+(e.reason?.message||String(e.reason||'erro desconhecido'));
+});
+</script>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -26,7 +36,16 @@ const player=new THREE.Group();const body=new THREE.Mesh(new THREE.CapsuleGeomet
 let yaw=0;const keys={};addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 const held={};for(const [id,key] of [['forward','w'],['back','s'],['left','a'],['right','d']]){const b=document.getElementById(id);b.onpointerdown=()=>held[key]=true;b.onpointerup=b.onpointerleave=()=>held[key]=false}
 function updateStats(){document.querySelector('#stats').textContent='❤️ '+health+' · Madeira: '+wood+' · Pedra: '+stone}
-async function saveResources(){if(!user)return;await db.from('players').upsert({user_id:user.id,player_name:user.email.split('@')[0],x:player.position.x,y:0,z:player.position.z,health,stamina:100,wood,stone,updated_at:new Date().toISOString()})}
+async function saveResources(){
+  if(!user)return {error:null};
+  const {error}=await db.from('players').upsert({
+    user_id:user.id,player_name:(user.email||'Jogador').split('@')[0],
+    x:player.position.x,y:0,z:player.position.z,health,stamina:100,wood,stone,
+    updated_at:new Date().toISOString()
+  });
+  if(error) console.error('Falha ao salvar jogador:',error);
+  return {error};
+}
 document.querySelector('#collect').onclick=async()=>{wood+=1;stone+=1;updateStats();await saveResources();document.querySelector('#hint').textContent='Recursos coletados (ação demonstrativa).'}
 
 document.querySelector('#build').onclick=async()=>{if(!user)return;if(wood<3||stone<2){document.querySelector('#hint').textContent='Precisa de 3 madeiras e 2 pedras.';return}const x=Math.round(player.position.x/2)*2,z=Math.round((player.position.z-2)/2)*2;const {data,error}=await db.from('world_blocks').insert({owner_id:user.id,block_type:'stone',x,y:1,z,rotation:0}).select().single();if(error){document.querySelector('#hint').textContent='Falha ao salvar construção: '+error.message;return}wood-=3;stone-=2;updateStats();renderBlock(data);await saveResources()}; 
@@ -36,51 +55,93 @@ function renderAnimal(a){if(meshes.animals.has(a.id))return;const colors={cow:0x
 document.querySelector('#plant').onclick=async()=>{if(!user)return;const x=player.position.x+Math.sin(player.rotation.y)*-3,z=player.position.z+Math.cos(player.rotation.y)*-3;const {data,error}=await db.from('world_trees').insert({owner_id:user.id,tree_type:'oak',x,y:0,z,growth_seconds:60,health:100}).select().single();if(error){document.querySelector('#hint').textContent=error.message;return}renderTree(data);document.querySelector('#hint').textContent='Muda plantada! Crescimento previsto: 60 segundos.'};
 document.querySelector('#animal').onclick=async()=>{if(!user)return;const types=['cow','pig','chicken','sheep'];const animal_type=types[Math.floor(Math.random()*types.length)];const {data,error}=await db.from('world_animals').insert({owner_id:user.id,animal_type,x:player.position.x+2,y:0,z:player.position.z+2,state:{}}).select().single();if(error){document.querySelector('#hint').textContent=error.message;return}renderAnimal(data);document.querySelector('#hint').textContent='Animal criado: '+animal_type};
 document.querySelector('#chatToggle').onclick=()=>document.querySelector('#chatbox').classList.toggle('hidden');
-async function loadWorld(){const [b,t,a,ch]=await Promise.all([db.from('world_blocks').select('*'),db.from('world_trees').select('*'),db.from('world_animals').select('*'),db.from('world_chat').select('*').order('created_at',{ascending:false}).limit(30)]);(b.data||[]).forEach(renderBlock);(t.data||[]).forEach(renderTree);(a.data||[]).forEach(renderAnimal);(ch.data||[]).reverse().forEach(showChat)}
+async function loadWorld(){
+  const jobs=[
+    ['construções',db.from('world_blocks').select('*')],
+    ['árvores',db.from('world_trees').select('*')],
+    ['animais',db.from('world_animals').select('*')],
+    ['chat',db.from('world_chat').select('*').order('created_at',{ascending:false}).limit(30)]
+  ];
+  const results=await Promise.all(jobs.map(async ([name,query])=>{
+    try { const result=await query; if(result.error) throw result.error; return {name,data:result.data||[]}; }
+    catch(error){ console.error('Falha ao carregar '+name,error); return {name,error}; }
+  }));
+  for(const r of results){
+    if(r.error) continue;
+    if(r.name==='construções') r.data.forEach(renderBlock);
+    if(r.name==='árvores') r.data.forEach(renderTree);
+    if(r.name==='animais') r.data.forEach(renderAnimal);
+    if(r.name==='chat') r.data.reverse().forEach(showChat);
+  }
+  return results.filter(r=>r.error).map(r=>r.name);
+}
 function showChat(m){const log=document.querySelector('#chatlog');const line=document.createElement('div');line.textContent=m.player_name+': '+m.message;log.appendChild(line);log.scrollTop=log.scrollHeight}
 document.querySelector('#chatform').onsubmit=async e=>{e.preventDefault();const input=document.querySelector('#chatinput');const message=input.value.trim();if(!message||!user)return;const {data,error}=await db.from('world_chat').insert({user_id:user.id,player_name:user.email.split('@')[0],message}).select().single();if(error){document.querySelector('#hint').textContent=error.message;return}showChat(data);input.value=''};
 let worldChannel=null;
 function subscribeWorld(){
-  if(worldChannel) return;
-  worldChannel=db.channel('world-changes');
-  worldChannel
+  if(worldChannel) return worldChannel;
+  const ch=db.channel('world-changes');
+  ch
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_blocks'},p=>renderBlock(p.new))
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_trees'},p=>renderTree(p.new))
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_animals'},p=>renderAnimal(p.new))
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'world_chat'},p=>{if(p.new.user_id!==user?.id)showChat(p.new)})
-    .subscribe();
+    .subscribe(status=>{
+      if(status==='CHANNEL_ERROR'||status==='TIMED_OUT') {
+        console.error('Realtime do mundo:',status);
+        document.querySelector('#hint').textContent='Mundo carregado; sincronização ao vivo indisponível no momento.';
+      }
+    });
+  worldChannel=ch;
+  return ch;
 }
 
 document.querySelector('#attack').onclick=()=>{document.querySelector('#hint').textContent='Você brandiu sua espada! Os inimigos ainda serão adicionados.'}
-const channel=()=>db.channel('world-live').on('presence',{event:'sync'},()=>{document.querySelector('#players').textContent='Online: '+Object.keys(channel.presenceState()).length}).subscribe(async status=>{if(status==='SUBSCRIBED'&&user)await channel.track({name:user.email.split('@')[0]})});
 let live;
 async function enterGame(session,emailFallback='') {
-  user=session.user;
+  user=session?.user;
   if(!user) throw new Error('Sessão não encontrada. Entre novamente com seu e-mail e senha.');
-  document.querySelector('#login').classList.add('hidden');
-  document.querySelector('#players').textContent='Carregando reino…';
+  const msg=document.querySelector('#authmsg');
+  const login=document.querySelector('#login');
+  const players=document.querySelector('#players');
+  players.textContent='Preparando seu reino…';
+  msg.textContent='Carregando cenário e dados…';
   try {
-    await loadWorld();
+    const failedTables=await loadWorld();
     subscribeWorld();
-    if(live) await db.removeChannel(live);
-    live=db.channel('world-live').on('presence',{event:'sync'},()=> {
+    if(live) { try { await db.removeChannel(live); } catch(e) { console.warn(e); } }
+    live=db.channel('world-live');
+    live.on('presence',{event:'sync'},()=>{
       const count=Object.keys(live.presenceState()).length;
-      document.querySelector('#players').textContent='Online: '+count;
+      players.textContent='Online: '+count;
     }).subscribe(async status=>{
       if(status==='SUBSCRIBED'&&user) {
-        await live.track({name:(user.email||emailFallback||'Jogador').split('@')[0]});
+        try { await live.track({name:(user.email||emailFallback||'Jogador').split('@')[0]}); }
+        catch(e) { console.warn('Presence:',e); }
       }
     });
     const {data,error}=await db.from('players').select('*').eq('user_id',user.id).maybeSingle();
-    if(error) throw error;
-    if(data) {
-      player.position.set(data.x||0,0,data.z||0);
-      wood=data.wood||0; stone=data.stone||0; health=data.health||100; updateStats();
-    } else await saveResources();
-    document.querySelector('#hint').textContent='Bem-vindo ao reino! Explore e construa.';
+    if(error) {
+      console.error('Perfil do jogador:',error);
+      document.querySelector('#hint').textContent='Entrou no reino; não foi possível recuperar o progresso salvo.';
+    } else if(data) {
+      player.position.set(Number(data.x)||0,0,Number(data.z)||0);
+      wood=Number(data.wood)||0; stone=Number(data.stone)||0;
+      health=Number(data.health)||100; updateStats();
+    } else {
+      const saved=await saveResources();
+      if(saved.error) document.querySelector('#hint').textContent='Reino aberto; salvamento indisponível: '+saved.error.message;
+    }
+    login.classList.add('hidden');
+    players.textContent='Reino conectado';
+    document.querySelector('#hint').textContent=failedTables.length
+      ? 'Você entrou! Alguns dados não carregaram: '+failedTables.join(', ')
+      : 'Bem-vindo ao reino! Explore e construa.';
+    return true;
   } catch(err) {
-    document.querySelector('#login').classList.remove('hidden');
-    document.querySelector('#authmsg').textContent='Acesso confirmado, mas houve falha ao carregar o mundo: '+(err.message||err);
+    console.error('Falha ao iniciar reino:',err);
+    login.classList.remove('hidden');
+    msg.textContent='Falha ao iniciar o jogo: '+(err?.message||String(err));
     throw err;
   }
 }
@@ -122,5 +183,7 @@ db.auth.getSession().then(async ({data,error})=>{
 });
 
 let last=0;function animate(t){requestAnimationFrame(animate);const dt=Math.min((t-last)/1000,.05);last=t;let dx=0,dz=0;if(keys.w||keys.arrowup||held.w)dz-=1;if(keys.s||keys.arrowdown||held.s)dz+=1;if(keys.a||keys.arrowleft||held.a)dx-=1;if(keys.d||keys.arrowright||held.d)dx+=1;const len=Math.hypot(dx,dz)||1;player.position.x+=dx/len*6*dt;player.position.z+=dz/len*6*dt;if(dx||dz)player.rotation.y=Math.atan2(dx,dz);camera.position.lerp(new THREE.Vector3(player.position.x,player.position.y+5,player.position.z+9),.08);camera.lookAt(player.position.x,1,player.position.z);renderer.render(scene,camera);if(user&&t-lastSave>4000){lastSave=t;saveResources()}}
-requestAnimationFrame(animate);addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');
+requestAnimationFrame(animate);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+if('serviceWorker'in navigator) navigator.serviceWorker.register('/sw.js').catch(e=>console.warn('Service worker:',e));
 </script></body></html>
