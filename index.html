@@ -575,6 +575,13 @@ async function loadRealHorse(h,type){
  model.scale.setScalar(scale);
  model.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
  model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=false;const ms=Array.isArray(o.material)?o.material:(o.material?[o.material]:[]);ms.forEach(m=>{if(m.map){m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=4;}m.envMap=charEnv;m.envMapIntensity=.48;m.needsUpdate=true;});}});
+ if(type!=='horse-western'){
+  const tack=new THREE.Group(),padMat=mat(0x713b31,0,.92),leatherMat=mat(0x35231a,0,.78),metalMat=mat(0x8b7651,.62,.38);
+  const pad=new THREE.Mesh(new THREE.BoxGeometry(.72,.09,.82),padMat);pad.position.set(0,1.43,-.08);tack.add(pad);
+  const seat=new THREE.Mesh(new THREE.BoxGeometry(.54,.19,.58),leatherMat);seat.position.set(0,1.55,-.08);tack.add(seat);
+  for(const side of [-1,1]){const stirrup=new THREE.Mesh(new THREE.TorusGeometry(.115,.025,7,14),metalMat);stirrup.rotation.x=Math.PI/2;stirrup.position.set(side*.39,1.06,-.12);tack.add(stirrup);const strap=new THREE.Mesh(new THREE.BoxGeometry(.035,.38,.035),leatherMat);strap.position.set(side*.36,1.28,-.12);tack.add(strap);}
+  model.add(tack);
+ }
  for(const child of [...h.group.children]){h.group.remove(child);child.traverse(o=>{if(o.isMesh){o.geometry?.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose();}});}
  h.group.add(model);h.model=model;h.mixer=new THREE.AnimationMixer(model);h.horseActions={};
  for(const clip of gltf.animations){const key=clip.name.toLowerCase().replace(/[ _-]/g,'');const action=h.mixer.clipAction(clip);action.setLoop(THREE.LoopRepeat,Infinity);if(key.includes('idle'))h.horseActions.idle=action;else if(key.includes('walk'))h.horseActions.walk=action;else if(key.includes('trot'))h.horseActions.trot=action;else if(key.includes('gallop'))h.horseActions.gallop=action;else if(key.includes('graze'))h.horseActions.graze=action;else if(key.includes('rear'))h.horseActions.rear=action;}
@@ -598,7 +605,7 @@ function mountNearestHorse(){
  let best=null,dist=4.5;
  for(const h of horses){if(!h.wild)continue;const d=Math.hypot(h.group.position.x-player.position.x,h.group.position.z-player.position.z);if(d<dist){dist=d;best=h}}
  if(!best){document.querySelector('#hint').textContent='Chegue mais perto de um cavalo para montar.';return}
- mountedHorse=best;best.wild=false;playHorseAnimation(best,'Idle');player.position.y=1.36;document.querySelector('#mount').textContent='↘ Desmontar';document.querySelector('#hint').textContent='Você montou a cavalo! Use o joystick para cavalgar.';
+ mountedHorse=best;best.wild=false;playHorseAnimation(best,'Idle');player.position.y=1.48;document.querySelector('#mount').textContent='↘ Desmontar';document.querySelector('#hint').textContent='Você montou a cavalo! Use o joystick para cavalgar.';
 }
 document.querySelector('#mount').onclick=mountNearestHorse;
 let yaw=0,cameraPitch=.42,cameraDistance=11,cameraDistanceCurrent=11;
@@ -1032,7 +1039,7 @@ let last=0,walkPhase=0,shadowRefresh=0,motionBlend=0;function animate(t){request
  const len=Math.hypot(sx,sy);const moving=len>.08,running=moving&&!mountedHorse&&len>.86;if(moving){walkPhase+=dt*(mountedHorse?10:(running?11:8));const side=sx/Math.max(1,len),forward=sy/Math.max(1,len);
  const dx=(-Math.sin(yaw)*forward+Math.cos(yaw)*side),dz=(-Math.cos(yaw)*forward-Math.sin(yaw)*side);
  moveWithCollisions(dx*(mountedHorse?10:(running?8:6))*dt,dz*(mountedHorse?10:(running?8:6))*dt);const ta=Math.atan2(dx,dz),d=Math.atan2(Math.sin(ta-player.rotation.y),Math.cos(ta-player.rotation.y));player.rotation.y+=d*Math.min(1,dt*12);if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;}
- if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);mountedHorse.group.rotation.y=player.rotation.y;player.position.y=1.36;}else player.position.y=0;
+ if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);mountedHorse.group.rotation.y=player.rotation.y;player.position.y=1.48;}else player.position.y=0;
  if(castleGate){gateAngle+=(gateTarget-gateAngle)*Math.min(1,dt*2.8);castleGate.rotation.y=gateAngle;}
 shadowRefresh+=dt;if(shadowRefresh>.18){shadowRefresh=0;sun.target.position.set(Math.round(player.position.x/2)*2,0,Math.round(player.position.z/2)*2);sun.position.set(sun.target.position.x-35,55,sun.target.position.z+28);renderer.shadowMap.needsUpdate=true;}
  const activeMotion=moving&&!mountedHorse?1:0;motionBlend+=(activeMotion-motionBlend)*Math.min(1,dt*5.5);
