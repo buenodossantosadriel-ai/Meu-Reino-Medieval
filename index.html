@@ -929,11 +929,11 @@ function prepareAvatarMotion(model,type){
 }
 let avatarModel=makeKnight();let avatarMotion=prepareAvatarMotion(avatarModel,'knight');player.add(avatarModel);
 const professionalAvatarUrls={
- knight:'https://vibeassets.io/download/9h7odik5fl',
+ knight:'/api/farm-model?type=knight',
  princess:'/api/farm-model?type=princess',
  ogre:'/api/farm-model?type=ogre'
 };
-const professionalAvatarNames={knight:'Cavaleiro humano de barba grisalha e armadura',princess:'Princesa guerreira em armadura medieval',ogre:'Ogro ciclope gigante com clava'};
+const professionalAvatarNames={knight:'Cavaleiro medieval de armadura completa',princess:'Princesa guerreira em armadura medieval',ogre:'Ogro ciclope gigante com clava'};
 const avatarLoader=new GLTFLoader(),avatarAssetPromises=new Map();
 let avatarInstance=null,avatarLoadToken=0;
 function disposeProceduralModel(model){
