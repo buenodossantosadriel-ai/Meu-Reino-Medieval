@@ -148,7 +148,7 @@ export function createImmersive4D(THREE, scene) {
       // Atualiza partículas a 30 Hz no máximo; a câmera continua renderizando na taxa normal.
       state.particleClock+=dt;
       if(state.particleClock>=1/30){
-        const step=state.particleClock;state.particleClock=0;
+        const step=1/30;state.particleClock-=step;
         const p=particleGeo.attributes.position.array;
         for(let i=0;i<maxParticles;i++){
           const k=i*3;p[k]+=velocities[k]*step+Math.sin(state.elapsed*.7+i)*step*.12;
