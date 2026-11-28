@@ -12,7 +12,9 @@ const SOURCES = {
   'horse-draft': 'https://vinish-models.pages.dev/horses/draft-horse.glb',
   knight: 'https://vinish-models.pages.dev/knights/plate-armour-knight.glb',
   princess: 'https://vinish-models.pages.dev/knights/lady-knight.glb',
-  ogre: 'https://vinish-models.pages.dev/monsters/cyclops.glb'
+  ogre: 'https://vinish-models.pages.dev/monsters/cyclops.glb',
+  goblin: 'https://vinish-models.pages.dev/goblins-and-trolls/goblin-raider.glb',
+  troll: 'https://vinish-models.pages.dev/goblins-and-trolls/forest-troll.glb'
 };
 module.exports = async function handler(req, res) {
   const type = String(req.query.type || '');
