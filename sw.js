@@ -32,7 +32,7 @@ self.addEventListener('fetch',event=>{
       const cache=await caches.open(CACHE);
       try{
         const response=await fetch(request);
-        if(response.ok)await cache.put('/',response.clone());
+        if(response.ok){try{await cache.put('/',response.clone());}catch(cacheError){console.warn('Cache da página indisponível:',cacheError);}}
         return response;
       }catch(error){
         const cached=await cache.match(request)||await cache.match('/');
@@ -49,7 +49,7 @@ self.addEventListener('fetch',event=>{
     if(cached)return cached;
     try{
       const response=await fetch(request);
-      if(response.ok)await cache.put(request,response.clone());
+      if(response.ok){try{await cache.put(request,response.clone());}catch(cacheError){console.warn('Cache do recurso indisponível:',cacheError);}}
       return response;
     }catch(error){
       const fallback=await cache.match(request);
