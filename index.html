@@ -90,7 +90,7 @@ scene.background=new THREE.Color(0x9fc8df);
 scene.fog=new THREE.Fog(0x9fc8df,175,390);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,1800);
 const isMobile=innerWidth<=900||navigator.maxTouchPoints>0;
-const mobilePixelRatioMax=Math.max(1,Math.min(devicePixelRatio,1.5));let adaptivePixelRatio=isMobile?Math.min(mobilePixelRatioMax,1.3):Math.min(devicePixelRatio,1.85);
+const mobilePixelRatioMax=Math.max(1,Math.min(devicePixelRatio,1.25));let adaptivePixelRatio=isMobile?Math.min(mobilePixelRatioMax,1.05):Math.min(devicePixelRatio,1.85);
 const renderer=new THREE.WebGLRenderer({antialias:!isMobile,powerPreference:'high-performance'});
 renderer.setPixelRatio(adaptivePixelRatio);
 renderer.setSize(innerWidth,innerHeight);
@@ -102,7 +102,7 @@ renderer.toneMappingExposure=1.12;
 const pmremGenerator=new THREE.PMREMGenerator(renderer);
 const charEnv=pmremGenerator.fromScene(new RoomEnvironment(),.04).texture;
 pmremGenerator.dispose();
-if(charEnv)scene.environment=charEnv;
+if(charEnv&&!isMobile)scene.environment=charEnv;
 renderer.toneMappingExposure=1.18;
 document.querySelector('#game').appendChild(renderer.domElement);
 const hemisphere=new THREE.HemisphereLight(0xdceeff,0x66734a,1.65);scene.add(hemisphere);
@@ -522,7 +522,7 @@ function castle(){
  const outerRoute=[[-20,0,-20],[20,0,-20],[20,0,20],[-20,0,20]];
  addCastlePatrol(wallRoute,.66,1.05);addCastlePatrol(wallRoute.map(([x,y,z])=>[-x,y,-z]),.66,1.12);
  addCastlePatrol(outerRoute,.74,1.45);addCastlePatrol(outerRoute.map(([x,y,z])=>[-x,0,-z]),.74,1.38);
- celestialGuardians=[];for(let i=0;i<7;i++){const angel=createCelestialAngel(i);scene.add(angel.group);installPhotorealAngelModel(angel);celestialGuardians.push({...angel,angle:i*Math.PI*2/7,radius:20+(i%3)*2,height:6.8+i*1.05});}
+ celestialGuardians=[];for(let i=0;i<7;i++){const angel=createCelestialAngel(i);scene.add(angel.group);if(!isMobile)installPhotorealAngelModel(angel);celestialGuardians.push({...angel,angle:i*Math.PI*2/7,radius:20+(i%3)*2,height:6.8+i*1.05});}
  // Círculo sagrado dos sete guardiões: o dragão não atravessa esta proteção.
  const angelWard=new THREE.Mesh(new THREE.TorusGeometry(58,.16,6,112),new THREE.MeshStandardMaterial({color:0xffe7a2,emissive:0xe5b957,emissiveIntensity:.75,transparent:true,opacity:.19,roughness:.28,metalness:.22,depthWrite:false}));angelWard.rotation.x=Math.PI/2;angelWard.position.y=.24;angelWard.castShadow=false;angelWard.receiveShadow=false;scene.add(angelWard);
  // Portal em arco com moldura de blocos e portão de madeira articulado.
@@ -2386,6 +2386,6 @@ shadowRefresh+=dt;if(shadowRefresh>(isMobile?1.15:.42)){shadowRefresh=0;const li
  lavaGlow.intensity=(worldLight.night>0.5?6.5:3.4)+Math.sin(t*.003)*.65;lavaGlow.distance=worldLight.night>0.5?95:58;
  if(ambientUpdateFrame%3===0)clouds.forEach((c,i)=>{c.position.x+=dt*3*(.45+(i%3)*.12);if(c.position.x>165)c.position.x=-165;});immersive4DAccumulator+=dt;if(!isMobile||immersive4DAccumulator>=.05){const immersiveDt=immersive4DAccumulator;immersive4DAccumulator=0;window.__medieval4D?.update(immersiveDt,t,player.position,worldLight,camera,{moving:activeMoving&&!cannonActive,mounted:!!mountedHorse,running});}renderer.render(scene,camera);if(isMobile){perfRenderTotal+=performance.now()-frameStart;perfFrameCount++;if(!perfWindowStart)perfWindowStart=t;if(t-perfWindowStart>=2000){const avg=perfRenderTotal/Math.max(1,perfFrameCount);window.__kingdomPerf={frameMs:+avg.toFixed(1),fps:+(1000/Math.max(avg,1)).toFixed(1),pixelRatio:adaptivePixelRatio,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};perfWindowStart=t;perfFrameCount=0;perfRenderTotal=0;}}lastRender=t;if(user&&t-lastSave>15000){lastSave=t;saveResources()}}
 document.addEventListener('visibilitychange',()=>{if(document.hidden){pauseKingdomAnimation();}else{last=0;lastRender=0;scheduleKingdomAnimation();}});addEventListener('pagehide',pauseKingdomAnimation);addEventListener('pageshow',()=>{last=0;lastRender=0;scheduleKingdomAnimation();});scheduleKingdomAnimation();
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);adaptivePixelRatio=isMobile?Math.min(mobilePixelRatioMax,1.3):Math.min(devicePixelRatio,1.85);renderer.setPixelRatio(adaptivePixelRatio);perfWindowStart=0;perfFrameCount=0;perfRenderTotal=0;});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);adaptivePixelRatio=isMobile?Math.min(mobilePixelRatioMax,1.05):Math.min(devicePixelRatio,1.85);renderer.setPixelRatio(adaptivePixelRatio);perfWindowStart=0;perfFrameCount=0;perfRenderTotal=0;});
 
 </script></body></html>
