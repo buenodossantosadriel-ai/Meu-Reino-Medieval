@@ -18,7 +18,22 @@ window.addEventListener('unhandledrejection',e=>{
  if(m) m.textContent='Falha inesperada do jogo: '+detail;
  console.error('Promise rejeitada no jogo:',e.reason);
 });
-const hintBox=document.querySelector('#hint');if(hintBox){let hintTimer=null;const showTemporaryHint=()=>{hintBox.classList.add('show');clearTimeout(hintTimer);hintTimer=setTimeout(()=>hintBox.classList.remove('show'),1000)};const hintObserver=new MutationObserver(showTemporaryHint);hintObserver.observe(hintBox,{childList:true,subtree:true,characterData:true});showTemporaryHint();}
+const hintBox=document.querySelector('#hint');if(hintBox){
+ let hintTimer=null,lastHintMessage=hintBox.textContent.trim();
+ const hideTemporaryHint=()=>{hintBox.classList.remove('show');};
+ const showTemporaryHint=()=>{
+  const message=hintBox.textContent.trim();
+  if(!message){clearTimeout(hintTimer);hideTemporaryHint();lastHintMessage='';return;}
+  if(message===lastHintMessage)return;
+  lastHintMessage=message;
+  clearTimeout(hintTimer);
+  hintBox.classList.add('show');
+  hintTimer=setTimeout(hideTemporaryHint,1000);
+ };
+ const hintObserver=new MutationObserver(showTemporaryHint);
+ hintObserver.observe(hintBox,{childList:true,subtree:true,characterData:true});
+ if(lastHintMessage){hintBox.classList.add('show');hintTimer=setTimeout(hideTemporaryHint,1000);}
+}
 </script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <script type="module">
@@ -1076,7 +1091,7 @@ const QUESTS=[
 ];
 let questData={level:1,xp:0,progress:{wood:0,stone:0,build:0,plant:0,animals:0,products:0,enemies:0},completed_quests:[]},questLoaded=false,questSaving=Promise.resolve();
 function questLevelFor(xp){let level=1,remaining=xp;while(remaining>=level*100){remaining-=level*100;level++}return {level,remaining,next:level*100}}
-let questToastTimer=null;function showQuestToast(message){const el=document.querySelector('#questToast');el.textContent=message;el.style.display='block';clearTimeout(questToastTimer);questToastTimer=setTimeout(()=>{el.style.display='none'},1000)}
+let questToastTimer=null;function showQuestToast(message){const el=document.querySelector('#questToast');clearTimeout(questToastTimer);el.textContent=message;el.style.display='block';questToastTimer=setTimeout(()=>{el.style.display='none';el.textContent=''},1000)}
 function renderQuests(){
  const lv=questLevelFor(questData.xp||0),el=document.querySelector('#questLevel');
  el.textContent='Nível '+lv.level+' · '+lv.remaining+'/'+lv.next+' XP';
