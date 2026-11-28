@@ -2083,7 +2083,7 @@ db.auth.getSession().then(async ({data,error})=>{
   }
 });
 
-const targetFrameMs=isMobile?1000/30:1000/55;let angelThreatCandidates=[],angelThreatRefresh=0,last=0,lastRender=0,walkPhase=0,shadowRefresh=0,motionBlend=0,playerMoveSpeed=0,perfWindowStart=0,perfFrameCount=0,perfRenderTotal=0;function animate(t){requestAnimationFrame(animate);if(t-lastRender<targetFrameMs)return;const frameStart=performance.now();const dt=Math.min((t-last)/1000,.05);last=t;
+const targetFrameMs=isMobile?1000/40:1000/55;let angelThreatCandidates=[],angelThreatRefresh=0,last=0,lastRender=0,walkPhase=0,shadowRefresh=0,motionBlend=0,playerMoveSpeed=0,perfWindowStart=0,perfFrameCount=0,perfRenderTotal=0;function animate(t){requestAnimationFrame(animate);if(t-lastRender<targetFrameMs)return;const frameStart=performance.now();const dt=Math.min((t-last)/1000,.05);last=t;
  if(!window.__medieval4D) window.__medieval4D=createImmersive4D(THREE,scene);
  const worldLight=updateWorldClock();
  if(!dragonLoadStarted&&Math.hypot(player.position.x-DRAGON_LAIR.x,player.position.z-DRAGON_LAIR.z)<55&&insideEnemyForest(player.position.x,player.position.z)){dragonLoadStarted=true;loadHorizonDragon();}
