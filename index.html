@@ -292,9 +292,29 @@ function tower(x,z){
 }
 let castleGate,castleBridge,gateAngle=0,gateTarget=0,castleBridgeTarget=0,fortressGuards=[],celestialGuardians=[],castlePatrols=[];
 
+let celestialGLTFPromise=null;
+function installPhotorealAngelModel(angel){
+ if(!celestialGLTFPromise)celestialGLTFPromise=new GLTFLoader().loadAsync('/public/querubim.glb');
+ celestialGLTFPromise.then(gltf=>{
+  if(angel.professional||!angel.group.parent)return;
+  const model=cloneSkeleton(gltf.scene);
+  model.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;object.frustumCulled=true;}});
+  const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+  const scale=2.22/Math.max(size.y,.001);
+  model.scale.setScalar(scale);
+  model.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
+  angel.body.visible=false;
+  angel.group.add(model);
+  const mixer=gltf.animations.length?new THREE.AnimationMixer(model):null;
+  if(mixer){const clip=gltf.animations.find(item=>/idle|stand|fly|hover/i.test(item.name))||gltf.animations[0];mixer.clipAction(clip).play();}
+  angel.professional={model,mixer};
+ }).catch(error=>console.warn('Modelo realista dos querubins indisponível; mantendo modelo leve:',error));
+}
+
 function createCelestialAngel(index){
- // Querubim leve: cabeça infantil, corpo pequeno, túnica simples e asas articuladas.
+ // Corpo procedural permanece como fallback enquanto o modelo humano é carregado.
  const g=new THREE.Group();
+ const body=new THREE.Group();g.add(body);
  const robe=new THREE.MeshStandardMaterial({color:index%2?0xfffbf0:0xeaf1fb,roughness:.94});
  const robeShade=new THREE.MeshStandardMaterial({color:0xd8e2ee,roughness:.96});
  const gold=new THREE.MeshStandardMaterial({color:0xe3bd69,metalness:.42,roughness:.42});
@@ -305,7 +325,7 @@ function createCelestialAngel(index){
  const eyeWhite=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.5});
  const iris=new THREE.MeshStandardMaterial({color:index%2?0x638eaa:0x6d8a68,roughness:.4});
  const dark=new THREE.MeshStandardMaterial({color:0x30251f,roughness:.55});
- const add=(geo,mat,x,y,z,sx=1,sy=1,sz=1,parent=g)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m};
+ const add=(geo,mat,x,y,z,sx=1,sy=1,sz=1,parent=body)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m};
  // Túnica curta e arredondada, com detalhes dourados discretos.
  add(new THREE.ConeGeometry(.48,.98,14,2),robe,0,.83,0,1,1,.9);
  add(new THREE.SphereGeometry(.34,16,12),robeShade,0,1.16,.04,1,.72,.92);
@@ -383,7 +403,7 @@ function createCelestialAngel(index){
  }
  const glow=new THREE.PointLight(0xffdf91,0,15,1.7);glow.position.set(0,1.85,.12);glow.castShadow=false;g.add(glow);
  const aura=new THREE.PointLight(0xfff0c8,0,6,2);aura.position.set(0,2.25,-.12);g.add(aura);
- return {group:g,wings,halo,weapon,weaponType,glow,aura,index,phase:index*.9,nextAttack:0};
+ return {group:g,body,wings,halo,weapon,weaponType,glow,aura,index,phase:index*.9,nextAttack:0};
 }
 
 const spiralStaircases=[];
@@ -447,7 +467,7 @@ function castle(){
  const outerRoute=[[-14.5,0,-14.5],[14.5,0,-14.5],[14.5,0,14.5],[-14.5,0,14.5]];
  addCastlePatrol(wallRoute,.66,1.05);addCastlePatrol(wallRoute.map(([x,y,z])=>[-x,y,-z]),.66,1.12);
  addCastlePatrol(outerRoute,.74,1.45);addCastlePatrol(outerRoute.map(([x,y,z])=>[-x,0,-z]),.74,1.38);
- celestialGuardians=[];for(let i=0;i<7;i++){const angel=createCelestialAngel(i);scene.add(angel.group);celestialGuardians.push({...angel,angle:i*Math.PI*2/7,radius:20+(i%3)*2,height:6.8+i*1.05});}
+ celestialGuardians=[];for(let i=0;i<7;i++){const angel=createCelestialAngel(i);scene.add(angel.group);installPhotorealAngelModel(angel);celestialGuardians.push({...angel,angle:i*Math.PI*2/7,radius:20+(i%3)*2,height:6.8+i*1.05});}
  // Círculo sagrado dos sete guardiões: o dragão não atravessa esta proteção.
  const angelWard=new THREE.Mesh(new THREE.TorusGeometry(36,.16,6,112),new THREE.MeshStandardMaterial({color:0xffe7a2,emissive:0xe5b957,emissiveIntensity:.75,transparent:true,opacity:.19,roughness:.28,metalness:.22,depthWrite:false}));angelWard.rotation.x=Math.PI/2;angelWard.position.y=.24;angelWard.castShadow=false;angelWard.receiveShadow=false;scene.add(angelWard);
  // Portal em arco com moldura de blocos e portão de madeira articulado.
@@ -2143,7 +2163,7 @@ shadowRefresh+=dt;if(shadowRefresh>(isMobile?.38:.18)){shadowRefresh=0;const lig
  }
  enemyUpdateAccumulator+=dt;if(enemyUpdateAccumulator>=.05){const enemyDt=enemyUpdateAccumulator;enemyUpdateAccumulator=0;updateEnemies(enemyDt,t);}
  angelUpdateAccumulator+=dt;if(angelUpdateAccumulator>=.05){const angelDt=angelUpdateAccumulator;angelUpdateAccumulator=0;
- for(const angel of celestialGuardians){angel.phase+=angelDt;if(angel.professional)angel.professional.mixer.update(angelDt);let tx,tz,ty;const playerCastleDistance=Math.hypot(player.position.x,player.position.z);const escort=angel.index===0&&playerCastleDistance>ENEMY_FOREST.castleSafeRadius;const followYaw=yaw;if(escort){const forwardX=Math.sin(followYaw),forwardZ=-Math.cos(followYaw),sideX=Math.cos(followYaw),sideZ=Math.sin(followYaw);if(angel.index===0){tx=player.position.x+forwardX*4.2;tz=player.position.z+forwardZ*4.2;ty=player.position.y+6.2+Math.sin(angel.phase*1.25)*.45;}else{const side=angel.index===1?-1:1;tx=player.position.x-forwardX*1.7+sideX*side*4.1;tz=player.position.z-forwardZ*1.7+sideZ*side*4.1;ty=player.position.y+5.5+Math.sin(angel.phase*1.25+angel.index)*.5;}}else{const a=angel.angle+t*.000075*(angel.index%2?1:-1);tx=Math.cos(a)*angel.radius;tz=Math.sin(a)*angel.radius;ty=angel.height+Math.sin(angel.phase*.95+angel.index*1.37)*(.78+(angel.index%3)*.18);}const pos=angel.group.position;const followSpeed=escort?1.65:.65;pos.x+=(tx-pos.x)*Math.min(1,angelDt*followSpeed);pos.z+=(tz-pos.z)*Math.min(1,angelDt*followSpeed);pos.y+=(ty-pos.y)*Math.min(1,angelDt*1.1);const dx=tx-pos.x,dz=tz-pos.z;if(Math.hypot(dx,dz)>.05)angel.group.rotation.y=Math.atan2(dx,dz);for(const wing of angel.wings){wing.pivot.rotation.z=wing.side*(.10+Math.sin(angel.phase*3.1)*.23+Math.sin(angel.phase*6.2)*.045);wing.pivot.rotation.x=.035+Math.sin(angel.phase*3.1)*.035;}angel.group.rotation.z=Math.sin(angel.phase*1.1)*.018;angel.halo.rotation.z=Math.sin(angel.phase*1.4)*.08;const darkness=worldLight.night;angel.glow.intensity=darkness*(escort?8.5:4.8);angel.glow.distance=escort?34:27;angel.aura.intensity=darkness*(escort?3.2:1.8);angel.glow.decay=1.35;angel.aura.distance=escort?15:11;angel.aura.decay=1.5;
+ for(const angel of celestialGuardians){angel.phase+=angelDt;if(angel.professional?.mixer)angel.professional.mixer.update(angelDt);let tx,tz,ty;const playerCastleDistance=Math.hypot(player.position.x,player.position.z);const escort=angel.index===0&&playerCastleDistance>ENEMY_FOREST.castleSafeRadius;const followYaw=yaw;if(escort){const forwardX=Math.sin(followYaw),forwardZ=-Math.cos(followYaw),sideX=Math.cos(followYaw),sideZ=Math.sin(followYaw);if(angel.index===0){tx=player.position.x+forwardX*4.2;tz=player.position.z+forwardZ*4.2;ty=player.position.y+6.2+Math.sin(angel.phase*1.25)*.45;}else{const side=angel.index===1?-1:1;tx=player.position.x-forwardX*1.7+sideX*side*4.1;tz=player.position.z-forwardZ*1.7+sideZ*side*4.1;ty=player.position.y+5.5+Math.sin(angel.phase*1.25+angel.index)*.5;}}else{const a=angel.angle+t*.000075*(angel.index%2?1:-1);tx=Math.cos(a)*angel.radius;tz=Math.sin(a)*angel.radius;ty=angel.height+Math.sin(angel.phase*.95+angel.index*1.37)*(.78+(angel.index%3)*.18);}const pos=angel.group.position;const followSpeed=escort?1.65:.65;pos.x+=(tx-pos.x)*Math.min(1,angelDt*followSpeed);pos.z+=(tz-pos.z)*Math.min(1,angelDt*followSpeed);pos.y+=(ty-pos.y)*Math.min(1,angelDt*1.1);const dx=tx-pos.x,dz=tz-pos.z;if(Math.hypot(dx,dz)>.05)angel.group.rotation.y=Math.atan2(dx,dz);for(const wing of angel.wings){wing.pivot.rotation.z=wing.side*(.10+Math.sin(angel.phase*3.1)*.23+Math.sin(angel.phase*6.2)*.045);wing.pivot.rotation.x=.035+Math.sin(angel.phase*3.1)*.035;}angel.group.rotation.z=Math.sin(angel.phase*1.1)*.018;angel.halo.rotation.z=Math.sin(angel.phase*1.4)*.08;const darkness=worldLight.night;angel.glow.intensity=darkness*(escort?8.5:4.8);angel.glow.distance=escort?34:27;angel.aura.intensity=darkness*(escort?3.2:1.8);angel.glow.decay=1.35;angel.aura.distance=escort?15:11;angel.aura.decay=1.5;
  // Os sete guardiões priorizam qualquer inimigo que esteja perseguindo o jogador.
  const threatNow=Date.now();if(threatNow>=angelThreatRefresh){angelThreatRefresh=threatNow+400;angelThreatCandidates=[];for(const e of enemyUnits){if(e.alive&&e.hasAggro&&Math.hypot(e.group.position.x-player.position.x,e.group.position.z-player.position.z)<38)angelThreatCandidates.push(e);}}
  let threat=null;for(const e of angelThreatCandidates){if(!e.alive)continue;const d=angel.group.position.distanceTo(e.group.position);if(d<52&&(!threat||d<threat.d))threat={e,d};}
