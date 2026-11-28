@@ -293,8 +293,8 @@ let castleGate,castleBridge,gateAngle=0,gateTarget=0,castleBridgeTarget=0,fortre
 let celestialGLTFPromise=null;
 function installPhotorealAngelModel(angel){
  // No celular, mantém o querubim procedural leve para evitar carregar sete modelos 3D pesados.
- return; // Mantém as sete aparências próprias; não substitui todos pelo mesmo GLB.
- if(!celestialGLTFPromise)celestialGLTFPromise=new GLTFLoader().loadAsync('/public/baby-character-rigged.glb').catch(error=>{celestialGLTFPromise=null;throw error;});
+ // Usa o querubim 3D enviado ao repositório; cada guardião recebe uma instância independente.
+ if(!celestialGLTFPromise)celestialGLTFPromise=new GLTFLoader().loadAsync('/baby-character-rigged.glb').catch(error=>{celestialGLTFPromise=null;throw error;});
  celestialGLTFPromise.then(gltf=>{
   if(angel.professional||!angel.group.parent)return;
   const model=cloneSkeleton(gltf.scene);
