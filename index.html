@@ -1583,7 +1583,7 @@ const ENEMY_FOREST={patrolRadius:11,castleSafeRadius:17,aggroRadius:36,spawnRadi
 function insideEnemyForest(x,z,radius=54){return Math.hypot(x,z)>ENEMY_FOREST.castleSafeRadius&&Math.hypot(x,z)<radius+ENEMY_FOREST.castleSafeRadius}
 function spawnEnemies(){if(enemyUnits.length)return;const placements=[[-18,18,'bandit'],[-25,8,'bandit'],[-30,-8,'ogre'],[-22,-23,'bandit'],[-8,-27,'bandit'],[9,-25,'ogre'],[25,-20,'bandit'],[31,-5,'bandit'],[28,13,'ogre'],[19,26,'bandit'],[5,32,'bandit'],[-10,31,'ogre'],[-33,20,'bandit'],[-38,2,'ogre'],[-35,-17,'bandit'],[38,23,'bandit'],[41,-15,'ogre'],[0,42,'bandit'],[-17,41,'bandit'],[17,42,'ogre'],[43,5,'bandit'],[-43,-5,'bandit']];enemyUnits=placements.map(([x,z,type])=>{const angle=Math.atan2(z,x);return createEnemy(type,Math.cos(angle)*ENEMY_FOREST.spawnRadius,Math.sin(angle)*ENEMY_FOREST.spawnRadius)});}
 function enemyMove(e,dx,dz){const nx=e.group.position.x+dx,nz=e.group.position.z+dz;if(!collidesAt(nx,nz,.48)){e.group.position.x=nx;e.group.position.z=nz;return true}if(!collidesAt(nx,e.group.position.z,.48))e.group.position.x=nx;if(!collidesAt(e.group.position.x,nz,.48))e.group.position.z=nz;return false}
-const fortressTargetCache=new Map();let fortressTargetRefresh=0;
+const fortressTargetCache=new Map();let fortressTargetRefresh=0,mobileEnemyVisualCount=0;
 function updateEnemies(dt,t){
  const now=Date.now();
  if(now>=fortressTargetRefresh){
@@ -1593,7 +1593,7 @@ function updateEnemies(dt,t){
  for(let i=0;i<enemyUnits.length;i++){
   let e=enemyUnits[i];if(!e.alive){if(now>=e.respawnAt){enemyUnits[i]=createEnemy(e.type,e.x,e.z);if(e.type==='bandit')loadBanditVisual(enemyUnits[i]);else loadOgreVisual(enemyUnits[i]);}continue}
   e.phase+=dt;const dx=player.position.x-e.group.position.x,dz=player.position.z-e.group.position.z,dist=Math.hypot(dx,dz);e.bar.quaternion.copy(camera.quaternion);
-  if(dist<48&&!e.professional&&!e.visualLoading&&!e.visualLoadAttempted){e.visualLoading=true;e.visualLoadAttempted=true;(e.type==='bandit'?loadBanditVisual(e):loadOgreVisual(e)).finally(()=>e.visualLoading=false);}
+  if(dist<48&&!e.professional&&!e.visualLoading&&!e.visualLoadAttempted&&(!isMobile||mobileEnemyVisualCount<4)){e.visualLoading=true;e.visualLoadAttempted=true;if(isMobile)mobileEnemyVisualCount++;(e.type==='bandit'?loadBanditVisual(e):loadOgreVisual(e)).finally(()=>e.visualLoading=false);}
   if(e.professional){
    e.professional.mixer.update(dt);
    setProfessionalGait(e.professional,e.state==='chase',e.state==='chase'&&dist<5);
