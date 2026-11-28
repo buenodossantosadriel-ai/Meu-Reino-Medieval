@@ -38,3 +38,6 @@ Os efeitos são executados localmente no navegador, sem chamadas adicionais ao S
 ## Créditos dos modelos 3D de personagens
 - Cavaleiro principal: “Plate Armour Knight”, de vinish.dev, licença CC BY 4.0. https://vinish.dev/free-3d-models/knights
 - Princesa guerreira: “Lady Knight”, de vinish.dev, licença CC BY 4.0. https://vinish.dev/free-3d-models/knights
+
+- Inimigo goblin: “Goblin Raider”, de vinish.dev, licença CC BY 4.0. https://vinish.dev/free-3d-models/goblins-and-trolls
+- Inimigo troll: “Forest Troll”, de vinish.dev, licença CC BY 4.0. https://vinish.dev/free-3d-models/goblins-and-trolls
