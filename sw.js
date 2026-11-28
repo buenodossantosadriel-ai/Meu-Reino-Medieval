@@ -44,12 +44,7 @@ self.addEventListener('fetch',event=>{
   event.respondWith((async()=>{
     const cache=await caches.open(CACHE);
     const cached=await cache.match(request);
-    if(cached){
-      event.waitUntil(fetch(request).then(response=>{
-        if(response.ok)return cache.put(request,response.clone());
-      }).catch(()=>{}));
-      return cached;
-    }
+    if(cached)return cached;
     try{
       const response=await fetch(request);
       if(response.ok)await cache.put(request,response.clone());
