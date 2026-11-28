@@ -79,7 +79,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL='https://vuvjxrxljlhvoldugmpz.supabase.co';
 const SUPABASE_KEY='sb_publishable_Rr0gZu8e2g7uLLSBugM2aA_93T5xOVY';
 const db=createClient(SUPABASE_URL,SUPABASE_KEY);
-let user=null,wood=0,stone=0,wool=0,health=100,coins=0,power=1,weapon="Espada de madeira",night=false,lastSave=0;const meshes={blocks:new Map(),trees:new Map(),animals:new Map(),fences:new Map(),wells:new Map()};const harvestRocks=[];
+let user=null,wood=0,stone=0,wool=0,health=100,coins=0,power=1,weapon="Espada de madeira",night=false,lastSave=0;const meshes={blocks:new Map(),trees:new Map(),animals:new Map(),fences:new Map(),wells:new Map()};const harvestRocks=[];let treeCullClock=0;
 const worldObstacles=[];
 function addCircleObstacle(x,z,r){worldObstacles.push({type:'circle',x,z,r})}
 function addRectObstacle(x,z,hx,hz){worldObstacles.push({type:'rect',x,z,hx,hz})}
@@ -94,7 +94,7 @@ const mobilePixelRatioMax=Math.max(1,Math.min(devicePixelRatio,1.5));let adaptiv
 const renderer=new THREE.WebGLRenderer({antialias:!isMobile,powerPreference:'high-performance'});
 renderer.setPixelRatio(adaptivePixelRatio);
 renderer.setSize(innerWidth,innerHeight);
-renderer.shadowMap.enabled=!isMobile;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=!isMobile;
+renderer.shadowMap.enabled=false;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=false;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -106,7 +106,7 @@ if(charEnv)scene.environment=charEnv;
 renderer.toneMappingExposure=1.18;
 document.querySelector('#game').appendChild(renderer.domElement);
 const hemisphere=new THREE.HemisphereLight(0xdceeff,0x66734a,1.65);scene.add(hemisphere);
-const sun=new THREE.DirectionalLight(0xffe2ad,2.4);sun.castShadow=!isMobile;
+const sun=new THREE.DirectionalLight(0xffe2ad,2.4);sun.castShadow=false;
 sun.shadow.mapSize.set(isMobile?768:1536,isMobile?768:1536);
 sun.shadow.camera.left=-40;sun.shadow.camera.right=40;sun.shadow.camera.top=40;sun.shadow.camera.bottom=-40;
 sun.shadow.bias=-.00025;sun.shadow.radius=isMobile?3:4;scene.add(sun);scene.add(sun.target);
@@ -176,7 +176,7 @@ const groundTexture=makeGroundTexture();
 groundTexture.colorSpace=THREE.SRGBColorSpace;groundTexture.anisotropy=Math.min(isMobile?4:8,renderer.capabilities.getMaxAnisotropy());groundTexture.needsUpdate=true;
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(420,420),new THREE.MeshStandardMaterial({map:groundTexture,bumpMap:isMobile?null:groundTexture,bumpScale:isMobile?0:.16,color:0xffffff,roughness:.96}));
 
-ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=false;scene.add(ground);
 // Céu em degradê e horizonte com colinas distantes
 const sky=new THREE.Mesh(new THREE.SphereGeometry(480,32,20),new THREE.ShaderMaterial({
  side:THREE.BackSide,depthWrite:false,uniforms:{nightFactor:{value:0}},
@@ -1782,17 +1782,18 @@ function updateEnemyHealth(e){const ratio=Math.max(0,e.health/e.maxHealth);e.fil
 function createAngelImpact(position,color=0xffe6a3){const fx=new THREE.Group();const core=new THREE.Mesh(new THREE.SphereGeometry(.72,14,10),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.92,depthWrite:false}));fx.add(core);const ring=new THREE.Mesh(new THREE.TorusGeometry(1.05,.075,8,28),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.95,depthWrite:false}));ring.rotation.x=Math.PI/2;fx.add(ring);fx.position.copy(position);fx.scale.setScalar(.45);scene.add(fx);const light=isMobile?null:new THREE.PointLight(color,3.8,13);if(light){light.position.copy(position);scene.add(light);}const started=performance.now();const animateFx=()=>{const p=Math.min(1,(performance.now()-started)/380);fx.scale.setScalar(.45+p*1.25);core.material.opacity=1-p;ring.material.opacity=1-p;if(light)light.intensity=3.8*(1-p);if(p<1)requestAnimationFrame(animateFx);else{scene.remove(fx);if(light)scene.remove(light);fx.traverse(o=>{o.geometry?.dispose();if(o.material)o.material.dispose()});}};requestAnimationFrame(animateFx);}
 const ENEMY_FOREST={patrolRadius:11,castleSafeRadius:58,aggroRadius:58,spawnRadius:120,engageRadius:76,outerRadius:165};
 function insideEnemyForest(x,z,radius=54){const d=Math.hypot(x,z);return d>ENEMY_FOREST.engageRadius&&d<ENEMY_FOREST.outerRadius&&d<radius+ENEMY_FOREST.outerRadius;}
-function spawnEnemies(){if(enemyUnits.length)return;const placements=[[-18,18,'bandit'],[-25,8,'bandit'],[-30,-8,'ogre'],[-22,-23,'bandit'],[-8,-27,'bandit'],[9,-25,'ogre'],[25,-20,'bandit'],[31,-5,'bandit'],[28,13,'ogre'],[19,26,'bandit'],[5,32,'bandit'],[-10,31,'ogre'],[-33,20,'bandit'],[-38,2,'ogre'],[-35,-17,'bandit'],[38,23,'bandit'],[41,-15,'ogre'],[0,42,'bandit'],[-17,41,'bandit'],[17,42,'ogre'],[43,5,'bandit'],[-43,-5,'bandit']];enemyUnits=placements.map(([x,z,type])=>{const angle=Math.atan2(z,x);return createEnemy(type,Math.cos(angle)*ENEMY_FOREST.spawnRadius,Math.sin(angle)*ENEMY_FOREST.spawnRadius)});}
+function spawnEnemies(){if(enemyUnits.length)return;const placements=[[-18,18,'bandit'],[-25,8,'bandit'],[-30,-8,'ogre'],[-22,-23,'bandit'],[-8,-27,'bandit'],[9,-25,'ogre'],[25,-20,'bandit'],[31,-5,'bandit'],[28,13,'ogre'],[19,26,'bandit'],[5,32,'bandit'],[-10,31,'ogre'],[-33,20,'bandit'],[-38,2,'ogre'],[-35,-17,'bandit'],[38,23,'bandit'],[41,-15,'ogre'],[0,42,'bandit'],[-17,41,'bandit'],[17,42,'ogre'],[43,5,'bandit'],[-43,-5,'bandit']];enemyUnits=placements.map(([x,z,type])=>{const angle=Math.atan2(z,x);return {type,x:Math.cos(angle)*ENEMY_FOREST.spawnRadius,z:Math.sin(angle)*ENEMY_FOREST.spawnRadius,group:null,model:null,bar:null,fill:null,professional:null,alive:true,respawnAt:0,health:type==='ogre'?150:80,maxHealth:type==='ogre'?150:80,hasAggro:false};});}
 function enemyMove(e,dx,dz){const nx=e.group.position.x+dx,nz=e.group.position.z+dz;if(!collidesAt(nx,nz,.48)){e.group.position.x=nx;e.group.position.z=nz;return true}if(!collidesAt(nx,e.group.position.z,.48))e.group.position.x=nx;if(!collidesAt(e.group.position.x,nz,.48))e.group.position.z=nz;return false}
 const fortressTargetCache=new Map();let fortressTargetRefresh=0,mobileEnemyVisualCount=0;
 function updateEnemies(dt,t){
  const now=Date.now();
  if(now>=fortressTargetRefresh){
   fortressTargetRefresh=now+350;
-  for(const guard of fortressGuards){let best=40,chosen=null;for(const e of enemyUnits){if(!e.alive||Math.hypot(e.group.position.x,e.group.position.z)>=68)continue;const d=guard.group.position.distanceTo(e.group.position);if(d<best){best=d;chosen=e;}}fortressTargetCache.set(guard,chosen);}
+  for(const guard of fortressGuards){let best=40,chosen=null;for(const e of enemyUnits){if(!e.alive||!e.group||Math.hypot(e.group.position.x,e.group.position.z)>=68)continue;const d=guard.group.position.distanceTo(e.group.position);if(d<best){best=d;chosen=e;}}fortressTargetCache.set(guard,chosen);}
  }
  for(let i=0;i<enemyUnits.length;i++){
-  let e=enemyUnits[i];if(!e.alive){if(now>=e.respawnAt){enemyUnits[i]=createEnemy(e.type,e.x,e.z);if(e.type==='bandit')loadBanditVisual(enemyUnits[i]);else loadOgreVisual(enemyUnits[i]);}continue}
+  let e=enemyUnits[i];if(!e.alive){if(now<e.respawnAt)continue;e.alive=true;e.group=null;e.professional=null;}
+  if(!e.group){const spawnDist=Math.hypot(player.position.x-e.x,player.position.z-e.z);if(spawnDist>78)continue;const fresh=createEnemy(e.type,e.x,e.z);Object.assign(e,fresh);}
   const dx=player.position.x-e.group.position.x,dz=player.position.z-e.group.position.z,dist=Math.hypot(dx,dz);
   // Fora do raio de atividade, os inimigos ficam ocultos e não executam IA/animações.
   // O raio é maior que o alcance de agressão, então eles são ativados antes de poderem atacar.
@@ -1855,7 +1856,7 @@ document.querySelector('#dodge').onclick=()=>{
 };
 document.querySelector('#attack').onclick=async()=>{
  if(!user)return;const now=Date.now();if(now-lastAttackAt<900){document.querySelector('#hint').textContent='Aguarde para atacar novamente.';return}lastAttackAt=now;
- const enemy=enemyUnits.filter(e=>e.alive).map(e=>({e,d:Math.hypot(e.group.position.x-player.position.x,e.group.position.z-player.position.z)})).filter(v=>v.d<3.6).sort((a,b)=>a.d-b.d)[0];
+ const enemy=enemyUnits.filter(e=>e.alive&&e.group).map(e=>({e,d:Math.hypot(e.group.position.x-player.position.x,e.group.position.z-player.position.z)})).filter(v=>v.d<3.6).sort((a,b)=>a.d-b.d)[0];
  attackUntil=Date.now()+720;window.__medieval4D?.play('sword',player.position);if(avatarInstance?.attackAction){avatarInstance.attackAction.reset().fadeIn(.08).play();avatarInstance.attackAction.clampWhenFinished=true;avatarInstance.attackAction.setLoop(THREE.LoopOnce,1)}
  if(enemy){const e=enemy.e;window.__medieval4D?.play('hit',e.group.position);const damage=Math.min(65,14+power*6);const awayX=e.group.position.x-player.position.x,awayZ=e.group.position.z-player.position.z,awayLen=Math.hypot(awayX,awayZ)||1;e.knockbackX=awayX/awayLen*(e.type==='ogre'?3.2:5.2);e.knockbackZ=awayZ/awayLen*(e.type==='ogre'?3.2:5.2);e.knockbackUntil=Date.now()+260;e.health=Math.max(0,e.health-damage);updateEnemyHealth(e);if(e.health<=0){e.alive=false;e.respawnAt=Date.now()+18000;scene.remove(e.group);coins+=e.reward;updateStats();await saveResources();advanceQuest('enemies',1);document.querySelector('#hint').textContent='🏅 '+(e.type==='ogre'?'Ciclope':'Bandido')+' derrotado! +'+e.reward+' moedas. Ele retornará em breve.'}else document.querySelector('#hint').textContent='⚔ Você acertou '+(e.type==='ogre'?'o ciclope':'o bandido')+'! '+e.health+'/'+e.maxHealth+' de vida restante.';return}
  const target=[...remotePlayers.values()].map(r=>({r,d:Math.hypot(r.group.position.x-player.position.x,r.group.position.z-player.position.z)})).filter(v=>v.d<3.4).sort((a,b)=>a.d-b.d)[0];
@@ -2228,7 +2229,7 @@ db.auth.getSession().then(async ({data,error})=>{
 
 const targetFrameMs=isMobile?1000/30:1000/55;let worldClockAccumulator=0,worldLightState={day:1,night:0,hour:12},enemyUpdateAccumulator=0,angelUpdateAccumulator=0,ambientUpdateFrame=0,immersive4DAccumulator=0,angelThreatCandidates=[],angelThreatRefresh=0,last=0,lastRender=0,walkPhase=0,shadowRefresh=0,motionBlend=0,playerMoveSpeed=0,perfWindowStart=0,perfFrameCount=0,perfRenderTotal=0,animationFrameId=0;function scheduleKingdomAnimation(){if(!document.hidden&&!animationFrameId)animationFrameId=requestAnimationFrame(animate);}function pauseKingdomAnimation(){if(animationFrameId){cancelAnimationFrame(animationFrameId);animationFrameId=0;}}function animate(t){animationFrameId=0;if(document.hidden)return;animationFrameId=requestAnimationFrame(animate);if(t-lastRender<targetFrameMs)return;const frameStart=performance.now();const dt=Math.min((t-last)/1000,.05);last=t;
  if(!window.__medieval4D) window.__medieval4D=createImmersive4D(THREE,scene);
- worldClockAccumulator+=dt;if(worldClockAccumulator>=.5){worldClockAccumulator=0;worldLightState=updateWorldClock();}const worldLight=worldLightState;updateVillage(dt,worldLight.hour);
+ worldClockAccumulator+=dt;if(worldClockAccumulator>=.5){worldClockAccumulator=0;worldLightState=updateWorldClock();}const worldLight=worldLightState;updateVillage(dt,worldLight.hour);treeCullClock+=dt;if(treeCullClock>=.45){treeCullClock=0;for(const treeGroup of meshes.trees.values()){const tx=treeGroup.userData.harvestX||0,tz=treeGroup.userData.harvestZ||0;treeGroup.visible=Math.hypot(player.position.x-tx,player.position.z-tz)<105;}}
  if(!dragonLoadStarted){dragonLoadStarted=true;loadHorizonDragon();}
  let sx=moveInput.x,sy=-moveInput.y;
  if(keys.w||keys.arrowup)sy=1;if(keys.s||keys.arrowdown)sy=-1;if(keys.a||keys.arrowleft)sx=-1;if(keys.d||keys.arrowright)sx=1;
@@ -2308,7 +2309,7 @@ shadowRefresh+=dt;if(shadowRefresh>(isMobile?1.15:.42)){shadowRefresh=0;const li
  angelUpdateAccumulator+=dt;if(angelUpdateAccumulator>=(isMobile ? .24 : .05)){const angelDt=angelUpdateAccumulator;angelUpdateAccumulator=0;
  for(const angel of celestialGuardians){angel.phase+=angelDt;if(angel.professional?.mixer)angel.professional.mixer.update(angelDt);let tx,tz,ty;const playerCastleDistance=Math.hypot(player.position.x,player.position.z);const escort=angel.index===0&&playerCastleDistance>ENEMY_FOREST.castleSafeRadius;const followYaw=yaw;if(escort){const forwardX=Math.sin(followYaw),forwardZ=-Math.cos(followYaw),sideX=Math.cos(followYaw),sideZ=Math.sin(followYaw);if(angel.index===0){tx=player.position.x+forwardX*4.2;tz=player.position.z+forwardZ*4.2;ty=player.position.y+6.2+Math.sin(angel.phase*1.25)*.45;}else{const side=angel.index===1?-1:1;tx=player.position.x-forwardX*1.7+sideX*side*4.1;tz=player.position.z-forwardZ*1.7+sideZ*side*4.1;ty=player.position.y+5.5+Math.sin(angel.phase*1.25+angel.index)*.5;}}else{const a=angel.angle+t*.000075*(angel.index%2?1:-1);tx=Math.cos(a)*angel.radius;tz=Math.sin(a)*angel.radius;ty=angel.height+Math.sin(angel.phase*.95+angel.index*1.37)*(.78+(angel.index%3)*.18);}const pos=angel.group.position;const followSpeed=escort?1.65:.65;pos.x+=(tx-pos.x)*Math.min(1,angelDt*followSpeed);pos.z+=(tz-pos.z)*Math.min(1,angelDt*followSpeed);pos.y+=(ty-pos.y)*Math.min(1,angelDt*1.1);const dx=tx-pos.x,dz=tz-pos.z;if(Math.hypot(dx,dz)>.05)angel.group.rotation.y=Math.atan2(dx,dz);for(const wing of angel.wings){wing.pivot.rotation.z=wing.side*(.10+Math.sin(angel.phase*3.1)*.23+Math.sin(angel.phase*6.2)*.045);wing.pivot.rotation.x=.035+Math.sin(angel.phase*3.1)*.035;}angel.group.rotation.z=Math.sin(angel.phase*1.1)*.018;angel.halo.rotation.z=Math.sin(angel.phase*1.4)*.08;const darkness=isMobile?0:worldLight.night;angel.glow.intensity=darkness*(escort?8.5:4.8);angel.glow.distance=escort?34:27;angel.aura.intensity=darkness*(escort?3.2:1.8);angel.glow.decay=1.35;angel.aura.distance=escort?15:11;angel.aura.decay=1.5;
  // Os sete guardiões priorizam qualquer inimigo que esteja perseguindo o jogador.
- const threatNow=Date.now();if(threatNow>=angelThreatRefresh){angelThreatRefresh=threatNow+400;angelThreatCandidates=[];for(const e of enemyUnits){if(e.alive&&e.hasAggro&&Math.hypot(e.group.position.x-player.position.x,e.group.position.z-player.position.z)<68)angelThreatCandidates.push(e);}}
+ const threatNow=Date.now();if(threatNow>=angelThreatRefresh){angelThreatRefresh=threatNow+400;angelThreatCandidates=[];for(const e of enemyUnits){if(e.alive&&e.group&&e.hasAggro&&Math.hypot(e.group.position.x-player.position.x,e.group.position.z-player.position.z)<68)angelThreatCandidates.push(e);}}
  let threat=null;for(const e of angelThreatCandidates){if(!e.alive)continue;const d=angel.group.position.distanceTo(e.group.position);if(d<68&&(!threat||d<threat.d))threat={e,d};}
  if(threat&&Date.now()>angel.nextAttack){
   const target=threat.e,origin=angel.group.position.clone().add(new THREE.Vector3(0,-.25,.25)),aim=target.group.position.clone().add(new THREE.Vector3(0,1.15,0)),dir=aim.sub(origin).normalize();
@@ -2344,7 +2345,7 @@ shadowRefresh+=dt;if(shadowRefresh>(isMobile?1.15:.42)){shadowRefresh=0;const li
   let dragonHit=false;
   if(!b.dragonChecked&&dragonFlight.ready&&dragonFlight.group&&!dragonFlight.destroyed){const dragonCenter=dragonFlight.group.position.clone().add(new THREE.Vector3(0,1.2,0));if(b.mesh.position.distanceTo(dragonCenter)<5.2){b.dragonChecked=true;dragonHit=true;dragonFlight.destroyed=true;dragonFlight.ready=false;dragonFlight.group.visible=false;dragonGlow.intensity=0;const p=dragonCenter.clone();const burst=new THREE.Mesh(new THREE.SphereGeometry(7,20,14),new THREE.MeshBasicMaterial({color:0xff7a28,transparent:true,opacity:.82}));burst.position.copy(p);scene.add(burst);setTimeout(()=>{scene.remove(burst);burst.geometry.dispose();burst.material.dispose()},900);coins+=300;updateStats();saveResources();document.querySelector('#hint').textContent='🐉 DRAGÃO DESTRUÍDO! Recompensa: +300 moedas!';}
   }
-  let target=enemyUnits.find(e=>e.alive&&e.group.position.distanceTo(b.mesh.position)<2.3),explode=dragonHit||!!target||b.mesh.position.y<.35||b.life<=0;
+  let target=enemyUnits.find(e=>e.alive&&e.group&&e.group.position.distanceTo(b.mesh.position)<2.3),explode=dragonHit||!!target||b.mesh.position.y<.35||b.life<=0;
   if(explode){const p=b.mesh.position.clone();const fx=new THREE.Mesh(new THREE.SphereGeometry(dragonHit?6:2.5,14,10),new THREE.MeshBasicMaterial({color:0xff6a20,transparent:true,opacity:.7}));fx.position.copy(p);scene.add(fx);setTimeout(()=>{scene.remove(fx);fx.geometry.dispose();fx.material.dispose()},320);if(target){target.health=Math.max(0,target.health-125);updateEnemyHealth(target);if(target.health<=0){target.alive=false;target.respawnAt=Date.now()+18000;scene.remove(target.group);coins+=target.reward;updateStats();saveResources();advanceQuest('enemies',1);document.querySelector('#hint').textContent='💥 Inimigo eliminado pela bola de fogo! +'+target.reward+' moedas.';}}
    if(!cannonActive&&Math.hypot(p.x-player.position.x,p.z-player.position.z)<2.8&&p.y<player.position.y+2.5){health=Math.max(0,health-25);updateStats();saveResources();document.querySelector('#hint').textContent='🔥 Sua própria bola de fogo caiu no castelo e causou -25 de vida!';if(health<=0){health=35;player.position.set(0,0,13);saveResources();}}
    scene.remove(b.mesh);b.mesh.geometry.dispose();b.mesh.material.dispose();cannonBalls.splice(i,1);
