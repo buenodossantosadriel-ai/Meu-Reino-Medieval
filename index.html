@@ -42,7 +42,7 @@ scene.background=new THREE.Color(0x9fc8df);
 scene.fog=new THREE.Fog(0x9fc8df,175,390);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,1800);
 const isMobile=innerWidth<=900||navigator.maxTouchPoints>0;
-const mobilePixelRatioMax=Math.max(1,Math.min(devicePixelRatio,1.25));let adaptivePixelRatio=isMobile?Math.max(1,Math.min(devicePixelRatio,1.12)):Math.min(devicePixelRatio,1.5);
+const mobilePixelRatioMax=Math.max(1,Math.min(devicePixelRatio,1.4));let adaptivePixelRatio=isMobile?Math.max(1,Math.min(devicePixelRatio,1.15)):Math.min(devicePixelRatio,1.5);
 const renderer=new THREE.WebGLRenderer({antialias:!isMobile,powerPreference:'high-performance'});
 renderer.setPixelRatio(adaptivePixelRatio);
 renderer.setSize(innerWidth,innerHeight);
@@ -119,12 +119,12 @@ function makeGroundTexture(){
  }
  const tex=new THREE.CanvasTexture(canvas);
  tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(17,17);
- tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+ tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=Math.min(isMobile?4:8,renderer.capabilities.getMaxAnisotropy());
  return tex;
 }
 const groundTexture=makeGroundTexture();
-groundTexture.colorSpace=THREE.SRGBColorSpace;groundTexture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());groundTexture.needsUpdate=true;
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(420,420),new THREE.MeshStandardMaterial({map:groundTexture,bumpMap:groundTexture,bumpScale:.16,color:0xffffff,roughness:.96}));
+groundTexture.colorSpace=THREE.SRGBColorSpace;groundTexture.anisotropy=Math.min(isMobile?4:8,renderer.capabilities.getMaxAnisotropy());groundTexture.needsUpdate=true;
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(420,420),new THREE.MeshStandardMaterial({map:groundTexture,bumpMap:isMobile?null:groundTexture,bumpScale:isMobile?0:.16,color:0xffffff,roughness:.96}));
 
 ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
 // Céu em degradê e horizonte com colinas distantes
@@ -2095,7 +2095,7 @@ db.auth.getSession().then(async ({data,error})=>{
   }
 });
 
-const targetFrameMs=isMobile?1000/40:1000/55;let angelThreatCandidates=[],angelThreatRefresh=0,last=0,lastRender=0,walkPhase=0,shadowRefresh=0,motionBlend=0,playerMoveSpeed=0,perfWindowStart=0,perfFrameCount=0,perfRenderTotal=0;function animate(t){requestAnimationFrame(animate);if(t-lastRender<targetFrameMs)return;const frameStart=performance.now();const dt=Math.min((t-last)/1000,.05);last=t;
+const targetFrameMs=isMobile?1000/40:1000/55;let ambientUpdateFrame=0,angelThreatCandidates=[],angelThreatRefresh=0,last=0,lastRender=0,walkPhase=0,shadowRefresh=0,motionBlend=0,playerMoveSpeed=0,perfWindowStart=0,perfFrameCount=0,perfRenderTotal=0;function animate(t){requestAnimationFrame(animate);if(t-lastRender<targetFrameMs)return;const frameStart=performance.now();const dt=Math.min((t-last)/1000,.05);last=t;
  if(!window.__medieval4D) window.__medieval4D=createImmersive4D(THREE,scene);
  const worldLight=updateWorldClock();
  if(!dragonLoadStarted&&Math.hypot(player.position.x-DRAGON_LAIR.x,player.position.z-DRAGON_LAIR.z)<55&&insideEnemyForest(player.position.x,player.position.z)){dragonLoadStarted=true;loadHorizonDragon();}
@@ -2155,18 +2155,20 @@ shadowRefresh+=dt;if(shadowRefresh>(isMobile?.38:.18)){shadowRefresh=0;const lig
    l.pivot.rotation.x=(activeMoving?Math.sin(phase)*.52*motionBlend:Math.sin(t*.001)*.008)-jumpBlend*.28+(dodgeBlend&&l.side<0?-.25:0);l.pivot.position.y=.68+(activeMoving?Math.max(0,Math.cos(phase))*.075*motionBlend:0);
   }
  }
- for(const bird of skyBirds){bird.phase+=dt*bird.speed;bird.group.position.x+=dt*bird.speed;if(bird.group.position.x>85)bird.group.position.x=-85;bird.group.position.y+=Math.sin(bird.phase*.7)*dt*.18;bird.group.position.z+=Math.sin(bird.phase*.32+bird.offset)*dt*.22;bird.group.rotation.y=Math.PI/2+Math.sin(bird.phase*.32+bird.offset)*.08;for(const wing of bird.wings)wing.pivot.rotation.z=Math.sin(bird.phase*5+(wing.side<0?Math.PI:0))*.62;}
- for(const animal of meshes.animals.values()){const u=animal.userData;u.phase=(u.phase||0)+dt*2.1;if(u.staticAsset){if(u.type==='chicken'||u.type==='cow'||u.type==='sheep'){u.roam=(u.roam||0)+dt*(u.type==='chicken'?.22:.11);const radius=u.type==='cow'?3.4: u.type==='sheep'?2.7:.8;animal.position.x=u.baseX+Math.sin(u.roam)*radius;animal.position.z=u.baseZ+Math.cos(u.roam*.73)*radius*.78;animal.rotation.y=Math.atan2(Math.cos(u.roam)*radius,-Math.sin(u.roam*.73)*radius*.57);animal.position.y=Math.abs(Math.sin(u.phase*2))*.018;}continue}animal.position.y=Math.abs(Math.sin(u.phase*2))*.018;if(u.head)u.head.rotation.x=Math.sin(u.phase*.7)*.045;if(u.tail)u.tail.rotation.x=Math.sin(u.phase*1.8)*.22;u.legs?.forEach((leg,i)=>{leg.rotation.x=Math.sin(u.phase*2.4+i*Math.PI)*.08;});}
+ if(++ambientUpdateFrame%2===0){const ambientDt=dt*2;
+ for(const bird of skyBirds){bird.phase+=ambientDt*bird.speed;bird.group.position.x+=ambientDt*bird.speed;if(bird.group.position.x>85)bird.group.position.x=-85;bird.group.position.y+=Math.sin(bird.phase*.7)*ambientDt*.18;bird.group.position.z+=Math.sin(bird.phase*.32+bird.offset)*ambientDt*.22;bird.group.rotation.y=Math.PI/2+Math.sin(bird.phase*.32+bird.offset)*.08;for(const wing of bird.wings)wing.pivot.rotation.z=Math.sin(bird.phase*5+(wing.side<0?Math.PI:0))*.62;}
+ for(const animal of meshes.animals.values()){const u=animal.userData;u.phase=(u.phase||0)+ambientDt*2.1;if(u.staticAsset){if(u.type==='chicken'||u.type==='cow'||u.type==='sheep'){u.roam=(u.roam||0)+ambientDt*(u.type==='chicken'?.22:.11);const radius=u.type==='cow'?3.4: u.type==='sheep'?2.7:.8;animal.position.x=u.baseX+Math.sin(u.roam)*radius;animal.position.z=u.baseZ+Math.cos(u.roam*.73)*radius*.78;animal.rotation.y=Math.atan2(Math.cos(u.roam)*radius,-Math.sin(u.roam*.73)*radius*.57);animal.position.y=Math.abs(Math.sin(u.phase*2))*.018;}continue}animal.position.y=Math.abs(Math.sin(u.phase*2))*.018;if(u.head)u.head.rotation.x=Math.sin(u.phase*.7)*.045;if(u.tail)u.tail.rotation.x=Math.sin(u.phase*1.8)*.22;u.legs?.forEach((leg,i)=>{leg.rotation.x=Math.sin(u.phase*2.4+i*Math.PI)*.08;});}
  for(const h of horses){
   const horseDistance=Math.hypot(h.group.position.x-player.position.x,h.group.position.z-player.position.z);
   if(!h.model&&!h.loading&&!h.loadFailed&&horseDistance<18){h.loading=true;loadRealHorse(h,h.horseType).catch(error=>{h.loadFailed=true;console.warn('Modelo de cavalo não carregou:',h.horseType,error);}).finally(()=>h.loading=false);}
-  if(h.mixer)h.mixer.update(dt);
+  if(h.mixer)h.mixer.update(ambientDt);
   if(h===mountedHorse)continue;
-  h.timer-=dt;if(h.timer<=0){const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*h.patrolRadius;h.target.set(h.home.x+Math.cos(a)*r,0,h.home.z+Math.sin(a)*r);h.timer=2.2+Math.random()*3.2;}
+  h.timer-=ambientDt;if(h.timer<=0){const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*h.patrolRadius;h.target.set(h.home.x+Math.cos(a)*r,0,h.home.z+Math.sin(a)*r);h.timer=2.2+Math.random()*3.2;}
   const vx=h.target.x-h.group.position.x,vz=h.target.z-h.group.position.z,dl=Math.hypot(vx,vz),walking=dl>.5;
-  if(walking){const speed=h.zone==='forest'?2.65:2.35;h.group.position.x+=vx/dl*speed*dt;h.group.position.z+=vz/dl*speed*dt;h.group.rotation.y=Math.atan2(vx,vz);}
+  if(walking){const speed=h.zone==='forest'?2.65:2.35;h.group.position.x+=vx/dl*speed*ambientDt;h.group.position.z+=vz/dl*speed*ambientDt;h.group.rotation.y=Math.atan2(vx,vz);}
   if(h.mixer)playHorseAnimation(h,walking?'Walk':'Idle');
   else{h.legs.forEach((leg,i)=>{leg.rotation.x=walking?Math.sin(t*.006+i*Math.PI)*.38:Math.sin(t*.0012+i)*.025;});if(h.tail)h.tail.rotation.x=Math.sin(t*.002)*.16;if(h.head)h.head.rotation.x=Math.sin(t*.0018+h.phase)*.025;}
+ }
  }
  if(mountedHorse){
   if(mountedHorse.mixer){mountedHorse.mixer.update(dt);playHorseAnimation(mountedHorse,moving?'Gallop':'Idle');}
