@@ -296,24 +296,39 @@ function createCelestialAngel(index){
   const foot=add(new THREE.SphereGeometry(.14,12,10),skin,side*.18,.16,.13,1,.65,1.25);
   add(new THREE.SphereGeometry(.055,10,8),gold,side*.31,1.25,.12);
  }
- // Cabeça maior e arredondada, olhos grandes, bochechas e cachinhos.
- add(new THREE.CylinderGeometry(.105,.12,.16,10),skin,0,1.38,0);
- add(new THREE.SphereGeometry(.49,24,20),skin,0,1.83,.045,1,1.02,.9);
+ // Rosto de bebê com proporções mais naturais: testa ampla, queixo curto e traços delicados.
+ const blush=new THREE.MeshStandardMaterial({color:0xe8a49a,roughness:.82});
+ const lips=new THREE.MeshStandardMaterial({color:0xa85f59,roughness:.68});
+ add(new THREE.SphereGeometry(.435,24,20),skin,0,1.84,.045,.96,1.12,.86);
+ // Orelhas pequenas, encaixadas nas laterais da cabeça.
  for(const side of [-1,1]){
-  add(new THREE.SphereGeometry(.105,14,12),skin,side*.29,1.67,.36,1,.78,.55);
-  add(new THREE.SphereGeometry(.105,14,12),eyeWhite,side*.17,1.91,.438,1,1,.45);
-  add(new THREE.SphereGeometry(.064,12,10),iris,side*.17,1.91,.485,1,1,.5);
-  add(new THREE.SphereGeometry(.032,10,8),dark,side*.17,1.91,.51);
-  add(new THREE.SphereGeometry(.014,8,6),eyeWhite,side*.19,1.94,.526);
-  const brow=add(new THREE.CapsuleGeometry(.018,.09,3,6),hair,side*.17,2.065,.42);brow.rotation.z=side*.08;
-  add(new THREE.SphereGeometry(.045,10,8),new THREE.MeshStandardMaterial({color:0xe99b91,roughness:.9}),side*.29,1.72,.397,.9,.65,.3);
+  add(new THREE.SphereGeometry(.092,12,10),skin,side*.405,1.82,.015,.72,1.05,.58);
+  add(new THREE.SphereGeometry(.043,10,8),blush,side*.438,1.82,.048,.7,1,.45);
+  // Olhos menores e mais profundos, com pálpebras e brilho discreto.
+  add(new THREE.SphereGeometry(.078,16,12),eyeWhite,side*.153,1.91,.405,1,.9,.48);
+  add(new THREE.SphereGeometry(.043,14,12),iris,side*.153,1.91,.443,1,1,.5);
+  add(new THREE.SphereGeometry(.022,12,10),dark,side*.153,1.91,.461);
+  add(new THREE.SphereGeometry(.009,8,6),eyeWhite,side*.166,1.928,.474);
+  const brow=add(new THREE.CapsuleGeometry(.012,.075,3,6),hair,side*.153,2.018,.39);brow.rotation.z=side*.07;
+  add(new THREE.SphereGeometry(.075,12,10),blush,side*.275,1.765,.345,.9,.55,.32);
  }
- add(new THREE.SphereGeometry(.055,10,8),skin,0,1.78,.49,.8,.7,.6);
- const smile=add(new THREE.TorusGeometry(.075,.012,5,16,Math.PI),dark,0,1.66,.475);smile.rotation.z=Math.PI;
- add(new THREE.SphereGeometry(.48,20,14),hair,0,2.13,-.055,1,.48,.88);
- // Cachos pequenos na testa e nas laterais.
- for(let i=0;i<7;i++){const a=Math.PI+(i/6)*Math.PI;add(new THREE.SphereGeometry(.105,10,8),hair,Math.cos(a)*.36,2.11+Math.sin(a)*.13,.31,.95,1,.9);}
- for(const side of [-1,1]){add(new THREE.SphereGeometry(.13,12,10),hair,side*.42,1.94,.02,1,.9,.9);add(new THREE.SphereGeometry(.09,10,8),hair,side*.45,1.78,-.015);}
+ // Nariz curto com ponte suave e ponta arredondada.
+ add(new THREE.CapsuleGeometry(.027,.075,4,8),skin,0,1.82,.425,.78,1,.72);
+ add(new THREE.SphereGeometry(.047,12,10),skin,0,1.785,.455,.92,.7,.78);
+ // Boca pequena, lábio inferior e queixo macio.
+ add(new THREE.SphereGeometry(.052,12,10),lips,0,1.695,.416,.9,.38,.32);
+ add(new THREE.SphereGeometry(.031,10,8),skin,0,1.645,.397,.9,.55,.3);
+ // Couro cabeludo e cachos assimétricos para evitar aparência de capacete.
+ add(new THREE.SphereGeometry(.455,20,16),hair,0,2.105,-.045,.99,.54,.88);
+ for(let i=0;i<9;i++){
+  const x=-.34+i*.085;
+  const y=2.075+Math.sin(i*1.17)*.055;
+  add(new THREE.SphereGeometry(.078+(i%3)*.009,10,8),hair,x,y,.315,.96,1.05,.82);
+ }
+ for(const side of [-1,1]){
+  add(new THREE.SphereGeometry(.105,12,10),hair,side*.405,1.94,.005,.95,.9,.86);
+  add(new THREE.SphereGeometry(.072,10,8),hair,side*.43,1.82,-.015);
+ }
  // Auréola dourada delicada.
  const halo=new THREE.Group();halo.position.set(0,2.53,-.08);g.add(halo);
  const ring=new THREE.Mesh(new THREE.TorusGeometry(.31,.028,8,36),gold);ring.rotation.x=Math.PI/2;halo.add(ring);
