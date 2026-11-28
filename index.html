@@ -349,30 +349,39 @@ function createCelestialAngel(index){
  const ring=new THREE.Mesh(new THREE.TorusGeometry(.39,.035,10,48),gold);ring.rotation.x=Math.PI/2;halo.add(ring);
  const innerRing=new THREE.Mesh(new THREE.TorusGeometry(.29,.012,6,40),robe);innerRing.rotation.x=Math.PI/2;halo.add(innerRing);
  for(let i=0;i<12;i++){const a=i*Math.PI/6,ray=add(new THREE.CylinderGeometry(.009,.018,.16,6),gold,Math.cos(a)*.48,2.72+Math.sin(a)*.48,-.08);ray.rotation.z=-a;}
+ // Geometria compartilhada de pena: silhueta afilada, curvada e com nervura em relevo.
+ const featherShape=new THREE.Shape();
+ featherShape.moveTo(0,-.24);
+ featherShape.bezierCurveTo(-.075,-.12,-.09,.12,0,.25);
+ featherShape.bezierCurveTo(.09,.12,.075,-.12,0,-.24);
+ const featherGeometry=new THREE.ExtrudeGeometry(featherShape,{depth:.018,steps:1,bevelEnabled:true,bevelSegments:2,bevelSize:.006,bevelThickness:.006});
+ featherGeometry.translate(0,0,-.009);
  const wings=[];
  for(const side of [-1,1]){
   const pivot=new THREE.Group();pivot.position.set(side*.24,1.77,-.19);pivot.scale.set(1.42,1.28,1);g.add(pivot);
-  const base=add(new THREE.SphereGeometry(.2,14,12),featherShade,side*.3,.12,-.04,1.25,1.7,.62,pivot);
-  // Camadas sobrepostas de penas longas, com pontas suaves.
+  add(new THREE.SphereGeometry(.2,14,12),featherShade,side*.3,.12,-.04,1.25,1.7,.62,pivot);
+  // Quatro camadas de penas individuais, sobrepostas como plumagem natural.
   for(let row=0;row<4;row++){
    const count=row===0?8:row===1?7:6;
    for(let j=0;j<count;j++){
     const x=side*(.25+j*.145),y=.29-row*.17+j*.09;
-    const f=add(new THREE.CapsuleGeometry(.052,.29,5,9),row%2?featherShade:feather,x,y,-.055+row*.028,.82,1.72,.55,pivot);
+    const f=add(featherGeometry,row%2?featherShade:feather,x,y,-.055+row*.028,.82,1.72,.55,pivot);
     f.rotation.z=side*(-.16-j*.045);
-    const shaft=add(new THREE.CapsuleGeometry(.006,.25,2,4),featherShade,x,y,-.015+row*.035,.7,1.45,.7,pivot);shaft.rotation.z=f.rotation.z;
+    const shaft=add(new THREE.CapsuleGeometry(.005,.22,2,4),featherShade,x,y,-.012+row*.035,.65,1.45,.65,pivot);
+    shaft.rotation.z=f.rotation.z;
    }
   }
+  // Penas inferiores curtas que fecham a borda interna da asa.
   for(let j=0;j<5;j++){
-   const f=add(new THREE.SphereGeometry(.105,12,10),feather,side*(.32+j*.13),-.34-j*.075,.02,.82,2.5,.5,pivot);
+   const f=add(featherGeometry,feather,side*(.32+j*.13),-.34-j*.075,.02,.82,1.05,.5,pivot);
    f.rotation.z=side*(-.24-j*.055);
   }
-  // Penas primárias longas e sobrepostas, dentro do construtor do anjo.
+  // Penas primárias mais longas, formando a ponta externa da asa.
   for(let j=0;j<10;j++){
    const t=j/9,x=side*(.68+t*.58),y=.2-t*.78;
-   const primary=add(new THREE.CapsuleGeometry(.055,.56,5,10),j%3===0?featherShade:feather,x,y,-.105,.78,2.05,.55,pivot);
+   const primary=add(featherGeometry,j%3===0?featherShade:feather,x,y,-.105,.78,2.35,.55,pivot);
    primary.rotation.z=side*(-.28-t*.42);
-   const vane=add(new THREE.CapsuleGeometry(.009,.43,3,5),featherShade,x-side*.025,y+.025,-.067,.72,1.7,.55,pivot);
+   const vane=add(new THREE.CapsuleGeometry(.006,.34,3,5),featherShade,x-side*.025,y+.025,-.067,.62,1.7,.55,pivot);
    vane.rotation.z=primary.rotation.z;
   }
   wings.push({pivot,side});
