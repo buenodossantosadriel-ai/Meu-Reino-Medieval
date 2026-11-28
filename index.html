@@ -83,29 +83,29 @@ let user=null,wood=0,stone=0,wool=0,health=100,coins=0,power=1,weapon="Espada de
 const worldObstacles=[];
 function addCircleObstacle(x,z,r){worldObstacles.push({type:'circle',x,z,r})}
 function addRectObstacle(x,z,hx,hz){worldObstacles.push({type:'rect',x,z,hx,hz})}
-function collidesAt(x,z,r=.52){for(const o of worldObstacles){if(o.type==='circle'){if(Math.hypot(x-o.x,z-o.z)<r+o.r)return true}else if(Math.abs(x-o.x)<o.hx+r&&Math.abs(z-o.z)<o.hz+r)return true}if(typeof gateAngle==='number'&&gateAngle>-.72){const ax=-1.52,az=8.04,bx=ax+Math.cos(gateAngle)*3.05,bz=az-Math.sin(gateAngle)*3.05,dx=bx-ax,dz=bz-az,t=Math.max(0,Math.min(1,((x-ax)*dx+(z-az)*dz)/(dx*dx+dz*dz))),px=ax+t*dx,pz=az+t*dz;if(Math.hypot(x-px,z-pz)<r+.16)return true}return false}
+function collidesAt(x,z,r=.52){for(const o of worldObstacles){if(o.type==='circle'){if(Math.hypot(x-o.x,z-o.z)<r+o.r)return true}else if(Math.abs(x-o.x)<o.hx+r&&Math.abs(z-o.z)<o.hz+r)return true}if(typeof gateAngle==='number'&&gateAngle>-.72){const ax=-1.52,az=12.04,bx=ax+Math.cos(gateAngle)*3.05,bz=az-Math.sin(gateAngle)*3.05,dx=bx-ax,dz=bz-az,t=Math.max(0,Math.min(1,((x-ax)*dx+(z-az)*dz)/(dx*dx+dz*dz))),px=ax+t*dx,pz=az+t*dz;if(Math.hypot(x-px,z-pz)<r+.16)return true}return false}
 function moveWithCollisions(dx,dz){const r=.52,nx=player.position.x+dx,nz=player.position.z+dz;if(!collidesAt(nx,nz,r)){player.position.x=nx;player.position.z=nz;return}if(!collidesAt(nx,player.position.z,r))player.position.x=nx;if(!collidesAt(player.position.x,nz,r))player.position.z=nz}
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x9fc8df);
 scene.fog=new THREE.Fog(0x9fc8df,175,390);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,1800);
 const isMobile=innerWidth<=900||navigator.maxTouchPoints>0;
-const mobilePixelRatioMax=Math.max(.85,Math.min(devicePixelRatio,1.4));let adaptivePixelRatio=isMobile?Math.min(mobilePixelRatioMax,1.15):Math.min(devicePixelRatio,1.75);
+const mobilePixelRatioMax=Math.max(1,Math.min(devicePixelRatio,1.5));let adaptivePixelRatio=isMobile?Math.min(mobilePixelRatioMax,1.3):Math.min(devicePixelRatio,1.85);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(adaptivePixelRatio);
 renderer.setSize(innerWidth,innerHeight);
-renderer.shadowMap.enabled=!isMobile;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=!isMobile;
+renderer.shadowMap.enabled=true;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.12;
-const charEnv=isMobile?null:new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(),.04).texture;
+const charEnv=new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(),.04).texture;
 if(charEnv)scene.environment=charEnv;
 renderer.toneMappingExposure=1.18;
 document.querySelector('#game').appendChild(renderer.domElement);
 const hemisphere=new THREE.HemisphereLight(0xdceeff,0x66734a,1.65);scene.add(hemisphere);
-const sun=new THREE.DirectionalLight(0xffe2ad,2.4);sun.castShadow=!isMobile;
-sun.shadow.mapSize.set(isMobile?512:1024,isMobile?512:1024);
+const sun=new THREE.DirectionalLight(0xffe2ad,2.4);sun.castShadow=true;
+sun.shadow.mapSize.set(isMobile?768:1536,isMobile?768:1536);
 sun.shadow.camera.left=-40;sun.shadow.camera.right=40;sun.shadow.camera.top=40;sun.shadow.camera.bottom=-40;
 sun.shadow.bias=-.00025;sun.shadow.radius=isMobile?3:4;scene.add(sun);scene.add(sun.target);
 const fill=new THREE.DirectionalLight(0x9dbbdf,.55);fill.position.set(30,18,-35);scene.add(fill);
@@ -558,32 +558,32 @@ function getSpiralStairElevation(x,z,currentY=0){
 function addCastlePatrol(path,scale=.72,speed=1.25){const group=new THREE.Group(),model=makeKnight();model.scale.setScalar(scale);group.add(model);group.position.set(path[0][0],path[0][1],path[0][2]);scene.add(group);castlePatrols.push({group,model,path,index:1,speed,phase:Math.random()*6});}
 function castle(){
  // Muralhas de pedra com entrada frontal aberta, ameias e quatro torres.
- box(0,2,-8,17,4,1.25,0xaaa99b,stoneMat);
- box(-4.85,2,8,6.3,4,1.25,0xaaa99b,stoneMat);box(4.85,2,8,6.3,4,1.25,0xaaa99b,stoneMat);
- box(-8,2,0,1.25,4,16,0xaaa99b,stoneMat);box(8,2,0,1.25,4,16,0xaaa99b,stoneMat);
- for(let x=-7.5;x<=7.5;x+=2){box(x,4.35,-8,.8,.65,1.35,0xaaa99b,stoneMat);if(Math.abs(x)>2)box(x,4.35,8,.8,.65,1.35,0xaaa99b,stoneMat)}
- for(let z=-6;z<=6;z+=2){box(-8,4.35,z,1.35,.65,.8,0xaaa99b,stoneMat);box(8,4.35,z,1.35,.65,.8,0xaaa99b,stoneMat)}
- tower(-8,-8);tower(8,-8);tower(-8,8);tower(8,8);
+ box(0,2,-12,25,4,1.25,0xaaa99b,stoneMat);
+ box(-7.85,2,12,9.3,4,1.25,0xaaa99b,stoneMat);box(7.85,2,12,9.3,4,1.25,0xaaa99b,stoneMat);
+ box(-12,2,0,1.25,4,24,0xaaa99b,stoneMat);box(12,2,0,1.25,4,24,0xaaa99b,stoneMat);
+ for(let x=-11.5;x<=11.5;x+=2){box(x,4.35,-12,.8,.65,1.35,0xaaa99b,stoneMat);if(Math.abs(x)>3.5)box(x,4.35,12,.8,.65,1.35,0xaaa99b,stoneMat)}
+ for(let z=-10;z<=10;z+=2){box(-12,4.35,z,1.35,.65,.8,0xaaa99b,stoneMat);box(12,4.35,z,1.35,.65,.8,0xaaa99b,stoneMat)}
+ tower(-12,-12);tower(12,-12);tower(-12,12);tower(12,12);
  // Cantaria em blocos alternados: textura geométrica de alvenaria nas quatro faces.
  const brickMat=new THREE.MeshStandardMaterial({color:0x96978d,roughness:.97}),brickGeo=new THREE.BoxGeometry(1.42,.52,.105),brickData=[];
- for(let row=0;row<4;row++){const y=.62+row*.92;for(let i=0;i<9;i++){const x=-7.05+i*1.76+(row%2)*.32;brickData.push([x,y,-8.66,0],[x,y,8.66,0]);const z=-7.05+i*1.76+(row%2)*.32;brickData.push([-8.66,y,z,Math.PI/2],[8.66,y,z,Math.PI/2]);}}
+ for(let row=0;row<4;row++){const y=.62+row*.92;for(let i=0;i<13;i++){const x=-11.05+i*1.76+(row%2)*.32;brickData.push([x,y,-12.66,0],[x,y,12.66,0]);const z=-11.05+i*1.76+(row%2)*.32;brickData.push([-12.66,y,z,Math.PI/2],[12.66,y,z,Math.PI/2]);}}
  const masonry=new THREE.InstancedMesh(brickGeo,brickMat,brickData.length),brickDummy=new THREE.Object3D();brickData.forEach(([x,y,z,rot],i)=>{brickDummy.position.set(x,y,z);brickDummy.rotation.set(0,rot,0);brickDummy.updateMatrix();masonry.setMatrixAt(i,brickDummy.matrix);});masonry.instanceMatrix.needsUpdate=true;masonry.castShadow=true;masonry.receiveShadow=true;scene.add(masonry);
- const moatGroup=new THREE.Group();const moatBed=new THREE.Mesh(new THREE.RingGeometry(10.1,13.2,80),new THREE.MeshStandardMaterial({color:0x756044,roughness:1}));moatBed.rotation.x=-Math.PI/2;moatBed.position.y=.035;moatGroup.add(moatBed);const moatWater=new THREE.Mesh(new THREE.RingGeometry(10.45,12.85,80),new THREE.MeshStandardMaterial({color:0x347f9b,roughness:.2,metalness:.12,transparent:true,opacity:.9}));moatWater.rotation.x=-Math.PI/2;moatWater.position.y=.075;moatGroup.add(moatWater);scene.add(moatGroup);
- castleBridge=new THREE.Group();castleBridge.position.set(0,.32,8.65);scene.add(castleBridge);const bridgeWood=new THREE.MeshStandardMaterial({color:0x684326,roughness:.88}),bridgeIron=new THREE.MeshStandardMaterial({color:0x333a3b,metalness:.7,roughness:.35});const bridgeDeck=new THREE.Mesh(new THREE.BoxGeometry(4.1,.32,6.8),bridgeWood);bridgeDeck.position.z=3.4;bridgeDeck.castShadow=true;bridgeDeck.receiveShadow=true;castleBridge.add(bridgeDeck);for(let i=-3;i<=3;i++){const plank=new THREE.Mesh(new THREE.BoxGeometry(.08,.36,6.75),bridgeIron);plank.position.set(i*.57,0,3.4);castleBridge.add(plank)}for(const x of [-1.8,1.8]){const rail=new THREE.Mesh(new THREE.BoxGeometry(.16,.75,6.5),bridgeWood);rail.position.set(x,.48,3.4);castleBridge.add(rail)}
- fortressGuards=[];for(const [gx,gz] of [[-6.3,-6.3],[6.3,-6.3],[-6.3,6.3],[6.3,6.3]]){const g=new THREE.Group(),knight=makeKnight();knight.scale.setScalar(.78);g.add(knight);g.position.set(gx,0,gz);scene.add(g);fortressGuards.push({group:g,model:knight,home:new THREE.Vector3(gx,0,gz),nextStrike:0,professional:null});}
+ const moatGroup=new THREE.Group();const moatBed=new THREE.Mesh(new THREE.RingGeometry(14.1,18.2,96),new THREE.MeshStandardMaterial({color:0x756044,roughness:1}));moatBed.rotation.x=-Math.PI/2;moatBed.position.y=.035;moatGroup.add(moatBed);const moatWater=new THREE.Mesh(new THREE.RingGeometry(14.45,17.85,96),new THREE.MeshStandardMaterial({color:0x347f9b,roughness:.2,metalness:.12,transparent:true,opacity:.9}));moatWater.rotation.x=-Math.PI/2;moatWater.position.y=.075;moatGroup.add(moatWater);scene.add(moatGroup);
+ castleBridge=new THREE.Group();castleBridge.position.set(0,.32,12.65);scene.add(castleBridge);const bridgeWood=new THREE.MeshStandardMaterial({color:0x684326,roughness:.88}),bridgeIron=new THREE.MeshStandardMaterial({color:0x333a3b,metalness:.7,roughness:.35});const bridgeDeck=new THREE.Mesh(new THREE.BoxGeometry(4.1,.32,6.8),bridgeWood);bridgeDeck.position.z=3.4;bridgeDeck.castShadow=true;bridgeDeck.receiveShadow=true;castleBridge.add(bridgeDeck);for(let i=-3;i<=3;i++){const plank=new THREE.Mesh(new THREE.BoxGeometry(.08,.36,6.75),bridgeIron);plank.position.set(i*.57,0,3.4);castleBridge.add(plank)}for(const x of [-1.8,1.8]){const rail=new THREE.Mesh(new THREE.BoxGeometry(.16,.75,6.5),bridgeWood);rail.position.set(x,.48,3.4);castleBridge.add(rail)}
+ fortressGuards=[];for(const [gx,gz] of [[-9.3,-9.3],[9.3,-9.3],[-9.3,9.3],[9.3,9.3]]){const g=new THREE.Group(),knight=makeKnight();knight.scale.setScalar(.78);g.add(knight);g.position.set(gx,0,gz);scene.add(g);fortressGuards.push({group:g,model:knight,home:new THREE.Vector3(gx,0,gz),nextStrike:0,professional:null});}
  castlePatrols=[];
- const wallRoute=[[-6.2,4.62,-8],[6.2,4.62,-8],[8,4.62,-6.2],[8,4.62,6.2],[6.2,4.62,8],[-6.2,4.62,8],[-8,4.62,6.2],[-8,4.62,-6.2]];
- const outerRoute=[[-14.5,0,-14.5],[14.5,0,-14.5],[14.5,0,14.5],[-14.5,0,14.5]];
+ const wallRoute=[[-10.2,4.62,-12],[10.2,4.62,-12],[12,4.62,-10.2],[12,4.62,10.2],[10.2,4.62,12],[-10.2,4.62,12],[-12,4.62,10.2],[-12,4.62,-10.2]];
+ const outerRoute=[[-20,0,-20],[20,0,-20],[20,0,20],[-20,0,20]];
  addCastlePatrol(wallRoute,.66,1.05);addCastlePatrol(wallRoute.map(([x,y,z])=>[-x,y,-z]),.66,1.12);
  addCastlePatrol(outerRoute,.74,1.45);addCastlePatrol(outerRoute.map(([x,y,z])=>[-x,0,-z]),.74,1.38);
  celestialGuardians=[];for(let i=0;i<7;i++){const angel=createCelestialAngel(i);scene.add(angel.group);installPhotorealAngelModel(angel);celestialGuardians.push({...angel,angle:i*Math.PI*2/7,radius:20+(i%3)*2,height:6.8+i*1.05});}
  // Círculo sagrado dos sete guardiões: o dragão não atravessa esta proteção.
  const angelWard=new THREE.Mesh(new THREE.TorusGeometry(58,.16,6,112),new THREE.MeshStandardMaterial({color:0xffe7a2,emissive:0xe5b957,emissiveIntensity:.75,transparent:true,opacity:.19,roughness:.28,metalness:.22,depthWrite:false}));angelWard.rotation.x=Math.PI/2;angelWard.position.y=.24;angelWard.castShadow=false;angelWard.receiveShadow=false;scene.add(angelWard);
  // Portal em arco com moldura de blocos e portão de madeira articulado.
- const arch=new THREE.Mesh(new THREE.TorusGeometry(1.62,.24,10,24,Math.PI),stoneMat);arch.rotation.z=Math.PI;arch.position.set(0,3.85,8.02);arch.castShadow=true;scene.add(arch);
- for(let y=.35;y<3.6;y+=.62){box(-1.72,y,8,.38,.55,1.48,0x96978e,stoneMat);box(1.72,y,8,.38,.55,1.48,0x96978e,stoneMat)}
- for(let x=-1.5;x<=1.5;x+=.5){if(Math.abs(x)>.01)box(x,4.05,8,.42,.5,1.35,0x96978e,stoneMat)}
- castleGate=new THREE.Group();castleGate.position.set(-1.52,0,8.04);scene.add(castleGate);
+ const arch=new THREE.Mesh(new THREE.TorusGeometry(1.62,.24,10,24,Math.PI),stoneMat);arch.rotation.z=Math.PI;arch.position.set(0,3.85,12.02);arch.castShadow=true;scene.add(arch);
+ for(let y=.35;y<3.6;y+=.62){box(-1.72,y,12,.38,.55,1.48,0x96978e,stoneMat);box(1.72,y,12,.38,.55,1.48,0x96978e,stoneMat)}
+ for(let x=-1.5;x<=1.5;x+=.5){if(Math.abs(x)>.01)box(x,4.05,12,.42,.5,1.35,0x96978e,stoneMat)}
+ castleGate=new THREE.Group();castleGate.position.set(-1.52,0,12.04);scene.add(castleGate);
  const leaf=new THREE.Group();castleGate.add(leaf);
  const plankMat=new THREE.MeshStandardMaterial({color:0x54351f,roughness:.86});
  const ironMat=new THREE.MeshStandardMaterial({color:0x333a3b,metalness:.72,roughness:.34});
@@ -593,8 +593,8 @@ function castle(){
  for(let x=.28;x<3;x+=.42)for(const y of [.55,2.85]){const rivet=new THREE.Mesh(new THREE.SphereGeometry(.055,8,8),ironMat);rivet.position.set(x,y,.19);leaf.add(rivet)}
  const handle=new THREE.Mesh(new THREE.TorusGeometry(.13,.035,8,12),ironMat);handle.position.set(2.75,1.75,.19);leaf.add(handle);
  // Ponte de acesso, caminho de pedra e iluminação junto à entrada.
- box(0,.18,12,4,.25,7,0x795b3a,woodMat);
- for(const x of [-2.35,2.35]){const post=box(x,1.2,9.2,.18,2.4,.18,0x60432c,woodMat);const flame=new THREE.PointLight(0xffa34b,1.4,8);flame.position.set(x,2.55,9.2);scene.add(flame)}
+ box(0,.18,16,4,.25,7,0x795b3a,woodMat);
+ for(const x of [-2.35,2.35]){const post=box(x,1.2,9.2,.18,2.4,.18,0x60432c,woodMat);const flame=new THREE.PointLight(0xffa34b,1.4,8);flame.position.set(x,2.55,13.2);scene.add(flame)}
  // Torre de menagem, telhado, janelas e reforços de pedra.
  // Salão real ampliado e acessível: paredes laterais, fundo e fachada com portal central aberto.
  const hallStone=stoneMat;
@@ -681,8 +681,8 @@ const cameraModeButton=document.createElement('button');cameraModeButton.type='b
 function toggleCastleGate(){gateTarget=gateTarget===0?-Math.PI/2:0;castleBridgeTarget=gateTarget===0?-.92:0;document.querySelector('#gate').textContent=gateTarget===0?'🚪 Abrir portão':'🚪 Fechar portão';document.querySelector('#hint').textContent=gateTarget===0?'O portão e a ponte levadiça estão fechando.':'O portão e a ponte levadiça estão baixando.'}
 document.querySelector('#gate').onclick=toggleCastleGate;
 // Colisões físicas das muralhas e da torre central; a abertura do portão permanece livre.
-addRectObstacle(0,-8,8.5,.68);addRectObstacle(-4.85,8,3.15,.68);addRectObstacle(4.85,8,3.15,.68);addRectObstacle(-8,0,.68,8);addRectObstacle(8,0,.68,8);
-addCircleObstacle(-8,-8,1.85);addCircleObstacle(8,-8,1.85);addCircleObstacle(-8,8,1.85);addCircleObstacle(8,8,1.85);
+addRectObstacle(0,-12,12.5,.68);addRectObstacle(-7.85,12,4.65,.68);addRectObstacle(7.85,12,4.65,.68);addRectObstacle(-12,0,.68,12);addRectObstacle(12,0,.68,12);
+addCircleObstacle(-12,-12,2.15);addCircleObstacle(12,-12,2.15);addCircleObstacle(-12,12,2.15);addCircleObstacle(12,12,2.15);
 addRectObstacle(-3.08,-2,.34,2.9);addRectObstacle(3.08,-2,.34,2.9);addRectObstacle(0,-4.84,2.85,.34);addRectObstacle(-2.12,.84,.98,.34);addRectObstacle(2.12,.84,.98,.34);
 const worldTreeLoader=new GLTFLoader(),worldTreeUrl='/api/farm-model?type=oak';let worldTreePromise=null;
 // Geometrias e materiais compartilhados evitam centenas de alocações repetidas no celular.
@@ -2421,12 +2421,12 @@ shadowRefresh+=dt;if(shadowRefresh>(isMobile?.38:.18)){shadowRefresh=0;const lig
  if(user&&live&&t-lastPresenceUpdate>1000){lastPresenceUpdate=t;live.track({client_id:clientId,user_id:user.id,name:playerName,avatar:selectedAvatar,x:player.position.x,z:player.position.z,rotation:player.rotation.y}).catch(e=>console.warn('Presença:',e));}
  if(user&&t-lastHeartbeat>10000){lastHeartbeat=t;heartbeatPlayerPosition();}
  if(user&&t-lastDbPlayersSync>15000){lastDbPlayersSync=t;syncDatabasePlayers();}
- const insideCastleHall=Math.abs(player.position.x)<1.55&&player.position.z> -4.35&&player.position.z<.25&&player.position.y<5.8;
+ const insideCastleHall=Math.abs(player.position.x)<11.15&&Math.abs(player.position.z)<11.15&&player.position.y<5.8;
  if(insideCastleHall!==castleInteriorCameraActive){castleInteriorCameraActive=insideCastleHall;firstPersonMode=insideCastleHall;player.visible=!firstPersonMode;cameraPitch=insideCastleHall?0:.88;cameraModeButton.textContent=firstPersonMode?'🎥 Terceira pessoa':'👁 Primeira pessoa';document.querySelector('#hint').textContent=insideCastleHall?'Você entrou no salão real. Câmera em primeira pessoa.':'Você saiu do castelo. Câmera em terceira pessoa.';}
  cameraDistanceCurrent+=(cameraDistance-cameraDistanceCurrent)*Math.min(1,dt*10);
  const horiz=Math.cos(cameraPitch)*cameraDistanceCurrent;
  const firstPersonEye=new THREE.Vector3(player.position.x,player.position.y+1.58,player.position.z);
- const firstPersonForward=new THREE.Vector3(Math.sin(yaw)*Math.cos(cameraPitch),-Math.sin(cameraPitch),Math.cos(yaw)*Math.cos(cameraPitch));
+ const firstPersonForward=new THREE.Vector3(-Math.sin(yaw)*Math.cos(cameraPitch),-Math.sin(cameraPitch),-Math.cos(yaw)*Math.cos(cameraPitch));
  const target=cannonActive?new THREE.Vector3(cannonMount.position.x+Math.sin(cannonYaw)*8*Math.cos(cannonPitch),cannonMount.position.y+1.05+Math.sin(cannonPitch)*8,cannonMount.position.z+Math.cos(cannonYaw)*8*Math.cos(cannonPitch)):firstPersonMode?firstPersonEye.clone().add(firstPersonForward.multiplyScalar(12)):new THREE.Vector3(player.position.x+Math.sin(yaw)*horiz,player.position.y+Math.sin(cameraPitch)*cameraDistanceCurrent+1.2,player.position.z+Math.cos(yaw)*horiz);
  const onLookout=player.position.y>8.7&&Math.hypot(player.position.x,player.position.z+2)<5.7;panoramaButton.style.display=onLookout&&!cannonActive?'block':'none';if(!onLookout)panoramaMode=false;if(cannonActive){const eye=cannonMount.position.clone().add(new THREE.Vector3(0,2.15,0));camera.position.copy(eye);camera.lookAt(target);cannonMount.userData.pivot.rotation.y=cannonYaw;cannonMount.userData.pivot.rotation.x=-cannonPitch;}else if(panoramaMode&&onLookout){const panoramic=new THREE.Vector3(player.position.x+Math.sin(yaw)*25,player.position.y+24,player.position.z+Math.cos(yaw)*25);camera.position.lerp(panoramic,.09);camera.lookAt(player.position.x,player.position.y-3.5,player.position.z);}else if(firstPersonMode){player.visible=false;camera.position.lerp(firstPersonEye,.35);camera.lookAt(target);}else{player.visible=true;camera.position.lerp(target,.14);camera.lookAt(player.position.x,player.position.y+1.1,player.position.z)}
  const nearCannon=!!cannonMount&&Math.hypot(player.position.x-cannonMount.position.x,player.position.z-cannonMount.position.z)<12&&!cannonActive;document.querySelector('#enterCannon').classList.toggle('hidden',!nearCannon);if(!document.querySelector('#mapPanel').classList.contains('hidden')&&t-lastMapDraw>500){lastMapDraw=t;drawKingdomMap();}
@@ -2438,8 +2438,8 @@ shadowRefresh+=dt;if(shadowRefresh>(isMobile?.38:.18)){shadowRefresh=0;const lig
  const dragonNear=dragonFlight.ready&&dragonFlight.group&&insideEnemyForest(player.position.x,player.position.z)&&Math.hypot(dragonFlight.group.position.x-player.position.x,dragonFlight.group.position.z-player.position.z)<7.5;if(dragonNear&&Date.now()>lastDragonDamage&&Date.now()<dragonBurnUntil){lastDragonDamage=Date.now()+620;health=Math.max(0,health-5);updateStats();saveResources();document.querySelector('#hint').textContent='🐉 Você está exposto às chamas do dragão! -5 de vida. Afaste-se!';if(health<=0){health=35;player.position.set(0,0,13);dragonBurnUntil=0;enemyInvulnerableUntil=Date.now()+2500;updateStats();saveResources();}}
  for(const smoke of volcanoSmoke){smoke.phase+=dt*.22;smoke.mesh.position.y+=dt*.55;if(smoke.mesh.position.y>125)smoke.mesh.position.y=74;smoke.mesh.position.x=Math.sin(smoke.phase)*5;smoke.mesh.material.opacity=.12+Math.sin(smoke.phase*2)*.06;}
  lavaGlow.intensity=(worldLight.night>0.5?6.5:3.4)+Math.sin(t*.003)*.65;lavaGlow.distance=worldLight.night>0.5?95:58;
- clouds.forEach((c,i)=>{c.position.x+=dt*(.45+(i%3)*.12);if(c.position.x>165)c.position.x=-165;});window.__medieval4D?.update(dt,t,player.position,worldLight,camera,{moving:activeMoving&&!cannonActive,mounted:!!mountedHorse,running});renderer.render(scene,camera);if(isMobile){perfRenderTotal+=performance.now()-frameStart;perfFrameCount++;if(!perfWindowStart)perfWindowStart=t;if(t-perfWindowStart>=1200){const avg=perfRenderTotal/Math.max(1,perfFrameCount);let next=adaptivePixelRatio;if(avg>24)next=Math.max(.75,adaptivePixelRatio-.08);else if(avg<16)next=Math.min(isMobile?mobilePixelRatioMax:Math.min(devicePixelRatio,1.75),adaptivePixelRatio+.04);if(Math.abs(next-adaptivePixelRatio)>=.015){adaptivePixelRatio=next;renderer.setPixelRatio(adaptivePixelRatio);}perfWindowStart=t;perfFrameCount=0;perfRenderTotal=0;}}lastRender=t;if(user&&t-lastSave>15000){lastSave=t;saveResources()}}
+ clouds.forEach((c,i)=>{c.position.x+=dt*(.45+(i%3)*.12);if(c.position.x>165)c.position.x=-165;});window.__medieval4D?.update(dt,t,player.position,worldLight,camera,{moving:activeMoving&&!cannonActive,mounted:!!mountedHorse,running});renderer.render(scene,camera);if(isMobile){perfRenderTotal+=performance.now()-frameStart;perfFrameCount++;if(!perfWindowStart)perfWindowStart=t;if(t-perfWindowStart>=1200){const avg=perfRenderTotal/Math.max(1,perfFrameCount);let next=adaptivePixelRatio;if(avg>28)next=Math.max(isMobile?1.0:.85,adaptivePixelRatio-.06);else if(avg<17)next=Math.min(isMobile?mobilePixelRatioMax:Math.min(devicePixelRatio,1.85),adaptivePixelRatio+.04);if(Math.abs(next-adaptivePixelRatio)>=.015){adaptivePixelRatio=next;renderer.setPixelRatio(adaptivePixelRatio);}perfWindowStart=t;perfFrameCount=0;perfRenderTotal=0;}}lastRender=t;if(user&&t-lastSave>15000){lastSave=t;saveResources()}}
 requestAnimationFrame(animate);
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);adaptivePixelRatio=isMobile?Math.min(mobilePixelRatioMax,1.15):Math.min(devicePixelRatio,1.75);renderer.setPixelRatio(adaptivePixelRatio);perfWindowStart=0;perfFrameCount=0;perfRenderTotal=0;});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);adaptivePixelRatio=isMobile?Math.min(mobilePixelRatioMax,1.3):Math.min(devicePixelRatio,1.85);renderer.setPixelRatio(adaptivePixelRatio);perfWindowStart=0;perfFrameCount=0;perfRenderTotal=0;});
 
 </script></body></html>
