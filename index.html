@@ -256,172 +256,83 @@ function tower(x,z){
 let castleGate,castleBridge,gateAngle=0,gateTarget=0,castleBridgeTarget=0,fortressGuards=[],celestialGuardians=[],castlePatrols=[];
 
 function createCelestialAngel(index){
+ // Querubim leve: cabeça infantil, corpo pequeno, túnica simples e asas articuladas.
  const g=new THREE.Group();
- const robe=new THREE.MeshStandardMaterial({color:index%2?0xf8f5ed:0xe9edf2,roughness:.96});
- const robeShade=new THREE.MeshStandardMaterial({color:0xd2d8df,roughness:.98});
- const gold=new THREE.MeshStandardMaterial({color:0xd9b765,metalness:.58,roughness:.34});
- const skin=new THREE.MeshStandardMaterial({color:index%3===0?0xe9c6ad:0xd9ad91,roughness:.88});
- const skinShadow=new THREE.MeshStandardMaterial({color:0xb9816e,roughness:.94});
- const hair=new THREE.MeshStandardMaterial({color:index%3===0?0x493126:index%3===1?0x806044:0x302b2b,roughness:.94});
- const feather=new THREE.MeshStandardMaterial({color:0xfffdf6,roughness:.92});
- const featherShade=new THREE.MeshStandardMaterial({color:0xe8edf1,roughness:.94});
- const eye=new THREE.MeshStandardMaterial({color:0x6b8b9c,roughness:.45,emissive:0x52758a,emissiveIntensity:.16});
- const add=(geo,matr,x,y,z,sx=1,sy=1,sz=1,parent=g)=>{const m=new THREE.Mesh(geo,matr);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m};
- // Túnica longa em camadas, com pregas e bordas douradas.
- add(new THREE.ConeGeometry(.58,1.55,16,3),robe,0,.91,0,1,1, .78);
- add(new THREE.CapsuleGeometry(.29,.48,7,14),robe,0,1.65,0,1,.92,.78);
- add(new THREE.SphereGeometry(.34,32,24),skin,0,2.18,.015,.86,1,.78);
- // Face com volume e proporções mais naturais: maçãs do rosto, queixo, nariz, pálpebras e boca.
- add(new THREE.SphereGeometry(.205,18,14),skin,0,2.015,.205,.92,.58,.62);
- add(new THREE.CapsuleGeometry(.043,.105,5,10),skin,0,2.16,.307,.72,1.18,.72);
- add(new THREE.SphereGeometry(.045,12,10),skin,0,2.105,.333,.8,.62,.72);
- add(new THREE.SphereGeometry(.026,10,8),skinShadow,0,2.045,.319,1.2,.34,.55);
+ const robe=new THREE.MeshStandardMaterial({color:index%2?0xfffbf0:0xeaf1fb,roughness:.94});
+ const robeShade=new THREE.MeshStandardMaterial({color:0xd8e2ee,roughness:.96});
+ const gold=new THREE.MeshStandardMaterial({color:0xe3bd69,metalness:.42,roughness:.42});
+ const skin=new THREE.MeshStandardMaterial({color:[0xf2c9ad,0xe8b994,0xd9a17f,0xf0d0b5][index%4],roughness:.9});
+ const hair=new THREE.MeshStandardMaterial({color:[0x8a5737,0x5a3829,0xc18a4c,0x302b2b][index%4],roughness:.96});
+ const feather=new THREE.MeshStandardMaterial({color:0xfffdf8,roughness:.93});
+ const featherShade=new THREE.MeshStandardMaterial({color:0xe5edf5,roughness:.95});
+ const eyeWhite=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.5});
+ const iris=new THREE.MeshStandardMaterial({color:index%2?0x638eaa:0x6d8a68,roughness:.4});
+ const dark=new THREE.MeshStandardMaterial({color:0x30251f,roughness:.55});
+ const add=(geo,mat,x,y,z,sx=1,sy=1,sz=1,parent=g)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m};
+ // Túnica curta e arredondada, com detalhes dourados discretos.
+ add(new THREE.ConeGeometry(.48,.98,14,2),robe,0,.83,0,1,1,.9);
+ add(new THREE.SphereGeometry(.34,16,12),robeShade,0,1.16,.04,1,.72,.92);
+ add(new THREE.TorusGeometry(.34,.025,6,24),gold,0,.48,0,1,1,.9).rotation.x=Math.PI/2;
+ add(new THREE.SphereGeometry(.12,12,10),gold,0,1.08,.32,.8,.8,.45);
+ // Braços curtos e mãos pequenas.
  for(const side of [-1,1]){
-  add(new THREE.SphereGeometry(.082,16,12),skin,side*.205,2.105,.235,1,.78,.62);
-  const lid=add(new THREE.TorusGeometry(.052,.012,6,16),skinShadow,side*.105,2.19,.319,1.12,.72,.6);lid.rotation.x=0;
-  add(new THREE.SphereGeometry(.018,10,8),skinShadow,side*.105,2.18,.328,1,.55,.4);
-  add(new THREE.SphereGeometry(.035,10,8),skinShadow,side*.032,2.025,.326,1.2,.28,.45);
+  const arm=add(new THREE.CapsuleGeometry(.105,.3,4,8),robe,side*.39,1.08,.015,.9,1,.9);arm.rotation.z=side*-.42;
+  add(new THREE.SphereGeometry(.105,12,10),skin,side*.49,.88,.13,.9,1,.9);
+  const foot=add(new THREE.SphereGeometry(.14,12,10),skin,side*.18,.16,.13,1,.65,1.25);
+  add(new THREE.SphereGeometry(.055,10,8),gold,side*.31,1.25,.12);
  }
- // Traços faciais e mechas discretas para dar mais expressão ao guardião.
- add(new THREE.ConeGeometry(.055,.16,8),skin,0,2.15,.315,.72,1,.72);
- add(new THREE.CapsuleGeometry(.012,.075,3,6),hair,-.105,2.275,.292,1,1,.8).rotation.z=-.12;
- add(new THREE.CapsuleGeometry(.012,.075,3,6),hair,.105,2.275,.292,1,1,.8).rotation.z=.12;
- add(new THREE.CapsuleGeometry(.012,.045,3,6),new THREE.MeshStandardMaterial({color:0x9b625e,roughness:.8}),0,2.055,.292,1,1,.7);
- for(const side of [-1,1])add(new THREE.SphereGeometry(.065,10,8),skin,side*.31,2.16,.015,.7,1,.65);
- // Pescoço, cabelo e moldura delicada do rosto.
- add(new THREE.CylinderGeometry(.105,.12,.2,12),skin,0,1.94,0);
- add(new THREE.SphereGeometry(.355,24,18),hair,0,2.34,-.055,.94,.72,.88);
- add(new THREE.SphereGeometry(.105,14,10),hair,-.29,2.13,-.005,.9,1.8,.9);
- add(new THREE.SphereGeometry(.105,14,10),hair,.29,2.13,-.005,.9,1.8,.9);
- // Mechas longas e curvas caindo atrás dos ombros.
- for(let side of [-1,1])for(let strand=0;strand<3;strand++){
-  const lock=add(new THREE.CapsuleGeometry(.045,.48+strand*.08,5,9),hair,side*(.25+strand*.045),1.91-strand*.06,-.13-strand*.025,.78,1.12,.8);
-  lock.rotation.z=side*(.12+strand*.1);
- }
+ // Cabeça maior e arredondada, olhos grandes, bochechas e cachinhos.
+ add(new THREE.CylinderGeometry(.105,.12,.16,10),skin,0,1.38,0);
+ add(new THREE.SphereGeometry(.49,24,20),skin,0,1.83,.045,1,1.02,.9);
  for(const side of [-1,1]){
-  add(new THREE.SphereGeometry(.052,12,10),new THREE.MeshStandardMaterial({color:0xfff5e9,roughness:.5}),side*.105,2.19,.285,1.18,.72,.5);
-  add(new THREE.SphereGeometry(.028,12,10),eye,side*.105,2.19,.307,1,1,.6);
-  add(new THREE.SphereGeometry(.014,8,8),new THREE.MeshStandardMaterial({color:0x101820,roughness:.25}),side*.105,2.19,.318);
-  const brow=add(new THREE.CapsuleGeometry(.014,.075,3,6),hair,side*.105,2.255,.282);brow.rotation.z=side*.08;
-  add(new THREE.SphereGeometry(.045,10,8),skin,side*.19,2.12,.22,.8,.72,.65);
-  const sleeve=add(new THREE.CapsuleGeometry(.105,.48,5,10),robe,side*.39,1.55,0,1,1,.95);sleeve.rotation.z=side*-.32;
-  add(new THREE.SphereGeometry(.105,12,10),skin,side*.49,1.27,.08);
-  // Pregas verticais da túnica e acabamento dourado na manga.
-  const fold=add(new THREE.CapsuleGeometry(.018,.78,3,6),robeShade,side*.23,.82,.39,1,1,.45);fold.rotation.z=side*.08;
-  const cuff=add(new THREE.TorusGeometry(.105,.025,6,14),gold,side*.39,1.31,0);cuff.rotation.z=Math.PI/2;
+  add(new THREE.SphereGeometry(.105,14,12),skin,side*.29,1.67,.36,1,.78,.55);
+  add(new THREE.SphereGeometry(.105,14,12),eyeWhite,side*.17,1.91,.438,1,1,.45);
+  add(new THREE.SphereGeometry(.064,12,10),iris,side*.17,1.91,.485,1,1,.5);
+  add(new THREE.SphereGeometry(.032,10,8),dark,side*.17,1.91,.51);
+  add(new THREE.SphereGeometry(.014,8,6),eyeWhite,side*.19,1.94,.526);
+  const brow=add(new THREE.CapsuleGeometry(.018,.09,3,6),hair,side*.17,2.065,.42);brow.rotation.z=side*.08;
+  add(new THREE.SphereGeometry(.045,10,8),new THREE.MeshStandardMaterial({color:0xe99b91,roughness:.9}),side*.29,1.72,.397,.9,.65,.3);
  }
- add(new THREE.TorusGeometry(.39,.035,8,36),gold,0,1.73,.02,1,1,1).rotation.x=Math.PI/2;
- add(new THREE.TorusGeometry(.47,.025,8,40),gold,0,.48,0,1,1,1).rotation.x=Math.PI/2;
- add(new THREE.SphereGeometry(.105,14,10),gold,0,1.67,.43,1,1,.45);
- const sash=add(new THREE.CapsuleGeometry(.045,.72,4,8),gold,0,1.34,.34,.8,1,.45);sash.rotation.z=-.12;
- // Anatomia mais definida: peitoral, ombreiras, mãos e pés sob a túnica.
- const breast=add(new THREE.SphereGeometry(.285,20,14),robeShade,0,1.53,.285,1.02,.72,.34);
- const breastTrim=add(new THREE.TorusGeometry(.255,.018,6,28),gold,0,1.52,.365,1,.78,.38);breastTrim.rotation.x=Math.PI/2;
- add(new THREE.SphereGeometry(.075,12,10),gold,0,1.48,.405,1,1,.55);
- for(const side of [-1,1]){
-  const upperArm=add(new THREE.CapsuleGeometry(.105,.31,6,10),robe,side*.39,1.53,-.005,1,1,.94);upperArm.rotation.z=side*-.34;
-  const forearm=add(new THREE.CapsuleGeometry(.082,.29,6,10),robeShade,side*.48,1.34,.055,1,1,.9);forearm.rotation.z=side*-.2;
-  const pauldron=add(new THREE.SphereGeometry(.19,14,10),gold,side*.39,1.72,-.015,1.18,.68,.92);
-  const inset=add(new THREE.SphereGeometry(.135,12,10),robe,side*.405,1.745,.055,1.12,.62,.72);
-  const hand=add(new THREE.SphereGeometry(.105,14,10),skin,side*.51,1.22,.105,.82,1.08,.72);
-  for(let finger=0;finger<4;finger++){
-   const digit=add(new THREE.CapsuleGeometry(.018,.105,3,6),skin,side*(.445+finger*.043),1.145,.16,.82,1,.8);
-   digit.rotation.z=side*(.12+finger*.055);
-  }
-  // Pequenas joias nas mangas e nas laterais do cinto.
-  add(new THREE.SphereGeometry(.045,10,8),gold,side*.3,1.32,.31);
- }
- for(const side of [-1,1]){
-  const sandal=add(new THREE.CapsuleGeometry(.105,.23,4,8),gold,side*.19,.105,.095,1,.42,1.45);
-  sandal.rotation.x=-.12;
-  add(new THREE.CapsuleGeometry(.075,.23,4,8),robeShade,side*.19,.32,-.005,1,.75,.8);
- }
- // Pingente solar e bordado vertical para reforçar a leitura celestial.
- const sunPendant=add(new THREE.CircleGeometry(.105,24),gold,0,1.32,.397);sunPendant.rotation.x=0;
- add(new THREE.SphereGeometry(.045,12,10),new THREE.MeshStandardMaterial({color:0xffe6a0,emissive:0xffc85a,emissiveIntensity:.45}),0,1.32,.412);
- const embroidery=add(new THREE.CapsuleGeometry(.012,.48,3,6),gold,0,.83,.405,.75,1,.4);
- // Manto curto sobre os ombros, com queda atrás do corpo.
- const mantle=add(new THREE.ConeGeometry(.48,.82,14,2,true),robeShade,0,1.38,-.31,1.05,1,.35);
- mantle.rotation.x=Math.PI;
-
- add(new THREE.TorusGeometry(.22,.025,6,24),gold,0,.28,0,1,1,.8).rotation.x=Math.PI/2;
- // Auréola dupla e raios suaves.
- const halo=new THREE.Group();halo.position.set(0,2.72,-.08);g.add(halo);
- const ring=new THREE.Mesh(new THREE.TorusGeometry(.39,.035,10,48),gold);ring.rotation.x=Math.PI/2;halo.add(ring);
- const innerRing=new THREE.Mesh(new THREE.TorusGeometry(.29,.012,6,40),robe);innerRing.rotation.x=Math.PI/2;halo.add(innerRing);
- for(let i=0;i<12;i++){const a=i*Math.PI/6,ray=add(new THREE.CylinderGeometry(.009,.018,.16,6),gold,Math.cos(a)*.48,2.72+Math.sin(a)*.48,-.08);ray.rotation.z=-a;}
- // Penas desenhadas em lote com InstancedMesh: reduz centenas de chamadas de desenho.
- const featherShape=new THREE.Shape();
- featherShape.moveTo(0,-.24);
- featherShape.bezierCurveTo(-.075,-.12,-.09,.12,0,.25);
- featherShape.bezierCurveTo(.09,.12,.075,-.12,0,-.24);
- const featherGeometry=new THREE.ExtrudeGeometry(featherShape,{depth:.018,steps:1,bevelEnabled:true,bevelSegments:1,bevelSize:.004,bevelThickness:.004});
- featherGeometry.translate(0,0,-.009);
- const shaftGeometry=new THREE.CapsuleGeometry(.005,.22,2,4);
+ add(new THREE.SphereGeometry(.055,10,8),skin,0,1.78,.49,.8,.7,.6);
+ const smile=add(new THREE.TorusGeometry(.075,.012,5,16,Math.PI),dark,0,1.66,.475);smile.rotation.z=Math.PI;
+ add(new THREE.SphereGeometry(.48,20,14),hair,0,2.13,-.055,1,.48,.88);
+ // Cachos pequenos na testa e nas laterais.
+ for(let i=0;i<7;i++){const a=Math.PI+(i/6)*Math.PI;add(new THREE.SphereGeometry(.105,10,8),hair,Math.cos(a)*.36,2.11+Math.sin(a)*.13,.31,.95,1,.9);}
+ for(const side of [-1,1]){add(new THREE.SphereGeometry(.13,12,10),hair,side*.42,1.94,.02,1,.9,.9);add(new THREE.SphereGeometry(.09,10,8),hair,side*.45,1.78,-.015);}
+ // Auréola dourada delicada.
+ const halo=new THREE.Group();halo.position.set(0,2.53,-.08);g.add(halo);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(.31,.028,8,36),gold);ring.rotation.x=Math.PI/2;halo.add(ring);
+ const innerRing=new THREE.Mesh(new THREE.TorusGeometry(.235,.012,6,32),robe);innerRing.rotation.x=Math.PI/2;halo.add(innerRing);
+ // Duas asas pequenas articuladas, com penas simples e geometria econômica.
  const wings=[];
  for(const side of [-1,1]){
-  const pivot=new THREE.Group();pivot.position.set(side*.24,1.77,-.19);pivot.scale.set(1.42,1.28,1);g.add(pivot);
-  add(new THREE.SphereGeometry(.2,12,10),featherShade,side*.3,.12,-.04,1.25,1.7,.62,pivot);
-  const featherMatrices=[[],[]],shaftMatrices=[];
-  const dummy=new THREE.Object3D();
-  const queueFeather=(batch,x,y,z,sx,sy,sz,rz)=>{
-   dummy.position.set(x,y,z);dummy.rotation.set(0,0,rz);dummy.scale.set(sx,sy,sz);dummy.updateMatrix();
-   featherMatrices[batch].push(dummy.matrix.clone());
-  };
-  const queueShaft=(x,y,z,sx,sy,sz,rz)=>{
-   dummy.position.set(x,y,z);dummy.rotation.set(0,0,rz);dummy.scale.set(sx,sy,sz);dummy.updateMatrix();
-   shaftMatrices.push(dummy.matrix.clone());
-  };
-  // Quatro fileiras de penas sobrepostas; todas preservam a curvatura da silhueta.
-  for(let row=0;row<4;row++){
-   const count=row===0?8:row===1?7:6;
-   for(let j=0;j<count;j++){
-    const x=side*(.25+j*.145),y=.29-row*.17+j*.09,rz=side*(-.16-j*.045);
-    queueFeather(row%2?1:0,x,y,-.055+row*.028,.82,1.72,.55,rz);
-    queueShaft(x,y,-.012+row*.035,.65,1.45,.65,rz);
-   }
+  const pivot=new THREE.Group();pivot.position.set(side*.27,1.34,-.18);pivot.scale.set(1.08,1.05,1);g.add(pivot);
+  add(new THREE.SphereGeometry(.19,12,10),featherShade,side*.18,.08,-.025,1.15,1.7,.62,pivot);
+  for(let j=0;j<6;j++){
+   const f=add(new THREE.CapsuleGeometry(.075,.34+(j%3)*.09,3,7),j%2?feather:featherShade,side*(.22+j*.105),.12-j*.105,-.045+j*.012,.82,1.18,.58,pivot);
+   f.rotation.z=side*(-.22-j*.075);
   }
-  for(let j=0;j<5;j++){
-   const x=side*(.32+j*.13),y=-.34-j*.075,rz=side*(-.24-j*.055);
-   queueFeather(0,x,y,.02,.82,1.05,.5,rz);
-  }
-  for(let j=0;j<10;j++){
-   const t=j/9,x=side*(.68+t*.58),y=.2-t*.78,rz=side*(-.28-t*.42);
-   queueFeather(j%3===0?1:0,x,y,-.105,.78,2.35,.55,rz);
-   queueShaft(x-side*.025,y+.025,-.067,.62,2.64,.55,rz);
-  }
-  for(let batch=0;batch<2;batch++){
-   const matrices=featherMatrices[batch];if(!matrices.length)continue;
-   const mesh=new THREE.InstancedMesh(featherGeometry,batch?featherShade:feather,matrices.length);
-   for(let i=0;i<matrices.length;i++)mesh.setMatrixAt(i,matrices[i]);
-   mesh.instanceMatrix.needsUpdate=true;mesh.castShadow=true;mesh.receiveShadow=true;pivot.add(mesh);
-  }
-  const shafts=new THREE.InstancedMesh(shaftGeometry,featherShade,shaftMatrices.length);
-  for(let i=0;i<shaftMatrices.length;i++)shafts.setMatrixAt(i,shaftMatrices[i]);
-  shafts.instanceMatrix.needsUpdate=true;shafts.castShadow=false;shafts.receiveShadow=false;pivot.add(shafts);
   wings.push({pivot,side});
  }
- // Cada anjo carrega uma arma própria: arco de fogo, lança ou espada.
+ // Mantém as categorias de arma e a lógica de combate existentes.
  const weaponType=['firebow','spear','sword'][index%3];
- const weapon=new THREE.Group();weapon.position.set(index%2?-.57:.57,1.03,.13);g.add(weapon);
+ const weapon=new THREE.Group();weapon.position.set(index%2?-.48:.48,.86,.16);g.add(weapon);
  if(weaponType==='firebow'){
-  const bow=add(new THREE.TorusGeometry(.42,.045,8,24,Math.PI*1.15),gold,0,.92,0,1,1,1,weapon);bow.rotation.z=Math.PI/2;
-  add(new THREE.CylinderGeometry(.012,.012,1.05,6),robe,0,.92,.015,1,1,1,weapon);
-  add(new THREE.SphereGeometry(.075,10,8),new THREE.MeshStandardMaterial({color:0xff7a28,emissive:0xff3b08,emissiveIntensity:1.5}),0,1.48,.02,1,1,1,weapon);
+  const bow=add(new THREE.TorusGeometry(.22,.025,6,18,Math.PI*1.15),gold,0,.48,0,1,1,1,weapon);bow.rotation.z=Math.PI/2;
+  add(new THREE.CylinderGeometry(.008,.008,.62,5),robe,0,.48,.015,1,1,1,weapon);
+  add(new THREE.SphereGeometry(.045,8,7),new THREE.MeshStandardMaterial({color:0xff9b42,emissive:0xff4b12,emissiveIntensity:1.2}),0,.82,.02,1,1,1,weapon);
  }else if(weaponType==='spear'){
-  const shaft=add(new THREE.CylinderGeometry(.035,.05,2.05,10),gold,0,.95,0,1,1,1,weapon);
-  const tip=add(new THREE.ConeGeometry(.13,.42,8),robe,0,2.18,0,1,1,1,weapon);
-  add(new THREE.TorusGeometry(.07,.025,6,12),gold,0,1.96,0,1,1,1,weapon);
+  add(new THREE.CylinderGeometry(.022,.03,1.05,7),gold,0,.55,0,1,1,1,weapon);
+  add(new THREE.ConeGeometry(.075,.24,7),robe,0,1.18,0,1,1,1,weapon);
  }else{
-  add(new THREE.CylinderGeometry(.035,.055,1.22,8),robe,0,1.03,0,1,1,1,weapon);
-  const blade=add(new THREE.ConeGeometry(.105,.88,8),gold,0,2.02,0,1,1,1,weapon);
-  add(new THREE.BoxGeometry(.62,.09,.12),gold,0,1.48,0,1,1,1,weapon);
+  add(new THREE.CylinderGeometry(.025,.035,.66,7),gold,0,.48,0,1,1,1,weapon);
+  add(new THREE.ConeGeometry(.075,.46,7),new THREE.MeshStandardMaterial({color:0xffe9a8,emissive:0xb88936,emissiveIntensity:.22}),0,1.02,0,1,1,1,weapon);
+  add(new THREE.BoxGeometry(.32,.055,.07),gold,0,.69,0,1,1,1,weapon);
  }
- const glow=new THREE.PointLight(0xffdf91,0,18,1.55);glow.position.set(0,2.25,.15);glow.castShadow=false;g.add(glow);
- const aura=new THREE.PointLight(0xfff0c8,0,7,2);aura.position.set(0,2.8,-.15);g.add(aura);
+ const glow=new THREE.PointLight(0xffdf91,0,15,1.7);glow.position.set(0,1.85,.12);glow.castShadow=false;g.add(glow);
+ const aura=new THREE.PointLight(0xfff0c8,0,6,2);aura.position.set(0,2.25,-.12);g.add(aura);
  return {group:g,wings,halo,weapon,weaponType,glow,aura,index,phase:index*.9,nextAttack:0};
 }
-
 
 const spiralStaircases=[];
 function addStoneSpiralStaircase(parent,{centerX=0,centerZ=0,baseY=0,rise=8.55,turns=3.35,radius=4.25,steps=62,startAngle=Math.PI/2}={}){
