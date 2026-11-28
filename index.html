@@ -1604,9 +1604,48 @@ async function restartAfterDeath(){
  document.querySelector('#hint').textContent='Você renasceu! Comece novamente coletando madeira e pedras para reconstruir seu castelo.';
 }
 
-let enemyUnits=[],enemyInvulnerableUntil=0,angelProjectiles=[];let cannonActive=false,cannonYaw=0,cannonPitch=.12,cannonPower=70,cannonBalls=[];let dragonFireballs=[],dragonLastBreath=0,dragonBurnUntil=0,lastDragonDamage=0;const DRAGON_LAIR={x:0,z:82};
+let enemyUnits=[],enemyInvulnerableUntil=0,angelProjectiles=[];const mobileEnemyTemplates={};
+function makeMobileEnemyModel(type){
+ const g=new THREE.Group(),ogre=type==='ogre';
+ const steel=new THREE.MeshStandardMaterial({color:ogre?0x4f8739:0x263341,roughness:1});
+ const light=new THREE.MeshStandardMaterial({color:ogre?0x79a94d:0x667787,roughness:1});
+ const dark=new THREE.MeshStandardMaterial({color:ogre?0x345d2b:0x111923,roughness:1});
+ const gold=new THREE.MeshStandardMaterial({color:0xb58a42,roughness:.9});
+ const skin=new THREE.MeshStandardMaterial({color:ogre?0x659b43:0xb77d5d,roughness:1});
+ const ivory=new THREE.MeshStandardMaterial({color:0xe8dfc5,roughness:1});
+ const add=(geo,material,x,y,z,sx=1,sy=1,sz=1)=>{const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=false;m.receiveShadow=false;g.add(m);return m;};
+ if(ogre){
+  add(new THREE.CapsuleGeometry(.43,.72,3,7),steel,0,1.08,0,1.12,1,1);
+  add(new THREE.SphereGeometry(.39,9,7),skin,0,1.98,.02,1.12,1,.95);
+  for(const side of [-1,1]){
+   add(new THREE.SphereGeometry(.17,7,6),steel,side*.48,2.02,0);
+   add(new THREE.ConeGeometry(.09,.29,5),dark,side*.49,2.28,.02,1,1,1);
+   add(new THREE.CapsuleGeometry(.13,.48,3,6),skin,side*.52,1.12,0,1,1,1);
+   add(new THREE.ConeGeometry(.055,.18,5),ivory,side*.14,1.77,.36,1,1,1);
+  }
+  add(new THREE.BoxGeometry(.66,.24,.14),dark,0,.72,.32);
+  add(new THREE.BoxGeometry(.16,.12,.1),gold,0,.72,.41);
+ }else{
+  add(new THREE.CapsuleGeometry(.27,.58,3,7),dark,0,1.16,0,1.05,1,1);
+  add(new THREE.BoxGeometry(.56,.42,.32),steel,0,1.35,.04);
+  add(new THREE.SphereGeometry(.21,9,7),skin,0,1.91,.02);
+  add(new THREE.ConeGeometry(.25,.25,6),dark,0,2.13,-.015,1,1,1);
+  add(new THREE.BoxGeometry(.34,.09,.09),gold,0,1.64,.2);
+  for(const side of [-1,1]){
+   add(new THREE.SphereGeometry(.17,7,6),light,side*.36,1.53,0);
+   add(new THREE.CapsuleGeometry(.105,.37,3,6),steel,side*.43,1.12,0);
+   add(new THREE.CapsuleGeometry(.13,.39,3,6),dark,side*.17,.49,0);
+  }
+  add(new THREE.BoxGeometry(.32,.48,.09),light,-.65,1.02,.15);
+  const sword=add(new THREE.BoxGeometry(.055,.72,.045),light,.65,1.13,.16);sword.rotation.z=-.12;
+  add(new THREE.CylinderGeometry(.035,.035,.18,6),gold,.65,.69,.16);
+ }
+ return g;
+}
+function getMobileEnemyModel(type){const key=type==='ogre'?'ogre':'bandit';if(!mobileEnemyTemplates[key])mobileEnemyTemplates[key]=makeMobileEnemyModel(key==='ogre'?'ogre':'bandit');return mobileEnemyTemplates[key].clone(true);}
+let cannonActive=false,cannonYaw=0,cannonPitch=.12,cannonPower=70,cannonBalls=[];let dragonFireballs=[],dragonLastBreath=0,dragonBurnUntil=0,lastDragonDamage=0;const DRAGON_LAIR={x:0,z:82};
 function createEnemy(type,x,z){
- const group=new THREE.Group(),model=type==='ogre'?makeOgre():makeKnight();
+ const group=new THREE.Group(),model=isMobile?getMobileEnemyModel(type):(type==='ogre'?makeOgre():makeKnight());
  model.scale.setScalar(type==='ogre'?1.02:.88);
 
  group.add(model);group.position.set(x,0,z);scene.add(group);
