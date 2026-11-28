@@ -2193,7 +2193,7 @@ db.auth.getSession().then(async ({data,error})=>{
 const targetFrameMs=isMobile?1000/30:1000/55;let worldClockAccumulator=0,worldLightState={day:1,night:0,hour:12},enemyUpdateAccumulator=0,angelUpdateAccumulator=0,ambientUpdateFrame=0,angelThreatCandidates=[],angelThreatRefresh=0,last=0,lastRender=0,walkPhase=0,shadowRefresh=0,motionBlend=0,playerMoveSpeed=0,perfWindowStart=0,perfFrameCount=0,perfRenderTotal=0;function animate(t){requestAnimationFrame(animate);if(t-lastRender<targetFrameMs)return;const frameStart=performance.now();const dt=Math.min((t-last)/1000,.05);last=t;
  if(!window.__medieval4D) window.__medieval4D=createImmersive4D(THREE,scene);
  worldClockAccumulator+=dt;if(worldClockAccumulator>=.5){worldClockAccumulator=0;worldLightState=updateWorldClock();}const worldLight=worldLightState;
- if(!dragonLoadStarted&&Math.hypot(player.position.x-DRAGON_LAIR.x,player.position.z-DRAGON_LAIR.z)<55&&insideEnemyForest(player.position.x,player.position.z)){dragonLoadStarted=true;loadHorizonDragon();}
+ if(!dragonLoadStarted){dragonLoadStarted=true;loadHorizonDragon();}
  let sx=moveInput.x,sy=-moveInput.y;
  if(keys.w||keys.arrowup)sy=1;if(keys.s||keys.arrowdown)sy=-1;if(keys.a||keys.arrowleft)sx=-1;if(keys.d||keys.arrowright)sx=1;
  const rawLen=Math.hypot(sx,sy),inputLen=Math.min(1,rawLen),moving=inputLen>.08,running=moving&&!mountedHorse&&inputLen>.86;
