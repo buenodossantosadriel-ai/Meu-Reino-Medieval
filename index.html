@@ -826,7 +826,7 @@ async function loadLocalProfessionalAvatar(type,token){
 loadLocalProfessionalAvatar('knight',++avatarLoadToken);
 async function loadGuardVisual(guard){try{const instance=await loadProfessionalAvatar('knight');if(!guard.group.parent){disposeProceduralModel(instance.model);return;}guard.group.remove(guard.model);disposeProceduralModel(guard.model);guard.model=instance.model;guard.professional=instance;guard.group.add(instance.model);}catch(error){console.warn('Modelo 3D do guarda indisponível:',error);}}
 async function loadAngelVisual(angel){try{const instance=await loadProfessionalAvatar('knight');if(!angel.group.parent){disposeProceduralModel(instance.model);return;}angel.group.children.forEach(child=>{if(child.isMesh)child.visible=false;});instance.model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>{if(m.color)m.color.lerp(new THREE.Color(0xf1e6c9),.12);m.envMap=charEnv;m.envMapIntensity=.9;m.needsUpdate=true;});}});instance.model.scale.multiplyScalar(1.12);angel.professional=instance;angel.group.add(instance.model);}catch(error){console.warn('Modelo humano realista do anjo indisponível; mantendo modelo reserva:',error);}}
-for(const guard of fortressGuards)loadGuardVisual(guard);
+if(!isMobile)for(const guard of fortressGuards)loadGuardVisual(guard);
 // Os anjos mantêm o modelo celestial próprio, com rosto, túnica, auréola e asas em camadas. Não substituir por um cavaleiro humano.
 function makeNameTag(name){
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;
