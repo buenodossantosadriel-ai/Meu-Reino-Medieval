@@ -118,7 +118,7 @@ export function createImmersive4D(THREE, scene) {
         if(m.color) {
           const c=m.color;
           if(c.b>c.r*1.08 && c.g>c.r*1.12 && c.b>.16 && c.g>.18) { waterTargets.push(obj); break; }
-          if(c.g>c.r*1.16 && c.g>c.b*1.08 && c.g>.12 && obj.position.y>.15) { foliage.push(obj); break; }
+          // Vegetação permanece estática para reduzir trabalho por quadro.
         }
       }
     });
@@ -163,11 +163,6 @@ export function createImmersive4D(THREE, scene) {
     sceneEffectsTimer-=dt;
     if(sceneEffectsTimer<=0){
       sceneEffectsTimer=mobile?.35:.08;
-      for(let i=0;i<foliage.length;i++){
-        const obj=foliage[i], base=obj.userData.windBase??(obj.userData.windBase=obj.rotation.z);
-        obj.rotation.z=base+Math.sin(state.elapsed*1.6+i*.73)*.025*state.wind;
-        obj.rotation.x=Math.sin(state.elapsed*1.1+i*.41)*.012*state.wind;
-      }
       for(let i=0;i<waterTargets.length;i++){
         const obj=waterTargets[i];
         if(obj.geometry?.type==='RingGeometry') obj.rotation.z=Math.sin(state.elapsed*1.3+i)*.012;
