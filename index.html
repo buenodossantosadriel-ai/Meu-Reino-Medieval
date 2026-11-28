@@ -319,6 +319,17 @@ function installPhotorealAngelModel(angel){
   const scale=2.22/Math.max(size.y,.001);
   model.scale.setScalar(scale);
   model.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
+  // Túnica branca com caimento simples sobre o corpo do querubim.
+  const robeMaterial=new THREE.MeshStandardMaterial({color:0xfffdf7,roughness:.96,side:THREE.DoubleSide});
+  const robeTrim=new THREE.MeshStandardMaterial({color:0xe6c77c,metalness:.28,roughness:.55});
+  const robe=new THREE.Group();
+  const tunic=new THREE.Mesh(new THREE.CylinderGeometry(.29,.43,.92,20,2,false),robeMaterial);
+  tunic.position.set(0,.72,.035);tunic.scale.z=.82;tunic.castShadow=true;tunic.receiveShadow=true;robe.add(tunic);
+  const shoulderDrape=new THREE.Mesh(new THREE.SphereGeometry(1,18,12),robeMaterial);
+  shoulderDrape.position.set(0,1.12,.045);shoulderDrape.scale.set(.37,.19,.29);shoulderDrape.castShadow=true;robe.add(shoulderDrape);
+  const belt=new THREE.Mesh(new THREE.TorusGeometry(.355,.018,6,28),robeTrim);
+  belt.rotation.x=Math.PI/2;belt.position.set(0,.48,.035);belt.scale.set(1,.82,1);robe.add(belt);
+  model.add(robe);
   angel.body.visible=false;
   angel.group.add(model);
   const mixer=gltf.animations.length?new THREE.AnimationMixer(model):null;
@@ -331,13 +342,13 @@ function createCelestialAngel(index){
  // Corpo procedural permanece como fallback enquanto o modelo humano é carregado.
  const g=new THREE.Group();
  const body=new THREE.Group();g.add(body);
- const robe=new THREE.MeshStandardMaterial({color:[0xfffbf0,0xf0dce8,0xd8b66d,0xc5d0dc,0xe1ded5,0xb77c49,0x899bd8][index],roughness:.94});
- const robeShade=new THREE.MeshStandardMaterial({color:[0xe6dfcf,0xd8b6c9,0x9f7a42,0x8495a8,0xb9b7ae,0x754a32,0x596da9][index],roughness:.96});
+ const robe=new THREE.MeshStandardMaterial({color:0xfffdf7,roughness:.96});
+ const robeShade=new THREE.MeshStandardMaterial({color:0xeee9df,roughness:.98});
  const gold=new THREE.MeshStandardMaterial({color:[0xe3bd69,0xd7b4c7,0xf0c86c,0xcbd5df,0xbab3a4,0xb47a42,0xb9caff][index],metalness:.42,roughness:.42});
  const skin=new THREE.MeshStandardMaterial({color:[0xf2c9ad,0xf0c7b6,0xd9a17f,0xf0d0b5,0xe0c1a5,0xb98261,0xe5c6bd][index],roughness:.9});
  const hair=new THREE.MeshStandardMaterial({color:[0x8a5737,0x5a3829,0xc18a4c,0x30343b,0xd8d2c6,0x30251d,0x4a3d76][index],roughness:.96});
- const feather=new THREE.MeshStandardMaterial({color:[0xfffdf8,0xf4dce9,0xf7e7b8,0xe0e9f2,0xe3e2dd,0xc18b5b,0xc1d0ff][index],roughness:.93});
- const featherShade=new THREE.MeshStandardMaterial({color:[0xe5edf5,0xdcb9cf,0xd4b36e,0x9caec2,0xb7b7b2,0x875a39,0x788bc7][index],roughness:.95});
+ const feather=new THREE.MeshStandardMaterial({color:0xfffefa,roughness:.93});
+ const featherShade=new THREE.MeshStandardMaterial({color:0xe9edf2,roughness:.95});
  const eyeWhite=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.5});
  const iris=new THREE.MeshStandardMaterial({color:[0x6d8a68,0x638eaa,0x8a6335,0x647c9b,0x708b82,0x76533c,0x8875bd][index],roughness:.4});
  const dark=new THREE.MeshStandardMaterial({color:0x30251f,roughness:.55});
@@ -406,14 +417,20 @@ function createCelestialAngel(index){
  const halo=new THREE.Group();halo.position.set(0,2.53,-.08);g.add(halo);
  const ring=new THREE.Mesh(new THREE.TorusGeometry(.31,.028,8,36),gold);ring.rotation.x=Math.PI/2;halo.add(ring);
  const innerRing=new THREE.Mesh(new THREE.TorusGeometry(.235,.012,6,32),robe);innerRing.rotation.x=Math.PI/2;halo.add(innerRing);
- // Duas asas pequenas articuladas, com penas simples e geometria econômica.
+ // Asas angelicais brancas, maiores e com várias camadas de penas.
  const wings=[];
  for(const side of [-1,1]){
-  const pivot=new THREE.Group();pivot.position.set(side*.27,1.34,-.18);pivot.scale.set([1.28,1.38,1.22,1.3,1.18,1.32,1.48][index],1.05,1);g.add(pivot);
-  add(new THREE.SphereGeometry(.19,12,10),featherShade,side*.18,.08,-.025,1.15,1.7,.62,pivot);
-  for(let j=0;j<6;j++){
-   const f=add(new THREE.CapsuleGeometry(.075,.34+(j%3)*.09,3,7),j%2?feather:featherShade,side*(.22+j*.105),.12-j*.105,-.045+j*.012,.82,1.18,.58,pivot);
-   f.rotation.z=side*(-.22-j*.075);
+  const pivot=new THREE.Group();pivot.position.set(side*.29,1.34,-.2);pivot.scale.set(1.72,1.28,1.08);g.add(pivot);
+  const baseWing=add(new THREE.SphereGeometry(.22,14,10),featherShade,side*.16,.02,-.035,1.18,1.75,.58,pivot);
+  baseWing.rotation.z=side*-.18;
+  for(let j=0;j<9;j++){
+   const length=.36+(j%4)*.075+(j>5?.08:0);
+   const f=add(new THREE.CapsuleGeometry(.072,length,4,8),j%3===0?featherShade:feather,side*(.19+j*.105),.12-j*.052,-.06+j*.009,.92,1.22,.58,pivot);
+   f.rotation.z=side*(-.24-j*.045);
+  }
+  for(let j=0;j<4;j++){
+   const f=add(new THREE.CapsuleGeometry(.065,.28+j*.035,4,8),feather,side*(.22+j*.105),.2+j*.035,.018,.9,1.05,.55,pivot);
+   f.rotation.z=side*(-.38-j*.06);
   }
   wings.push({pivot,side});
  }
