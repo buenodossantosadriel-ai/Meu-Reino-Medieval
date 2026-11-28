@@ -1194,7 +1194,7 @@ function mountNearestHorse(){
  let best=null,dist=8.5;
  for(const h of horses){if(!h.wild)continue;const d=Math.hypot(h.group.position.x-player.position.x,h.group.position.z-player.position.z);if(d<dist){dist=d;best=h}}
  if(!best){document.querySelector('#hint').textContent='Chegue mais perto de um cavalo para montar.';return}
- window.__medieval4D?.play('mount',best.group.position);mountedHorse=best;best.wild=false;best.timer=9999;best.target.set(best.group.position.x,0,best.group.position.z);player.position.set(best.group.position.x,.98,best.group.position.z);player.rotation.y=best.group.rotation.y;playHorseAnimation(best,'Idle');document.querySelector('#mount').textContent='↘ Desmontar';showHorseHint('Você montou a cavalo! Use o joystick para cavalgar.');
+ window.__medieval4D?.play('mount',best.group.position);mountedHorse=best;best.wild=false;best.timer=9999;best.target.set(best.group.position.x,0,best.group.position.z);player.position.set(best.group.position.x,1.48,best.group.position.z);player.rotation.y=best.group.rotation.y;playHorseAnimation(best,'Idle');document.querySelector('#mount').textContent='↘ Desmontar';showHorseHint('Você montou a cavalo! Use o joystick para cavalgar.');
 }
 document.querySelector('#mount').onclick=mountNearestHorse;
 let yaw=0,cameraPitch=.88,cameraDistance=25,cameraDistanceCurrent=25,panoramaMode=false,firstPersonMode=false,castleInteriorCameraActive=false;
@@ -2251,7 +2251,7 @@ const targetFrameMs=isMobile?1000/30:1000/55;let worldClockAccumulator=0,worldLi
   player.rotation.y+=d*(1-Math.exp(-dt*(mountedHorse?9:running?10:8)));
   if(mountedHorse)mountedHorse.group.rotation.y=player.rotation.y;
  }
- if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);mountedHorse.group.rotation.y=player.rotation.y;player.position.y=.98;}else{
+ if(mountedHorse){mountedHorse.group.position.set(player.position.x,0,player.position.z);mountedHorse.group.rotation.y=player.rotation.y;player.position.y=1.48;}else{
   const groundY=getSpiralStairElevation(player.position.x,player.position.z,player.position.y);
   if(jumpOffset>0||jumpVelocity>0){jumpVelocity-=19.5*dt;jumpOffset=Math.max(0,jumpOffset+jumpVelocity*dt);if(jumpOffset===0)jumpVelocity=0;}
   player.position.y=groundY+jumpOffset;
