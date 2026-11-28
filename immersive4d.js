@@ -1,7 +1,7 @@
 // Camada 4D: clima vivo, vento, água, relâmpagos e áudio ambiente.
 // Mantém o ciclo solar original do jogo e acrescenta efeitos locais de baixo custo.
 export function createImmersive4D(THREE, scene) {
-  const state={weather:'clear',sound:false,audio:null,elapsed:0,lightning:0,wind:.35,stepClock:0,birdClock:0,musicClock:0,lastPosition:null,lastMoving:false,lastMounted:false,lastRunning:false};
+  const state={weather:'clear',sound:false,audio:null,elapsed:0,lightning:0,wind:.35,particleClock:0,stepClock:0,birdClock:0,musicClock:0,lastPosition:null,lastMoving:false,lastMounted:false,lastRunning:false};
   const weatherOptions=[['clear','☀️ Limpo'],['cloudy','☁️ Nublado'],['rain','🌧️ Chuva'],['storm','⛈️ Tempestade'],['snow','❄️ Neve'],['fog','🌫️ Neblina']];
   const panel=document.createElement('div');panel.id='immersive4dPanel';
   panel.style.cssText='position:fixed;right:10px;top:112px;z-index:6;pointer-events:auto;background:#142019ee;border:1px solid #d3b775;border-radius:12px;padding:7px;color:#fff2d0;font:12px system-ui;box-shadow:0 4px 16px #0008;width:154px;max-width:45vw;transition:width .18s ease';
@@ -145,14 +145,19 @@ export function createImmersive4D(THREE, scene) {
     const storm=state.weather==='storm', rain=state.weather==='rain'||storm, snow=state.weather==='snow';
     particles.position.set(playerPosition.x,0,playerPosition.z);
     if(rain||snow) {
-      const p=particleGeo.attributes.position.array;
-      for(let i=0;i<maxParticles;i++){
-        const k=i*3; p[k]+=velocities[k]*dt+Math.sin(state.elapsed*.7+i)*dt*.12;
-        p[k+1]+=velocities[k+1]*dt; p[k+2]+=velocities[k+2]*dt;
-        if(p[k+1]<.1||Math.abs(p[k])>52||Math.abs(p[k+2])>52) respawn(i);
+      // Atualiza partículas a 30 Hz no máximo; a câmera continua renderizando na taxa normal.
+      state.particleClock+=dt;
+      if(state.particleClock>=1/30){
+        const step=state.particleClock;state.particleClock=0;
+        const p=particleGeo.attributes.position.array;
+        for(let i=0;i<maxParticles;i++){
+          const k=i*3;p[k]+=velocities[k]*step+Math.sin(state.elapsed*.7+i)*step*.12;
+          p[k+1]+=velocities[k+1]*step;p[k+2]+=velocities[k+2]*step;
+          if(p[k+1]<.1||Math.abs(p[k])>52||Math.abs(p[k+2])>52)respawn(i);
+        }
+        particleGeo.attributes.position.needsUpdate=true;
       }
-      particleGeo.attributes.position.needsUpdate=true;
-    }
+    }else state.particleClock=0;
     const gust=(Math.sin(state.elapsed*.47)+Math.sin(state.elapsed*.19+1.7)*.55)*.5;
     state.wind=.35+Math.abs(gust)*.8+(storm?1.25:0)+(rain ? 0.25 : 0);
     sceneEffectsTimer-=dt;
@@ -171,8 +176,7 @@ export function createImmersive4D(THREE, scene) {
     }
     if(storm && Math.random()<dt*.16){state.lightning=.18+Math.random()*.28;play('thunder',playerPosition);}
     state.lightning=Math.max(0,state.lightning-dt);
-    lightningLight.position.set(playerPosition.x+8,28,playerPosition.z-12);
-    lightningLight.intensity=state.lightning>0?state.lightning*38:0;
+    if(state.lightning>0){lightningLight.position.set(playerPosition.x+8,28,playerPosition.z-12);lightningLight.intensity=state.lightning*38;}else lightningLight.intensity=0;
     state.lastMoving=!!movement?.moving;state.lastMounted=!!movement?.mounted;state.lastRunning=!!movement?.running;
     if(state.audio && state.sound) {
       const a=state.audio,now=a.ctx.currentTime;
