@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#18251d">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icons/icon-192.svg" type="image/svg+xml">
+<title>Instalar Meu Reino Medieval</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at top,#34523a,#18251d 65%);color:#fff2d0;font:16px system-ui;text-align:center}.card{width:min(100%,430px);padding:30px 24px;background:#142019ed;border:1px solid #c5a96b;border-radius:22px;box-shadow:0 16px 50px #0008}.crest{width:104px;height:104px;object-fit:contain;margin-bottom:10px}h1{font-size:25px;margin:8px 0;color:#f0cc78}p{line-height:1.55;color:#e8dfc8}.install{width:100%;margin:16px 0 8px;padding:16px;border:1px solid #ffe2a0;border-radius:12px;background:linear-gradient(#c9a45b,#8d6b34);color:#1b241b;font-size:17px;font-weight:800}.install:disabled{opacity:.65}.small{font-size:13px;color:#bfc9b8}.hidden{display:none}a{color:#f0cc78}
+</style>
+</head>
+<body>
+<main class="card">
+<img class="crest" src="/icons/icon-192.svg" alt="Brasão do Meu Reino Medieval">
+<h1>Meu Reino Medieval</h1>
+<p>Instale o jogo no seu celular para abrir direto pela tela inicial, em uma experiência de aplicativo.</p>
+<button class="install" id="installBtn" type="button">⚔ Instalar aplicativo</button>
+<p id="status" class="small" aria-live="polite">Verificando se este navegador permite a instalação…</p>
+<p id="fallback" class="small hidden">Se o botão de instalação não abrir, este navegador ainda não liberou a instalação automática. Abra esta página no Chrome atualizado e, se necessário, use <b>Adicionar à tela inicial</b> no menu do navegador.</p>
+<p><a href="/">Voltar ao jogo</a></p>
+</main>
+<script>
+let installEvent=null;
+const btn=document.getElementById('installBtn');
+const status=document.getElementById('status');
+const fallback=document.getElementById('fallback');
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}),{once:true});}
+window.addEventListener('beforeinstallprompt',event=>{
+ event.preventDefault();
+ installEvent=event;
+ btn.disabled=false;
+ status.textContent='Tudo pronto. Toque em “Instalar aplicativo” para confirmar.';
+ fallback.classList.add('hidden');
+});
+window.addEventListener('appinstalled',()=>{
+ installEvent=null;
+ btn.disabled=true;
+ btn.textContent='✓ Aplicativo instalado';
+ status.textContent='Instalação concluída. Você já pode abrir Meu Reino Medieval pela tela inicial.';
+ fallback.classList.add('hidden');
+});
+btn.addEventListener('click',async()=>{
+ if(installEvent){
+  installEvent.prompt();
+  const choice=await installEvent.userChoice;
+  status.textContent=choice.outcome==='accepted'?'Instalação aceita. Aguarde o ícone aparecer na tela inicial.':'A instalação foi cancelada.';
+  installEvent=null;
+  return;
+ }
+ if(window.matchMedia('(display-mode: standalone)').matches){
+  status.textContent='O aplicativo já está instalado neste aparelho.';
+  btn.disabled=true;
+  btn.textContent='✓ Aplicativo instalado';
+  return;
+ }
+ status.textContent='O Chrome ainda não disponibilizou a janela de instalação para este acesso.';
+ fallback.classList.remove('hidden');
+});
+setTimeout(()=>{
+ if(!installEvent&&!window.matchMedia('(display-mode: standalone)').matches){
+  status.textContent='Se a instalação não aparecer, confira as orientações abaixo.';
+  fallback.classList.remove('hidden');
+ }
+},2500);
+</script>
+</body>
+</html>
