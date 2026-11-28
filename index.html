@@ -442,6 +442,8 @@ function castle(){
  addCastlePatrol(wallRoute,.66,1.05);addCastlePatrol(wallRoute.map(([x,y,z])=>[-x,y,-z]),.66,1.12);
  addCastlePatrol(outerRoute,.74,1.45);addCastlePatrol(outerRoute.map(([x,y,z])=>[-x,0,-z]),.74,1.38);
  celestialGuardians=[];for(let i=0;i<7;i++){const angel=createCelestialAngel(i);scene.add(angel.group);celestialGuardians.push({...angel,angle:i*Math.PI*2/7,radius:20+(i%3)*2,height:5.5+(i%4)*2.1});}
+ // Círculo sagrado dos sete guardiões: o dragão não atravessa esta proteção.
+ const angelWard=new THREE.Mesh(new THREE.TorusGeometry(36,.16,6,112),new THREE.MeshStandardMaterial({color:0xffe7a2,emissive:0xe5b957,emissiveIntensity:.75,transparent:true,opacity:.19,roughness:.28,metalness:.22,depthWrite:false}));angelWard.rotation.x=Math.PI/2;angelWard.position.y=.24;angelWard.castShadow=false;angelWard.receiveShadow=false;scene.add(angelWard);
  // Portal em arco com moldura de blocos e portão de madeira articulado.
  const arch=new THREE.Mesh(new THREE.TorusGeometry(1.62,.24,10,24,Math.PI),stoneMat);arch.rotation.z=Math.PI;arch.position.set(0,3.85,8.02);arch.castShadow=true;scene.add(arch);
  for(let y=.35;y<3.6;y+=.62){box(-1.72,y,8,.38,.55,1.48,0x96978e,stoneMat);box(1.72,y,8,.38,.55,1.48,0x96978e,stoneMat)}
