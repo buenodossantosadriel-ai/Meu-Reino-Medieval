@@ -319,17 +319,8 @@ function installPhotorealAngelModel(angel){
   const scale=2.22/Math.max(size.y,.001);
   model.scale.setScalar(scale);
   model.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
-  // Túnica branca com caimento simples sobre o corpo do querubim.
-  const robeMaterial=new THREE.MeshStandardMaterial({color:0xfffdf7,roughness:.96,side:THREE.DoubleSide});
-  const robeTrim=new THREE.MeshStandardMaterial({color:0xe6c77c,metalness:.28,roughness:.55});
-  const robe=new THREE.Group();
-  const tunic=new THREE.Mesh(new THREE.CylinderGeometry(.29,.43,.92,20,2,false),robeMaterial);
-  tunic.position.set(0,.72,.035);tunic.scale.z=.82;tunic.castShadow=true;tunic.receiveShadow=true;robe.add(tunic);
-  const shoulderDrape=new THREE.Mesh(new THREE.SphereGeometry(1,18,12),robeMaterial);
-  shoulderDrape.position.set(0,1.12,.045);shoulderDrape.scale.set(.37,.19,.29);shoulderDrape.castShadow=true;robe.add(shoulderDrape);
-  const belt=new THREE.Mesh(new THREE.TorusGeometry(.355,.018,6,28),robeTrim);
-  belt.rotation.x=Math.PI/2;belt.position.set(0,.48,.035);belt.scale.set(1,.82,1);robe.add(belt);
-  model.add(robe);
+  // Não adiciona formas por cima do GLB: preserva a silhueta, o rosto e a roupa originais do modelo.
+  // A túnica cilíndrica e o volume nos ombros foram removidos porque deformavam a proporção do querubim.
   angel.body.visible=false;
   angel.group.add(model);
   const mixer=gltf.animations.length?new THREE.AnimationMixer(model):null;
@@ -353,11 +344,16 @@ function createCelestialAngel(index){
  const iris=new THREE.MeshStandardMaterial({color:[0x6d8a68,0x638eaa,0x8a6335,0x647c9b,0x708b82,0x76533c,0x8875bd][index],roughness:.4});
  const dark=new THREE.MeshStandardMaterial({color:0x30251f,roughness:.55});
  const add=(geo,mat,x,y,z,sx=1,sy=1,sz=1,parent=body)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m};
- // Túnica curta e arredondada, com detalhes dourados discretos.
- add(new THREE.ConeGeometry(.48,.98,14,2),robe,0,.83,0,1,1,.9);
- add(new THREE.SphereGeometry(.34,16,12),robeShade,0,1.16,.04,1,.72,.92);
- add(new THREE.TorusGeometry(.34,.025,6,24),gold,0,.48,0,1,1,.9).rotation.x=Math.PI/2;
- add(new THREE.SphereGeometry(.12,12,10),gold,0,1.08,.32,.8,.8,.45);
+ // Túnica branca com cintura estreita e barra levemente aberta, sem ombreiras arredondadas.
+ const robeProfile=[
+  new THREE.Vector2(.19,0),new THREE.Vector2(.22,.08),new THREE.Vector2(.25,.28),
+  new THREE.Vector2(.29,.58),new THREE.Vector2(.31,.78),new THREE.Vector2(.25,.94),
+  new THREE.Vector2(.18,.99),new THREE.Vector2(.0,.99)
+ ];
+ const tunicGeo=new THREE.LatheGeometry(robeProfile,18);
+ const tunic=add(tunicGeo,robe,0,.69,0,1,1,.9);
+ tunic.rotation.x=Math.PI;
+ add(new THREE.TorusGeometry(.235,.012,5,24),gold,0,.53,0,1,1,.9).rotation.x=Math.PI/2;
  // Braços curtos e mãos pequenas.
  for(const side of [-1,1]){
   const arm=add(new THREE.CapsuleGeometry(.105,.3,4,8),robe,side*.39,1.08,.015,.9,1,.9);arm.rotation.z=side*-.42;
@@ -407,30 +403,41 @@ function createCelestialAngel(index){
   add(new THREE.ConeGeometry(.105,.25,8),hair,-.09,1.53,.36,1,1,1);
   add(new THREE.ConeGeometry(.105,.25,8),hair,.09,1.53,.36,1,1,1);
  }
- if(index===2||index===3||index===5||index===6){
-  add(new THREE.SphereGeometry(.37,14,10),index===2?gold:robeShade,0,1.2,.29,1.08,.62,.28);
-  add(new THREE.BoxGeometry(.12,.38,.055),gold,0,1.16,.39);
-  for(const side of [-1,1])add(new THREE.SphereGeometry(.16,10,8),index===5?gold:robeShade,side*.39,1.3,.02,1.2,.72,.8);
- }
  if(index===0||index===6){const crest=add(new THREE.ConeGeometry(.13,.3,7),gold,0,2.48,-.02);crest.rotation.z=Math.PI;}
  // Auréola dourada delicada.
  const halo=new THREE.Group();halo.position.set(0,2.53,-.08);g.add(halo);
  const ring=new THREE.Mesh(new THREE.TorusGeometry(.31,.028,8,36),gold);ring.rotation.x=Math.PI/2;halo.add(ring);
  const innerRing=new THREE.Mesh(new THREE.TorusGeometry(.235,.012,6,32),robe);innerRing.rotation.x=Math.PI/2;halo.add(innerRing);
- // Asas angelicais brancas, maiores e com várias camadas de penas.
+ // Asas de penas alongadas e leves, encaixadas nas costas sem formar uma massa arredondada.
  const wings=[];
+ const featherShape=new THREE.LatheGeometry([
+  new THREE.Vector2(0,0),new THREE.Vector2(.035,.035),new THREE.Vector2(.052,.14),
+  new THREE.Vector2(.044,.30),new THREE.Vector2(.025,.43),new THREE.Vector2(0,.50)
+ ],8);
  for(const side of [-1,1]){
-  const pivot=new THREE.Group();pivot.position.set(side*.29,1.34,-.2);pivot.scale.set(1.72,1.28,1.08);g.add(pivot);
-  const baseWing=add(new THREE.SphereGeometry(.22,14,10),featherShade,side*.16,.02,-.035,1.18,1.75,.58,pivot);
-  baseWing.rotation.z=side*-.18;
-  for(let j=0;j<9;j++){
-   const length=.36+(j%4)*.075+(j>5?.08:0);
-   const f=add(new THREE.CapsuleGeometry(.072,length,4,8),j%3===0?featherShade:feather,side*(.19+j*.105),.12-j*.052,-.06+j*.009,.92,1.22,.58,pivot);
-   f.rotation.z=side*(-.24-j*.045);
+  const pivot=new THREE.Group();
+  pivot.position.set(side*.30,1.53,-.25);
+  pivot.scale.set(1.08,1.02,.72);
+  g.add(pivot);
+  const covert=new THREE.Mesh(new THREE.SphereGeometry(.13,12,9),featherShade);
+  covert.position.set(side*.10,.015,-.015);
+  covert.scale.set(1.0,1.45,.42);
+  pivot.add(covert);
+  for(let j=0;j<7;j++){
+   const length=.78+(j%3)*.08;
+   const featherMesh=new THREE.Mesh(featherShape,j%3===0?featherShade:feather);
+   featherMesh.scale.set(1,length/.50,1);
+   featherMesh.position.set(side*(.10+j*.095),-.12-j*.025,-.035+j*.012);
+   featherMesh.rotation.z=side*(-.38-j*.105);
+   featherMesh.castShadow=true;
+   pivot.add(featherMesh);
   }
-  for(let j=0;j<4;j++){
-   const f=add(new THREE.CapsuleGeometry(.065,.28+j*.035,4,8),feather,side*(.22+j*.105),.2+j*.035,.018,.9,1.05,.55,pivot);
-   f.rotation.z=side*(-.38-j*.06);
+  for(let j=0;j<3;j++){
+   const small=new THREE.Mesh(featherShape,feather);
+   small.scale.set(.72,.78,.8);
+   small.position.set(side*(.07+j*.075),.06+j*.045,.035);
+   small.rotation.z=side*(-.12-j*.12);
+   pivot.add(small);
   }
   wings.push({pivot,side});
  }
