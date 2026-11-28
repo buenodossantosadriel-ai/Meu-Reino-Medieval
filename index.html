@@ -1666,8 +1666,12 @@ function updateEnemies(dt,t){
  }
  for(let i=0;i<enemyUnits.length;i++){
   let e=enemyUnits[i];if(!e.alive){if(now>=e.respawnAt){enemyUnits[i]=createEnemy(e.type,e.x,e.z);if(e.type==='bandit')loadBanditVisual(enemyUnits[i]);else loadOgreVisual(enemyUnits[i]);}continue}
-  e.phase+=dt;const dx=player.position.x-e.group.position.x,dz=player.position.z-e.group.position.z,dist=Math.hypot(dx,dz);e.bar.quaternion.copy(camera.quaternion);
-  if(dist<48&&!e.professional&&!e.visualLoading&&!e.visualLoadAttempted&&(!isMobile||mobileEnemyVisualCount<4)){e.visualLoading=true;e.visualLoadAttempted=true;if(isMobile)mobileEnemyVisualCount++;(e.type==='bandit'?loadBanditVisual(e):loadOgreVisual(e)).finally(()=>e.visualLoading=false);}
+  const dx=player.position.x-e.group.position.x,dz=player.position.z-e.group.position.z,dist=Math.hypot(dx,dz);
+  // Fora do raio de atividade, os inimigos ficam ocultos e não executam IA/animações.
+  // O raio é maior que o alcance de agressão, então eles são ativados antes de poderem atacar.
+  if(dist>68){e.group.visible=false;continue;}e.group.visible=true;e.phase+=dt;e.bar.quaternion.copy(camera.quaternion);
+  // No celular, mantém o modelo procedural leve; carregar avatares profissionais durante a exploração causa picos de CPU/GPU e memória.
+  if(!isMobile&&dist<48&&!e.professional&&!e.visualLoading&&!e.visualLoadAttempted){e.visualLoading=true;e.visualLoadAttempted=true;if(isMobile)mobileEnemyVisualCount++;(e.type==='bandit'?loadBanditVisual(e):loadOgreVisual(e)).finally(()=>e.visualLoading=false);}
   if(e.professional){
    e.professional.mixer.update(dt);
    setProfessionalGait(e.professional,e.state==='chase',e.state==='chase'&&dist<5);
