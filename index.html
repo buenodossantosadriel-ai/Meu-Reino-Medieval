@@ -931,7 +931,9 @@ let avatarModel=makeKnight();let avatarMotion=prepareAvatarMotion(avatarModel,'k
 const professionalAvatarUrls={
  knight:'/api/farm-model?type=knight',
  princess:'/api/farm-model?type=princess',
- ogre:'/api/farm-model?type=ogre'
+ ogre:'/api/farm-model?type=ogre',
+ goblin:'/api/farm-model?type=goblin',
+ troll:'/api/farm-model?type=troll'
 };
 const professionalAvatarNames={knight:'Cavaleiro medieval de armadura completa',princess:'Princesa guerreira em armadura medieval',ogre:'Ogro ciclope gigante com clava'};
 const avatarLoader=new GLTFLoader(),avatarAssetPromises=new Map();
@@ -947,7 +949,7 @@ async function loadProfessionalAvatar(type){
  }
  const gltf=await avatarAssetPromises.get(type),model=cloneSkeleton(gltf.scene);
  const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
- const targetHeight=type==='ogre'?2.62:(type==='princess'?1.72:1.94),scale=targetHeight/Math.max(size.y,.01);
+ const targetHeight=type==='ogre'?2.62:(type==='princess'?1.72:(type==='goblin'?1.25:(type==='troll'?2.63:1.94))),scale=targetHeight/Math.max(size.y,.01);
  model.scale.setScalar(scale);model.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
  model.traverse(o=>{
   if(o.isMesh){o.castShadow=true;o.receiveShadow=true;
@@ -991,7 +993,7 @@ async function loadLocalProfessionalAvatar(type,token){
  }
 }
 loadLocalProfessionalAvatar('knight',++avatarLoadToken);
-async function loadGuardVisual(guard){try{const instance=await loadProfessionalAvatar('knight');if(!guard.group.parent){disposeProceduralModel(instance.model);return;}guard.group.remove(guard.model);disposeProceduralModel(guard.model);guard.model=instance.model;guard.professional=instance;guard.group.add(instance.model);}catch(error){console.warn('Modelo 3D do guarda indisponível:',error);}}
+async function loadGuardVisual(guard){try{const instance=await loadProfessionalAvatar('goblin');if(!guard.group.parent){disposeProceduralModel(instance.model);return;}guard.group.remove(guard.model);disposeProceduralModel(guard.model);guard.model=instance.model;guard.professional=instance;guard.group.add(instance.model);}catch(error){console.warn('Modelo 3D do guarda indisponível:',error);}}
 async function loadAngelVisual(angel){try{const instance=await loadProfessionalAvatar('knight');if(!angel.group.parent){disposeProceduralModel(instance.model);return;}angel.group.children.forEach(child=>{if(child.isMesh)child.visible=false;});instance.model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>{if(m.color)m.color.lerp(new THREE.Color(0xf1e6c9),.12);m.envMap=charEnv;m.envMapIntensity=.9;m.needsUpdate=true;});}});instance.model.scale.multiplyScalar(1.12);angel.professional=instance;angel.group.add(instance.model);}catch(error){console.warn('Modelo humano realista do anjo indisponível; mantendo modelo reserva:',error);}}
 if(!isMobile)for(const guard of fortressGuards)loadGuardVisual(guard);
 // Os anjos mantêm o modelo celestial próprio, com rosto, túnica, auréola e asas em camadas. Não substituir por um cavaleiro humano.
@@ -1782,7 +1784,7 @@ async function loadBanditVisual(enemy){
   });
  }catch(error){console.warn('Modelo 3D do bandido indisponível; mantendo personagem reserva:',error)}
 }
-async function loadOgreVisual(enemy){try{const instance=await loadProfessionalAvatar('ogre');if(!enemy.alive||!enemy.group.parent){disposeProceduralModel(instance.model);return;}enemy.group.remove(enemy.model);disposeProceduralModel(enemy.model);enemy.model=instance.model;enemy.professional=instance;enemy.group.add(instance.model);}catch(error){console.warn('Modelo 3D do ogro indisponível; mantendo reserva:',error);}}
+async function loadOgreVisual(enemy){try{const instance=await loadProfessionalAvatar('troll');if(!enemy.alive||!enemy.group.parent){disposeProceduralModel(instance.model);return;}enemy.group.remove(enemy.model);disposeProceduralModel(enemy.model);enemy.model=instance.model;enemy.professional=instance;enemy.group.add(instance.model);}catch(error){console.warn('Modelo 3D do ogro indisponível; mantendo reserva:',error);}}
 function updateEnemyHealth(e){const ratio=Math.max(0,e.health/e.maxHealth);e.fill.scale.x=ratio;e.fill.position.x=-(1-ratio)*.56;e.fill.material.color.set(ratio<.3?0xe64b42:ratio<.6?0xe6b64b:0x43c66b)}
 function createAngelImpact(position,color=0xffe6a3){const fx=new THREE.Group();const core=new THREE.Mesh(new THREE.SphereGeometry(.72,14,10),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.92,depthWrite:false}));fx.add(core);const ring=new THREE.Mesh(new THREE.TorusGeometry(1.05,.075,8,28),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.95,depthWrite:false}));ring.rotation.x=Math.PI/2;fx.add(ring);fx.position.copy(position);fx.scale.setScalar(.45);scene.add(fx);const light=isMobile?null:new THREE.PointLight(color,3.8,13);if(light){light.position.copy(position);scene.add(light);}const started=performance.now();const animateFx=()=>{const p=Math.min(1,(performance.now()-started)/380);fx.scale.setScalar(.45+p*1.25);core.material.opacity=1-p;ring.material.opacity=1-p;if(light)light.intensity=3.8*(1-p);if(p<1)requestAnimationFrame(animateFx);else{scene.remove(fx);if(light)scene.remove(light);fx.traverse(o=>{o.geometry?.dispose();if(o.material)o.material.dispose()});}};requestAnimationFrame(animateFx);}
 const ENEMY_FOREST={patrolRadius:11,castleSafeRadius:58,aggroRadius:58,spawnRadius:120,engageRadius:76,outerRadius:165};
@@ -1803,7 +1805,7 @@ function updateEnemies(dt,t){
   // O raio é maior que o alcance de agressão, então eles são ativados antes de poderem atacar.
   if(dist>68){e.group.visible=false;continue;}e.group.visible=true;if(isMobile&&dist>38){if(now-(e.lastLodUpdate||0)<320)continue;e.lastLodUpdate=now;}e.phase+=dt;e.bar.quaternion.copy(camera.quaternion);
   // No celular, mantém o modelo procedural leve; carregar avatares profissionais durante a exploração causa picos de CPU/GPU e memória.
-  if(!isMobile&&dist<48&&!e.professional&&!e.visualLoading&&!e.visualLoadAttempted){e.visualLoading=true;e.visualLoadAttempted=true;if(isMobile)mobileEnemyVisualCount++;(e.type==='bandit'?loadBanditVisual(e):loadOgreVisual(e)).finally(()=>e.visualLoading=false);}
+  if(dist<(isMobile?30:48)&&!e.professional&&!e.visualLoading&&!e.visualLoadAttempted){e.visualLoading=true;e.visualLoadAttempted=true;(e.type==='bandit'?loadBanditVisual(e):loadOgreVisual(e)).finally(()=>e.visualLoading=false);}
   if(e.professional){
    e.professional.mixer.update(dt);
    setProfessionalGait(e.professional,e.state==='chase',e.state==='chase'&&dist<5);
