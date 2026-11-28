@@ -291,10 +291,26 @@ function tower(x,z){
 let castleGate,castleBridge,gateAngle=0,gateTarget=0,castleBridgeTarget=0,fortressGuards=[],celestialGuardians=[],castlePatrols=[];
 
 let celestialGLTFPromise=null;
+async function loadCelestialAngelGLTF(){
+ const paths=['/public/baby-character-rigged.glb','/baby-character-rigged.glb'];
+ let lastError=null;
+ for(const path of paths){
+  try{
+   const gltf=await new GLTFLoader().loadAsync(path);
+   if(!gltf.scene||!gltf.scene.children.length)throw new Error('O arquivo GLB não contém uma cena 3D válida.');
+   console.info('Modelo dos anjos carregado:',path);
+   return gltf;
+  }catch(error){
+   lastError=error;
+   console.warn('Falha ao carregar modelo dos anjos em '+path,error);
+  }
+ }
+ throw lastError||new Error('Não foi possível localizar o modelo 3D dos anjos.');
+}
 function installPhotorealAngelModel(angel){
- // No celular, mantém o querubim procedural leve para evitar carregar sete modelos 3D pesados.
- // Usa o querubim 3D enviado ao repositório; cada guardião recebe uma instância independente.
- if(!celestialGLTFPromise)celestialGLTFPromise=new GLTFLoader().loadAsync('/baby-character-rigged.glb').catch(error=>{celestialGLTFPromise=null;throw error;});
+ // Tenta os dois endereços possíveis do arquivo na hospedagem Vercel (pasta public ou raiz).
+ // Um único download é compartilhado; cada um dos sete guardiões recebe uma cópia independente.
+ if(!celestialGLTFPromise)celestialGLTFPromise=loadCelestialAngelGLTF().catch(error=>{celestialGLTFPromise=null;throw error;});
  celestialGLTFPromise.then(gltf=>{
   if(angel.professional||!angel.group.parent)return;
   const model=cloneSkeleton(gltf.scene);
