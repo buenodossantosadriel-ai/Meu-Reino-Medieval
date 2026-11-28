@@ -33,3 +33,8 @@ Os efeitos são executados localmente no navegador, sem chamadas adicionais ao S
 - Efeitos ligados às ações do jogador: passos, cascos do cavalo, salto, esquiva, espada, impacto de combate e coleta de madeira/pedra.
 - Sons posicionais com atenuação espacial, usando a posição da câmera e do evento no mundo 3D.
 - Áudio gerado localmente com Web Audio API; não depende de arquivos externos ou chamadas ao Supabase.
+
+
+## Créditos dos modelos 3D de personagens
+- Cavaleiro principal: “Plate Armour Knight”, de vinish.dev, licença CC BY 4.0. https://vinish.dev/free-3d-models/knights
+- Princesa guerreira: “Lady Knight”, de vinish.dev, licença CC BY 4.0. https://vinish.dev/free-3d-models/knights
