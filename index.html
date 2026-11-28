@@ -563,20 +563,33 @@ function castle(){
  box(0,.18,12,4,.25,7,0x795b3a,woodMat);
  for(const x of [-2.35,2.35]){const post=box(x,1.2,9.2,.18,2.4,.18,0x60432c,woodMat);const flame=new THREE.PointLight(0xffa34b,1.4,8);flame.position.set(x,2.55,9.2);scene.add(flame)}
  // Torre de menagem, telhado, janelas e reforços de pedra.
- box(0,2.5,-2,6,5,5,0xb8b5a7,stoneMat);
+ // Salão real ampliado e acessível: paredes laterais, fundo e fachada com portal central aberto.
+ const hallStone=stoneMat;
+ box(-3.08,3.1,-2,.52,6.2,6.2,0xb8b5a7,hallStone);box(3.08,3.1,-2,.52,6.2,6.2,0xb8b5a7,hallStone);
+ box(0,3.1,-4.84,6.65,6.2,.52,0xb8b5a7,hallStone);
+ box(-2.12,3.1,0.84,1.92,6.2,.52,0xb8b5a7,hallStone);box(2.12,3.1,0.84,1.92,6.2,.52,0xb8b5a7,hallStone);
+ box(0,5.95,0.84,2.35,.5,.52,0xb8b5a7,hallStone);
+ const hallFloor=new THREE.Mesh(new THREE.BoxGeometry(5.95,.22,5.55),new THREE.MeshStandardMaterial({color:0x82745e,roughness:.94}));hallFloor.position.set(0,.06,-2);hallFloor.receiveShadow=true;scene.add(hallFloor);
+ // Interior: tapete real, trono, colunas, brasões e iluminação quente.
+ const royalCarpet=new THREE.Mesh(new THREE.BoxGeometry(1.65,.035,4.3),new THREE.MeshStandardMaterial({color:0x6d1728,roughness:.95}));royalCarpet.position.set(0,.19,-2.05);scene.add(royalCarpet);
+ const throneBase=new THREE.Mesh(new THREE.BoxGeometry(1.35,.35,.95),woodMat);throneBase.position.set(0,.38,-4.05);scene.add(throneBase);
+ const throneSeat=new THREE.Mesh(new THREE.BoxGeometry(1.15,.28,.82),goldMatForCastle);throneSeat.position.set(0,.68,-4.12);scene.add(throneSeat);
+ const throneBack=new THREE.Mesh(new THREE.BoxGeometry(1.2,1.75,.24),woodMat);throneBack.position.set(0,1.62,-4.48);scene.add(throneBack);
+ for(const x of [-.48,.48]){const fin=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8),goldMatForCastle);fin.position.set(x,2.55,-4.48);scene.add(fin)}
+ for(const x of [-2.45,2.45]){const pillar=new THREE.Mesh(new THREE.CylinderGeometry(.22,.3,5.7,10),stoneMat);pillar.position.set(x,2.95,-2.0);pillar.castShadow=true;scene.add(pillar);const capital=new THREE.Mesh(new THREE.BoxGeometry(.72,.24,.72),goldMatForCastle);capital.position.set(x,5.85,-2);scene.add(capital);const torch=new THREE.Group();const stem=new THREE.Mesh(new THREE.CylinderGeometry(.055,.09,.7,8),ironMat);stem.position.y=.35;torch.add(stem);const fire=new THREE.Mesh(new THREE.SphereGeometry(.16,8,7),new THREE.MeshBasicMaterial({color:0xffa34b}));fire.position.y=.82;torch.add(fire);torch.position.set(x*.82,3.9,-.9);scene.add(torch);const glow=new THREE.PointLight(0xffa34b,.9,9);glow.position.set(x*.82,4.7,-.9);scene.add(glow)}
  for(const x of [-3.08,3.08])for(const z of [-3.7,-2,-.3])box(x,2.2,z,.35,4.4,.42,0x777c72,darkStone);
- box(0,5.3,-2,6.3,.35,5.3,0x777c72,darkStone);
+ box(0,6.35,-2,6.55,.35,6.05,0x777c72,darkStone);
  for(let x=-2.4;x<=2.4;x+=1.6){box(x,5.8,-4.25,.75,.9,.75,0xb8b5a7,stoneMat)}
  for(let z=-3.5;z<=-.5;z+=1.5){box(-3.1,5.8,z,.75,.9,.75,0xb8b5a7,stoneMat);box(3.1,5.8,z,.75,.9,.75,0xb8b5a7,stoneMat)}
- const keepRoof=new THREE.Mesh(new THREE.ConeGeometry(3.9,3.2,8),roofMat);keepRoof.position.set(0,7.1,-2);keepRoof.rotation.y=Math.PI/8;keepRoof.castShadow=true;scene.add(keepRoof);
+ const keepRoof=new THREE.Mesh(new THREE.ConeGeometry(4.25,3.5,8),roofMat);keepRoof.position.set(0,7.95,-2);keepRoof.rotation.y=Math.PI/8;keepRoof.castShadow=true;scene.add(keepRoof);
  // Faixas de cantaria, contrafortes e blocos talhados dão profundidade à torre principal.
- for(const y of [.55,1.72,2.9,4.08,5.25]){const course=new THREE.Mesh(new THREE.BoxGeometry(6.12,.105,5.12),darkStone);course.position.set(0,y,-2);course.castShadow=true;scene.add(course)}
- for(const x of [-2.78,2.78])for(const z of [-4.12,.12]){const buttress=new THREE.Mesh(new THREE.BoxGeometry(.62,5.5,.62),stoneMat);buttress.position.set(x,2.75,z);buttress.castShadow=true;buttress.receiveShadow=true;scene.add(buttress);const cap=new THREE.Mesh(new THREE.BoxGeometry(.82,.22,.82),darkStone);cap.position.set(x,5.48,z);scene.add(cap)}
- for(let row=0;row<5;row++){const y=.9+row*.88;for(let col=0;col<4;col++){const x=-2.22+col*1.48+(row%2)*.28;const block=new THREE.Mesh(new THREE.BoxGeometry(1.22,.68,.075),stoneMat);block.position.set(x,y,.585);block.castShadow=true;scene.add(block);const sideBlock=new THREE.Mesh(new THREE.BoxGeometry(.075,.68,1.0),stoneMat);sideBlock.position.set(3.085,y,-3.65+col*1.1+(row%2)*.18);sideBlock.castShadow=true;scene.add(sideBlock)}}
+ for(const y of [.55,1.72,2.9,4.08,5.25,6.25]){const course=new THREE.Mesh(new THREE.BoxGeometry(6.35,.105,5.85),darkStone);course.position.set(0,y,-2);course.castShadow=true;scene.add(course)}
+ for(const x of [-2.78,2.78])for(const z of [-4.72,.72]){const buttress=new THREE.Mesh(new THREE.BoxGeometry(.62,6.4,.62),stoneMat);buttress.position.set(x,3.2,z);buttress.castShadow=true;buttress.receiveShadow=true;scene.add(buttress);const cap=new THREE.Mesh(new THREE.BoxGeometry(.82,.22,.82),darkStone);cap.position.set(x,6.35,z);scene.add(cap)}
+ for(let row=0;row<5;row++){const y=.9+row*.88;for(let col=0;col<4;col++){const x=-2.22+col*1.48+(row%2)*.28;const block=new THREE.Mesh(new THREE.BoxGeometry(1.22,.68,.075),stoneMat);block.position.set(x,y,1.125);block.castShadow=true;scene.add(block);const sideBlock=new THREE.Mesh(new THREE.BoxGeometry(.075,.68,1.0),stoneMat);sideBlock.position.set(3.705,y,-3.95+col*1.1+(row%2)*.18);sideBlock.castShadow=true;scene.add(sideBlock)}}
  // Molduras de pedra e arcos sobre as janelas da fachada.
- for(const x of [-1.5,1.5]){const frame=new THREE.Mesh(new THREE.BoxGeometry(.68,1.38,.16),darkStone);frame.position.set(x,3.4,.59);scene.add(frame);const glass=new THREE.Mesh(new THREE.BoxGeometry(.43,1.08,.1),new THREE.MeshStandardMaterial({color:0x263c4a,emissive:0x172d3c,emissiveIntensity:.55,roughness:.3}));glass.position.set(x,3.4,.69);scene.add(glass);const archStone=new THREE.Mesh(new THREE.TorusGeometry(.34,.09,8,18,Math.PI),stoneMat);archStone.position.set(x,4.08,.68);archStone.rotation.z=Math.PI;scene.add(archStone)}
+ for(const x of [-1.5,1.5]){const frame=new THREE.Mesh(new THREE.BoxGeometry(.68,1.38,.16),darkStone);frame.position.set(x,3.4,1.21);scene.add(frame);const glass=new THREE.Mesh(new THREE.BoxGeometry(.43,1.08,.1),new THREE.MeshStandardMaterial({color:0x263c4a,emissive:0x172d3c,emissiveIntensity:.55,roughness:.3}));glass.position.set(x,3.4,1.31);scene.add(glass);const archStone=new THREE.Mesh(new THREE.TorusGeometry(.34,.09,8,18,Math.PI),stoneMat);archStone.position.set(x,4.08,1.30);archStone.rotation.z=Math.PI;scene.add(archStone)}
  // Escada caracol externa, com degraus de cantaria e corrimão de ferro/madeira até o canhão.
- addStoneSpiralStaircase(scene,{centerX:0,centerZ:-2,baseY:.18,rise:9.2,turns:3.25,radius:4.15,steps:62,startAngle:Math.PI/2});
+ addStoneSpiralStaircase(scene,{centerX:0,centerZ:-2,baseY:.18,rise:9.2,turns:3.25,radius:4.9,steps:68,startAngle:Math.PI/2});
  // Parapeito elevado e ameias no mirante: plataforma panorâmica no topo da torre.
  const lookoutRing=new THREE.Mesh(new THREE.RingGeometry(4.55,5.22,64),stoneMat);lookoutRing.rotation.x=-Math.PI/2;lookoutRing.position.set(0,9.62,-2);lookoutRing.receiveShadow=true;scene.add(lookoutRing);
  const lookoutTrim=new THREE.Mesh(new THREE.TorusGeometry(5.05,.095,8,64),goldMatForCastle);lookoutTrim.rotation.x=Math.PI/2;lookoutTrim.position.set(0,9.78,-2);scene.add(lookoutTrim);
@@ -637,7 +650,7 @@ document.querySelector('#gate').onclick=toggleCastleGate;
 // Colisões físicas das muralhas e da torre central; a abertura do portão permanece livre.
 addRectObstacle(0,-8,8.5,.68);addRectObstacle(-4.85,8,3.15,.68);addRectObstacle(4.85,8,3.15,.68);addRectObstacle(-8,0,.68,8);addRectObstacle(8,0,.68,8);
 addCircleObstacle(-8,-8,1.85);addCircleObstacle(8,-8,1.85);addCircleObstacle(-8,8,1.85);addCircleObstacle(8,8,1.85);
-addRectObstacle(0,-2,3.05,2.55);
+addRectObstacle(-3.08,-2,.34,2.9);addRectObstacle(3.08,-2,.34,2.9);addRectObstacle(0,-4.84,2.85,.34);addRectObstacle(-2.12,.84,.98,.34);addRectObstacle(2.12,.84,.98,.34);
 const worldTreeLoader=new GLTFLoader(),worldTreeUrl='/api/farm-model?type=oak';let worldTreePromise=null;
 // Geometrias e materiais compartilhados evitam centenas de alocações repetidas no celular.
 const fallbackTreeTrunkGeo=new THREE.CylinderGeometry(.2,.34,1.8,7);
@@ -1200,7 +1213,7 @@ function mountNearestHorse(){
  window.__medieval4D?.play('mount',best.group.position);mountedHorse=best;best.wild=false;best.timer=9999;best.target.set(best.group.position.x,0,best.group.position.z);player.position.set(best.group.position.x,1.58,best.group.position.z);player.rotation.y=best.group.rotation.y;playHorseAnimation(best,'Idle');document.querySelector('#mount').textContent='↘ Desmontar';showHorseHint('Você montou a cavalo! Use o joystick para cavalgar.');
 }
 document.querySelector('#mount').onclick=mountNearestHorse;
-let yaw=0,cameraPitch=.88,cameraDistance=25,cameraDistanceCurrent=25,panoramaMode=false,firstPersonMode=false;
+let yaw=0,cameraPitch=.88,cameraDistance=25,cameraDistanceCurrent=25,panoramaMode=false,firstPersonMode=false,castleInteriorCameraActive=false;
 const keys={};addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 const moveInput={x:0,y:0},joystick=document.querySelector('#joystick'),stick=document.querySelector('#stick');
 document.querySelector('#actionsToggle').onclick=()=>{const open=document.body.classList.toggle('actions-open');document.querySelector('.bottom').classList.toggle('collapsed',!open);document.querySelector('#actionsToggle').textContent=open?'×':'☰';};
@@ -2375,6 +2388,8 @@ shadowRefresh+=dt;if(shadowRefresh>(isMobile?.38:.18)){shadowRefresh=0;const lig
  if(user&&live&&t-lastPresenceUpdate>1000){lastPresenceUpdate=t;live.track({client_id:clientId,user_id:user.id,name:playerName,avatar:selectedAvatar,x:player.position.x,z:player.position.z,rotation:player.rotation.y}).catch(e=>console.warn('Presença:',e));}
  if(user&&t-lastHeartbeat>10000){lastHeartbeat=t;heartbeatPlayerPosition();}
  if(user&&t-lastDbPlayersSync>15000){lastDbPlayersSync=t;syncDatabasePlayers();}
+ const insideCastleHall=Math.abs(player.position.x)<1.55&&player.position.z> -4.35&&player.position.z<.25&&player.position.y<5.8;
+ if(insideCastleHall!==castleInteriorCameraActive){castleInteriorCameraActive=insideCastleHall;firstPersonMode=insideCastleHall;player.visible=!firstPersonMode;cameraPitch=insideCastleHall?0:.88;cameraModeButton.textContent=firstPersonMode?'🎥 Terceira pessoa':'👁 Primeira pessoa';document.querySelector('#hint').textContent=insideCastleHall?'Você entrou no salão real. Câmera em primeira pessoa.':'Você saiu do castelo. Câmera em terceira pessoa.';}
  cameraDistanceCurrent+=(cameraDistance-cameraDistanceCurrent)*Math.min(1,dt*10);
  const horiz=Math.cos(cameraPitch)*cameraDistanceCurrent;
  const firstPersonEye=new THREE.Vector3(player.position.x,player.position.y+1.58,player.position.z);
