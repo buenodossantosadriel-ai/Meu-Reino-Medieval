@@ -1,7 +1,9 @@
-const CACHE='meu-reino-v5';
+const CACHE='meu-reino-v6';
+const CDN_ORIGINS=new Set(['https://cdn.jsdelivr.net']);
 const APP_SHELL=['/','/index.html','/immersive4d.js','/manifest.json','/icons/icon-192.svg','/icons/icon-512.svg'];
 const STATIC_EXT=/\.(?:js|mjs|css|png|jpe?g|webp|avif|svg|glb|gltf|bin|ktx2|woff2?)$/i;
 function isCacheableAsset(url,request){
+  if(CDN_ORIGINS.has(url.origin))return request.destination==='script'||STATIC_EXT.test(url.pathname);
   if(url.origin!==self.location.origin)return false;
   if(url.pathname.startsWith('/api/'))return url.pathname==='/api/farm-model';
   return request.destination==='script'||request.destination==='style'||request.destination==='image'||request.destination==='font'||STATIC_EXT.test(url.pathname);
@@ -24,7 +26,7 @@ self.addEventListener('fetch',event=>{
   const request=event.request;
   if(request.method!=='GET')return;
   const url=new URL(request.url);
-  if(url.origin!==self.location.origin)return;
+  if(url.origin!==self.location.origin&&!CDN_ORIGINS.has(url.origin))return;
   if(request.mode==='navigate'){
     event.respondWith((async()=>{
       const cache=await caches.open(CACHE);
