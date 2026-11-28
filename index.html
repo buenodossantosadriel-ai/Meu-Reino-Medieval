@@ -256,11 +256,12 @@ let castleGate,castleBridge,gateAngle=0,gateTarget=0,castleBridgeTarget=0,fortre
 
 function createCelestialAngel(index){
  const g=new THREE.Group();
- const robe=new THREE.MeshStandardMaterial({color:index%2?0xf8f4e9:0xe9edf0,roughness:.88});
- const robeShade=new THREE.MeshStandardMaterial({color:0xd9dce0,roughness:.94});
- const gold=new THREE.MeshStandardMaterial({color:0xd9b765,metalness:.68,roughness:.27});
- const skin=new THREE.MeshStandardMaterial({color:0xe5c3a8,roughness:.76});
- const hair=new THREE.MeshStandardMaterial({color:index%3===0?0x6b4934:0x9a7952,roughness:.82});
+ const robe=new THREE.MeshStandardMaterial({color:index%2?0xf8f5ed:0xe9edf2,roughness:.96});
+ const robeShade=new THREE.MeshStandardMaterial({color:0xd2d8df,roughness:.98});
+ const gold=new THREE.MeshStandardMaterial({color:0xd9b765,metalness:.58,roughness:.34});
+ const skin=new THREE.MeshStandardMaterial({color:index%3===0?0xe9c6ad:0xd9ad91,roughness:.88});
+ const skinShadow=new THREE.MeshStandardMaterial({color:0xb9816e,roughness:.94});
+ const hair=new THREE.MeshStandardMaterial({color:index%3===0?0x493126:index%3===1?0x806044:0x302b2b,roughness:.94});
  const feather=new THREE.MeshStandardMaterial({color:0xfffdf6,roughness:.92});
  const featherShade=new THREE.MeshStandardMaterial({color:0xe8edf1,roughness:.94});
  const eye=new THREE.MeshStandardMaterial({color:0x6b8b9c,roughness:.45,emissive:0x52758a,emissiveIntensity:.16});
@@ -268,7 +269,18 @@ function createCelestialAngel(index){
  // Túnica longa em camadas, com pregas e bordas douradas.
  add(new THREE.ConeGeometry(.58,1.55,16,3),robe,0,.91,0,1,1, .78);
  add(new THREE.CapsuleGeometry(.29,.48,7,14),robe,0,1.65,0,1,.92,.78);
- add(new THREE.SphereGeometry(.34,24,18),skin,0,2.18,.015, .86,1,.78);
+ add(new THREE.SphereGeometry(.34,32,24),skin,0,2.18,.015,.86,1,.78);
+ // Face com volume e proporções mais naturais: maçãs do rosto, queixo, nariz, pálpebras e boca.
+ add(new THREE.SphereGeometry(.205,18,14),skin,0,2.015,.205,.92,.58,.62);
+ add(new THREE.CapsuleGeometry(.043,.105,5,10),skin,0,2.16,.307,.72,1.18,.72);
+ add(new THREE.SphereGeometry(.045,12,10),skin,0,2.105,.333,.8,.62,.72);
+ add(new THREE.SphereGeometry(.026,10,8),skinShadow,0,2.045,.319,1.2,.34,.55);
+ for(const side of [-1,1]){
+  add(new THREE.SphereGeometry(.082,16,12),skin,side*.205,2.105,.235,1,.78,.62);
+  const lid=add(new THREE.TorusGeometry(.052,.012,6,16),skinShadow,side*.105,2.19,.319,1.12,.72,.6);lid.rotation.x=0;
+  add(new THREE.SphereGeometry(.018,10,8),skinShadow,side*.105,2.18,.328,1,.55,.4);
+  add(new THREE.SphereGeometry(.035,10,8),skinShadow,side*.032,2.025,.326,1.2,.28,.45);
+ }
  // Traços faciais e mechas discretas para dar mais expressão ao guardião.
  add(new THREE.ConeGeometry(.055,.16,8),skin,0,2.15,.315,.72,1,.72);
  add(new THREE.CapsuleGeometry(.012,.075,3,6),hair,-.105,2.275,.292,1,1,.8).rotation.z=-.12;
@@ -277,9 +289,14 @@ function createCelestialAngel(index){
  for(const side of [-1,1])add(new THREE.SphereGeometry(.065,10,8),skin,side*.31,2.16,.015,.7,1,.65);
  // Pescoço, cabelo e moldura delicada do rosto.
  add(new THREE.CylinderGeometry(.105,.12,.2,12),skin,0,1.94,0);
- add(new THREE.SphereGeometry(.355,20,16),hair,0,2.34,-.055,.94,.72,.88);
+ add(new THREE.SphereGeometry(.355,24,18),hair,0,2.34,-.055,.94,.72,.88);
  add(new THREE.SphereGeometry(.105,14,10),hair,-.29,2.13,-.005,.9,1.8,.9);
  add(new THREE.SphereGeometry(.105,14,10),hair,.29,2.13,-.005,.9,1.8,.9);
+ // Mechas longas e curvas caindo atrás dos ombros.
+ for(let side of [-1,1])for(let strand=0;strand<3;strand++){
+  const lock=add(new THREE.CapsuleGeometry(.045,.48+strand*.08,5,9),hair,side*(.25+strand*.045),1.91-strand*.06,-.13-strand*.025,.78,1.12,.8);
+  lock.rotation.z=side*(.12+strand*.1);
+ }
  for(const side of [-1,1]){
   add(new THREE.SphereGeometry(.052,12,10),new THREE.MeshStandardMaterial({color:0xfff5e9,roughness:.5}),side*.105,2.19,.285,1.18,.72,.5);
   add(new THREE.SphereGeometry(.028,12,10),eye,side*.105,2.19,.307,1,1,.6);
@@ -301,6 +318,8 @@ function createCelestialAngel(index){
  const breastTrim=add(new THREE.TorusGeometry(.255,.018,6,28),gold,0,1.52,.365,1,.78,.38);breastTrim.rotation.x=Math.PI/2;
  add(new THREE.SphereGeometry(.075,12,10),gold,0,1.48,.405,1,1,.55);
  for(const side of [-1,1]){
+  const upperArm=add(new THREE.CapsuleGeometry(.105,.31,6,10),robe,side*.39,1.53,-.005,1,1,.94);upperArm.rotation.z=side*-.34;
+  const forearm=add(new THREE.CapsuleGeometry(.082,.29,6,10),robeShade,side*.48,1.34,.055,1,1,.9);forearm.rotation.z=side*-.2;
   const pauldron=add(new THREE.SphereGeometry(.19,14,10),gold,side*.39,1.72,-.015,1.18,.68,.92);
   const inset=add(new THREE.SphereGeometry(.135,12,10),robe,side*.405,1.745,.055,1.12,.62,.72);
   const hand=add(new THREE.SphereGeometry(.105,14,10),skin,side*.51,1.22,.105,.82,1.08,.72);
@@ -332,14 +351,14 @@ function createCelestialAngel(index){
  for(let i=0;i<12;i++){const a=i*Math.PI/6,ray=add(new THREE.CylinderGeometry(.009,.018,.16,6),gold,Math.cos(a)*.48,2.72+Math.sin(a)*.48,-.08);ray.rotation.z=-a;}
  const wings=[];
  for(const side of [-1,1]){
-  const pivot=new THREE.Group();pivot.position.set(side*.24,1.77,-.19);pivot.scale.set(1.28,1.18,1);g.add(pivot);
+  const pivot=new THREE.Group();pivot.position.set(side*.24,1.77,-.19);pivot.scale.set(1.42,1.28,1);g.add(pivot);
   const base=add(new THREE.SphereGeometry(.2,14,12),featherShade,side*.3,.12,-.04,1.25,1.7,.62,pivot);
   // Camadas sobrepostas de penas longas, com pontas suaves.
-  for(let row=0;row<3;row++){
-   const count=row===0?7:6;
+  for(let row=0;row<4;row++){
+   const count=row===0?8:row===1?7:6;
    for(let j=0;j<count;j++){
-    const x=side*(.28+j*.145),y=.25-row*.19+j*.105;
-    const f=add(new THREE.CapsuleGeometry(.047,.25,4,8),row===1?featherShade:feather,x,y,-.055+row*.035,.88,1.55,.58,pivot);
+    const x=side*(.25+j*.145),y=.29-row*.17+j*.09;
+    const f=add(new THREE.CapsuleGeometry(.052,.29,5,9),row%2?featherShade:feather,x,y,-.055+row*.028,.82,1.72,.55,pivot);
     f.rotation.z=side*(-.16-j*.045);
     const shaft=add(new THREE.CapsuleGeometry(.006,.25,2,4),featherShade,x,y,-.015+row*.035,.7,1.45,.7,pivot);shaft.rotation.z=f.rotation.z;
    }
@@ -349,9 +368,9 @@ function createCelestialAngel(index){
    f.rotation.z=side*(-.24-j*.055);
   }
   // Penas primárias longas e sobrepostas, dentro do construtor do anjo.
-  for(let j=0;j<8;j++){
-   const t=j/7,x=side*(.68+t*.52),y=.18-t*.72;
-   const primary=add(new THREE.CapsuleGeometry(.052,.48,5,9),j%3===0?featherShade:feather,x,y,-.105,.82,1.9,.58,pivot);
+  for(let j=0;j<10;j++){
+   const t=j/9,x=side*(.68+t*.58),y=.2-t*.78;
+   const primary=add(new THREE.CapsuleGeometry(.055,.56,5,10),j%3===0?featherShade:feather,x,y,-.105,.78,2.05,.55,pivot);
    primary.rotation.z=side*(-.28-t*.42);
    const vane=add(new THREE.CapsuleGeometry(.009,.43,3,5),featherShade,x-side*.025,y+.025,-.067,.72,1.7,.55,pivot);
    vane.rotation.z=primary.rotation.z;
