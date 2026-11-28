@@ -294,7 +294,7 @@ let castleGate,castleBridge,gateAngle=0,gateTarget=0,castleBridgeTarget=0,fortre
 
 let celestialGLTFPromise=null;
 function installPhotorealAngelModel(angel){
- if(!celestialGLTFPromise)celestialGLTFPromise=new GLTFLoader().loadAsync('/public/baby-character-rigged.glb');
+ if(!celestialGLTFPromise)celestialGLTFPromise=new GLTFLoader().loadAsync('/baby-character-rigged.glb');
  celestialGLTFPromise.then(gltf=>{
   if(angel.professional||!angel.group.parent)return;
   const model=cloneSkeleton(gltf.scene);
