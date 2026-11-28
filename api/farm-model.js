@@ -10,6 +10,7 @@ const SOURCES = {
   'horse-friesian': 'https://vinish-models.pages.dev/horses/friesian-horse.glb',
   'horse-western': 'https://vinish-models.pages.dev/horses/western-horse.glb',
   'horse-draft': 'https://vinish-models.pages.dev/horses/draft-horse.glb',
+  knight: 'https://vinish-models.pages.dev/knights/plate-armour-knight.glb',
   princess: 'https://vinish-models.pages.dev/knights/lady-knight.glb',
   ogre: 'https://vinish-models.pages.dev/monsters/cyclops.glb'
 };
