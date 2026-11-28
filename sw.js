@@ -1,9 +1,9 @@
 const CACHE='meu-reino-v8';
-const CDN_ORIGINS=new Set(['https://cdn.jsdelivr.net']);
+const CDN_ORIGINS=new Set(['https://cdn.jsdelivr.net','https://vibeassets.io']);
 const APP_SHELL=['/','/index.html','/immersive4d.js','/manifest.json','/icons/icon-192.svg','/icons/icon-512.svg','https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js','https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js','https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/environments/RoomEnvironment.js','https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/SkeletonUtils.js','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'];
 const STATIC_EXT=/\.(?:js|mjs|css|png|jpe?g|webp|avif|svg|glb|gltf|bin|ktx2|woff2?)$/i;
 function isCacheableAsset(url,request){
-  if(CDN_ORIGINS.has(url.origin))return request.destination==='script'||STATIC_EXT.test(url.pathname);
+  if(CDN_ORIGINS.has(url.origin))return request.destination==='script'||STATIC_EXT.test(url.pathname)||url.pathname.startsWith('/download/');
   if(url.origin!==self.location.origin)return false;
   if(url.pathname.startsWith('/api/'))return url.pathname==='/api/farm-model';
   return request.destination==='script'||request.destination==='style'||request.destination==='image'||request.destination==='font'||STATIC_EXT.test(url.pathname);
